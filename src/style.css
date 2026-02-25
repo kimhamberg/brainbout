@@ -1,0 +1,29 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #1a1a2e;
+  color: #e0e0e0;
+  font-family: system-ui, -apple-system, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+#board-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#board {
+  width: 480px;
+  height: 480px;
+}
+
+@media (max-width: 520px) {
+  #board {
+    width: 95vw;
+    height: 95vw;
+  }
+}
