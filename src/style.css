@@ -4,16 +4,54 @@ body {
   background: #1a1a2e;
   color: #e0e0e0;
   font-family: system-ui, -apple-system, sans-serif;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   min-height: 100vh;
 }
 
-#board-container {
+#app {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+header {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
+  margin-bottom: 1rem;
+}
+
+header h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+#controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+#controls button {
+  background: #16213e;
+  color: #e0e0e0;
+  border: 1px solid #0f3460;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+#controls button:hover {
+  background: #0f3460;
+}
+
+main {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+#board-container {
+  flex-shrink: 0;
 }
 
 #board {
@@ -21,9 +59,41 @@ body {
   height: 480px;
 }
 
-@media (max-width: 520px) {
+#sidebar {
+  flex: 1;
+  min-width: 200px;
+}
+
+#status {
+  font-size: 1.1rem;
+  padding: 0.75rem;
+  background: #16213e;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+
+#eval {
+  font-size: 0.9rem;
+  padding: 0.5rem 0.75rem;
+  color: #888;
+  font-family: monospace;
+}
+
+@media (max-width: 700px) {
+  main {
+    flex-direction: column;
+    align-items: center;
+  }
+
   #board {
     width: 95vw;
     height: 95vw;
+    max-width: 480px;
+    max-height: 480px;
+  }
+
+  #sidebar {
+    width: 95vw;
+    max-width: 480px;
   }
 }

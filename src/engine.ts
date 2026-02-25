@@ -56,8 +56,12 @@ export class StockfishEngine {
   private worker: Worker | null = null;
   private onBestMove: EngineCallback | null = null;
   private onInfo: InfoCallback | null = null;
-  private ready = false;
+  private _ready = false;
   private options: EngineOptions;
+
+  get isReady(): boolean {
+    return this._ready;
+  }
 
   constructor(private scriptUrl: string) {
     this.options = { ...DEFAULT_OPTIONS };
@@ -74,7 +78,7 @@ export class StockfishEngine {
       const origHandler = this.handleLine.bind(this);
       const initHandler = (line: string) => {
         if (line === 'readyok') {
-          this.ready = true;
+          this._ready = true;
           this.handleLine = origHandler;
           resolve();
         }

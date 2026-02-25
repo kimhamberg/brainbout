@@ -8,9 +8,22 @@
 </head>
 <body>
   <div id="app">
-    <div id="board-container">
-      <div id="board"></div>
-    </div>
+    <header>
+      <h1>Chess960</h1>
+      <div id="controls">
+        <button id="new-game">New Game</button>
+        <button id="flip">Flip Board</button>
+      </div>
+    </header>
+    <main>
+      <div id="board-container">
+        <div id="board"></div>
+      </div>
+      <aside id="sidebar">
+        <div id="status">Loading engine...</div>
+        <div id="eval"></div>
+      </aside>
+    </main>
   </div>
   <script type="module" src="/src/main.ts"></script>
 </body>
