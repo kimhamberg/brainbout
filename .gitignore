@@ -1,2 +1,6 @@
 node_modules/
 dist/
+server/web/
+chess960
+chess960-linux-amd64
+chess960-windows-amd64.exe
