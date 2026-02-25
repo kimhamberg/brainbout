@@ -20,6 +20,32 @@ let engineThinking = false;
 
 const sfScript = '/stockfish/stockfish-18-lite-single.js';
 
+function getSettings(): { elo: number; skillLevel: number; moveTime: number; positionId: number | undefined; playerColor: 'white' | 'black' } {
+  const elo = parseInt((document.getElementById('elo-slider') as HTMLInputElement).value);
+  const skillLevel = parseInt((document.getElementById('skill-slider') as HTMLInputElement).value);
+  const moveTime = parseInt((document.getElementById('time-slider') as HTMLInputElement).value);
+  const posIdInput = (document.getElementById('position-id') as HTMLInputElement).value;
+  const positionId = posIdInput ? parseInt(posIdInput) : undefined;
+  const colorSelect = (document.getElementById('color-select') as HTMLSelectElement).value;
+  const color = colorSelect === 'random'
+    ? (Math.random() < 0.5 ? 'white' : 'black')
+    : colorSelect as 'white' | 'black';
+  return { elo, skillLevel, moveTime, positionId, playerColor: color };
+}
+
+function setupSliderLabels(): void {
+  const pairs = [
+    ['elo-slider', 'elo-value'],
+    ['skill-slider', 'skill-value'],
+    ['time-slider', 'time-value'],
+  ];
+  for (const [sliderId, labelId] of pairs) {
+    const slider = document.getElementById(sliderId) as HTMLInputElement;
+    const label = document.getElementById(labelId)!;
+    slider.addEventListener('input', () => { label.textContent = slider.value; });
+  }
+}
+
 async function startNewGame(positionId?: number): Promise<void> {
   const { fen, id } = positionId !== undefined
     ? chess960Fen(positionId)
@@ -89,10 +115,11 @@ function engineMove(): void {
     movable: { color: undefined, dests: new Map() },
   });
 
+  const moveTime = parseInt((document.getElementById('time-slider') as HTMLInputElement).value);
   engine.goWithMoves(
     game.startFen,
     game.moves,
-    DEFAULT_OPTIONS.moveTime,
+    moveTime,
     (bestMove: string) => {
       engineThinking = false;
       const newGame = applyUciMove(game, bestMove);
@@ -172,9 +199,20 @@ async function main(): Promise<void> {
   engine = new StockfishEngine(sfScript);
   await engine.init(DEFAULT_OPTIONS);
 
-  document.getElementById('new-game')?.addEventListener('click', () => {
-    engine.newGame();
-    startNewGame();
+  document.getElementById('new-game')?.addEventListener('click', async () => {
+    const settings = getSettings();
+    playerColor = settings.playerColor;
+    const options = {
+      ...DEFAULT_OPTIONS,
+      elo: settings.elo,
+      skillLevel: settings.skillLevel,
+      moveTime: settings.moveTime,
+      limitStrength: true,
+    };
+    engine.destroy();
+    engine = new StockfishEngine(sfScript);
+    await engine.init(options);
+    startNewGame(settings.positionId);
   });
 
   document.getElementById('flip')?.addEventListener('click', () => {
@@ -182,6 +220,7 @@ async function main(): Promise<void> {
     api.toggleOrientation();
   });
 
+  setupSliderLabels();
   await startNewGame();
 }
 

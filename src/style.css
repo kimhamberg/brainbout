@@ -97,3 +97,38 @@ main {
     max-width: 480px;
   }
 }
+
+#settings {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #16213e;
+  border-radius: 4px;
+}
+
+#settings h3 {
+  font-size: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+#settings label {
+  display: block;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+  color: #aaa;
+}
+
+#settings input[type="range"] {
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+#settings input[type="number"],
+#settings select {
+  width: 100%;
+  margin-top: 0.25rem;
+  padding: 0.3rem;
+  background: #1a1a2e;
+  color: #e0e0e0;
+  border: 1px solid #0f3460;
+  border-radius: 3px;
+}
