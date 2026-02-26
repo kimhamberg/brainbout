@@ -10,7 +10,6 @@ import { randomChess960, chess960Fen } from './chess960';
 import { StockfishEngine, DEFAULT_OPTIONS, humanDelay } from './engine';
 import { createGame, makeMove, applyUciMove, getGameStatus } from './game';
 import type { GameState } from './game';
-import type { EngineInfo } from './engine';
 import * as sound from './sounds';
 
 let api: Api;
@@ -134,12 +133,7 @@ function engineMove(): void {
 
       updateStatus('Your move');
     },
-    (info: EngineInfo) => {
-      const evalText = info.score.type === 'cp'
-        ? (info.score.value / 100).toFixed(1)
-        : `M${info.score.value}`;
-      updateEval(`Depth ${info.depth}: ${evalText}`);
-    },
+    () => {},
   );
 }
 
@@ -192,11 +186,6 @@ function showResult(status: ReturnType<typeof getGameStatus>): void {
 
 function updateStatus(text: string): void {
   const el = document.getElementById('status');
-  if (el) el.textContent = text;
-}
-
-function updateEval(text: string): void {
-  const el = document.getElementById('eval');
   if (el) el.textContent = text;
 }
 
