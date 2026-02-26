@@ -1,6 +1,6 @@
 // test/engine.test.ts
 import { describe, it, expect } from 'vitest';
-import { parseBestMove, parseInfoLine } from '../src/engine';
+import { parseBestMove, parseInfoLine, DEFAULT_OPTIONS, nodesForElo, humanDelay } from '../src/engine';
 
 describe('parseBestMove', () => {
   it('parses a simple bestmove', () => {
@@ -50,5 +50,39 @@ describe('parseInfoLine', () => {
   it('returns null for non-info lines', () => {
     expect(parseInfoLine('bestmove e2e4')).toBeNull();
     expect(parseInfoLine('readyok')).toBeNull();
+  });
+});
+
+describe('DEFAULT_OPTIONS', () => {
+  it('has no moveTime, contempt, or skillLevel', () => {
+    expect(DEFAULT_OPTIONS).not.toHaveProperty('moveTime');
+    expect(DEFAULT_OPTIONS).not.toHaveProperty('contempt');
+    expect(DEFAULT_OPTIONS).not.toHaveProperty('skillLevel');
+  });
+});
+
+describe('nodesForElo', () => {
+  it('returns ~10,000 nodes at minimum elo', () => {
+    expect(nodesForElo(1320)).toBe(10000);
+  });
+
+  it('returns ~1,000,000 nodes at maximum elo', () => {
+    expect(nodesForElo(3190)).toBe(1000000);
+  });
+
+  it('returns ~100,000 nodes at midpoint elo', () => {
+    const mid = nodesForElo(2255);
+    expect(mid).toBeGreaterThan(80000);
+    expect(mid).toBeLessThan(120000);
+  });
+});
+
+describe('humanDelay', () => {
+  it('resolves after 1-3 seconds', async () => {
+    const start = Date.now();
+    await humanDelay();
+    const elapsed = Date.now() - start;
+    expect(elapsed).toBeGreaterThanOrEqual(900);
+    expect(elapsed).toBeLessThanOrEqual(3200);
   });
 });

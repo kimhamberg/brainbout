@@ -7,7 +7,7 @@ import { Chessground } from '@lichess-org/chessground';
 import type { Api } from '@lichess-org/chessground/api';
 import type { Color as CgColor, Key, Dests } from '@lichess-org/chessground/types';
 import { randomChess960, chess960Fen } from './chess960';
-import { StockfishEngine, DEFAULT_OPTIONS } from './engine';
+import { StockfishEngine, DEFAULT_OPTIONS, humanDelay } from './engine';
 import { createGame, makeMove, applyUciMove, getGameStatus } from './game';
 import type { GameState } from './game';
 import type { EngineInfo } from './engine';
@@ -20,30 +20,21 @@ let engineThinking = false;
 
 const sfScript = import.meta.env.BASE_URL + 'stockfish/stockfish-18-lite-single.js';
 
-function getSettings(): { elo: number; skillLevel: number; moveTime: number; positionId: number | undefined; playerColor: 'white' | 'black' } {
+function getSettings(): { elo: number; positionId: number | undefined; playerColor: 'white' | 'black' } {
   const elo = parseInt((document.getElementById('elo-slider') as HTMLInputElement).value);
-  const skillLevel = parseInt((document.getElementById('skill-slider') as HTMLInputElement).value);
-  const moveTime = parseInt((document.getElementById('time-slider') as HTMLInputElement).value);
   const posIdInput = (document.getElementById('position-id') as HTMLInputElement).value;
   const positionId = posIdInput ? parseInt(posIdInput) : undefined;
   const colorSelect = (document.getElementById('color-select') as HTMLSelectElement).value;
   const color = colorSelect === 'random'
     ? (Math.random() < 0.5 ? 'white' : 'black')
     : colorSelect as 'white' | 'black';
-  return { elo, skillLevel, moveTime, positionId, playerColor: color };
+  return { elo, positionId, playerColor: color };
 }
 
 function setupSliderLabels(): void {
-  const pairs = [
-    ['elo-slider', 'elo-value'],
-    ['skill-slider', 'skill-value'],
-    ['time-slider', 'time-value'],
-  ];
-  for (const [sliderId, labelId] of pairs) {
-    const slider = document.getElementById(sliderId) as HTMLInputElement;
-    const label = document.getElementById(labelId)!;
-    slider.addEventListener('input', () => { label.textContent = slider.value; });
-  }
+  const slider = document.getElementById('elo-slider') as HTMLInputElement;
+  const label = document.getElementById('elo-value')!;
+  slider.addEventListener('input', () => { label.textContent = slider.value; });
 }
 
 async function startNewGame(positionId?: number): Promise<void> {
@@ -115,12 +106,11 @@ function engineMove(): void {
     movable: { color: undefined, dests: new Map() },
   });
 
-  const moveTime = parseInt((document.getElementById('time-slider') as HTMLInputElement).value);
   engine.goWithMoves(
     game.startFen,
     game.moves,
-    moveTime,
-    (bestMove: string) => {
+    async (bestMove: string) => {
+      await humanDelay();
       engineThinking = false;
       const newGame = applyUciMove(game, bestMove);
       if (!newGame) return;
@@ -205,9 +195,6 @@ async function main(): Promise<void> {
     const options = {
       ...DEFAULT_OPTIONS,
       elo: settings.elo,
-      skillLevel: settings.skillLevel,
-      moveTime: settings.moveTime,
-      limitStrength: true,
     };
     engine.destroy();
     engine = new StockfishEngine(sfScript);

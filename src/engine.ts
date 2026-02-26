@@ -8,21 +8,25 @@ export interface EngineInfo {
 
 export interface EngineOptions {
   chess960: boolean;
-  skillLevel: number;  // 0-20
   elo: number;         // 1320-3190
   limitStrength: boolean;
-  moveTime: number;    // milliseconds
-  contempt: number;    // -100 to 100
 }
 
 export const DEFAULT_OPTIONS: EngineOptions = {
   chess960: true,
-  skillLevel: 10,
   elo: 1500,
   limitStrength: true,
-  moveTime: 1000,
-  contempt: 0,
 };
+
+export function nodesForElo(elo: number): number {
+  const t = (elo - 1320) / (3190 - 1320);
+  return Math.round(10000 * Math.pow(100, t));
+}
+
+export function humanDelay(): Promise<void> {
+  const ms = 1000 + Math.random() * 2000;
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 export function parseBestMove(line: string): string | null {
   const match = line.match(/^bestmove\s+([a-h][1-8][a-h][1-8][qrbn]?)/);
@@ -93,10 +97,8 @@ export class StockfishEngine {
 
   private applyOptions(options: EngineOptions): void {
     this.send(`setoption name UCI_Chess960 value ${options.chess960}`);
-    this.send(`setoption name Skill Level value ${options.skillLevel}`);
     this.send(`setoption name UCI_LimitStrength value ${options.limitStrength}`);
     this.send(`setoption name UCI_Elo value ${options.elo}`);
-    this.send(`setoption name Contempt value ${options.contempt}`);
   }
 
   private send(cmd: string): void {
@@ -121,13 +123,12 @@ export class StockfishEngine {
     this.onInfo = infoCallback ?? null;
     this.send('ucinewgame');
     this.send(`position fen ${fen}`);
-    this.send(`go movetime ${this.options.moveTime}`);
+    this.send(`go nodes ${nodesForElo(this.options.elo)}`);
   }
 
   goWithMoves(
     startFen: string,
     moves: string[],
-    moveTime: number,
     callback: EngineCallback,
     infoCallback?: InfoCallback,
   ): void {
@@ -135,7 +136,7 @@ export class StockfishEngine {
     this.onInfo = infoCallback ?? null;
     const movesStr = moves.length > 0 ? ` moves ${moves.join(' ')}` : '';
     this.send(`position fen ${startFen}${movesStr}`);
-    this.send(`go movetime ${moveTime}`);
+    this.send(`go nodes ${nodesForElo(this.options.elo)}`);
   }
 
   newGame(): void {
