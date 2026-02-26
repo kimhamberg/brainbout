@@ -1,0 +1,41 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - run: npm ci
+      - run: npx vite build
+      - run: |
+          rm -rf android/app/src/main/assets
+          mkdir -p android/app/src/main/assets
+          cp -r dist/* android/app/src/main/assets/
+
+      - run: chmod +x android/gradlew
+      - run: cd android && ./gradlew assembleDebug
+
+      - run: cp android/app/build/outputs/apk/debug/app-debug.apk brainbout.apk
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: brainbout.apk
+          generate_release_notes: true
