@@ -22,9 +22,6 @@ body {
 }
 
 header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-bottom: 1rem;
 }
 
@@ -36,10 +33,12 @@ header h1 {
 #controls {
   display: flex;
   gap: 0.5rem;
+  margin-top: 0.75rem;
 }
 
 #controls button {
-  background: #16213e;
+  flex: 1;
+  background: #1a1a2e;
   color: #e0e0e0;
   border: 1px solid #0f3460;
   padding: 0.5rem 1rem;
