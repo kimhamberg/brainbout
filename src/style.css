@@ -1,3 +1,15 @@
+/* Catppuccin Frappé — https://catppuccin.com/palette (MIT) */
+:root {
+  --ctp-base: #303446;
+  --ctp-mantle: #292c3c;
+  --ctp-surface0: #414559;
+  --ctp-surface1: #51576d;
+  --ctp-surface2: #626880;
+  --ctp-text: #c6d0f5;
+  --ctp-subtext0: #a5adce;
+  --ctp-blue: #8caaee;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -5,8 +17,8 @@
 }
 
 body {
-  background: #1a1a2e;
-  color: #e0e0e0;
+  background: var(--ctp-base);
+  color: var(--ctp-text);
   font-family:
     system-ui,
     -apple-system,
@@ -38,9 +50,9 @@ header h1 {
 
 #controls button {
   flex: 1;
-  background: #1a1a2e;
-  color: #e0e0e0;
-  border: 1px solid #0f3460;
+  background: var(--ctp-surface0);
+  color: var(--ctp-text);
+  border: 1px solid var(--ctp-surface1);
   padding: 0.5rem 1rem;
   border-radius: 4px;
   cursor: pointer;
@@ -48,7 +60,7 @@ header h1 {
 }
 
 #controls button:hover {
-  background: #0f3460;
+  background: var(--ctp-surface1);
 }
 
 main {
@@ -74,7 +86,7 @@ main {
 #status {
   font-size: 1.1rem;
   padding: 0.75rem;
-  background: #16213e;
+  background: var(--ctp-surface0);
   border-radius: 4px;
   margin-bottom: 0.5rem;
 }
@@ -101,7 +113,7 @@ main {
 #settings {
   margin-top: 1rem;
   padding: 0.75rem;
-  background: #16213e;
+  background: var(--ctp-surface0);
   border-radius: 4px;
 }
 
@@ -114,12 +126,13 @@ main {
   display: block;
   margin-bottom: 0.75rem;
   font-size: 0.85rem;
-  color: #aaa;
+  color: var(--ctp-subtext0);
 }
 
 #settings input[type="range"] {
   width: 100%;
   margin-top: 0.25rem;
+  accent-color: var(--ctp-blue);
 }
 
 #settings input[type="number"],
@@ -127,8 +140,8 @@ main {
   width: 100%;
   margin-top: 0.25rem;
   padding: 0.3rem;
-  background: #1a1a2e;
-  color: #e0e0e0;
-  border: 1px solid #0f3460;
+  background: var(--ctp-base);
+  color: var(--ctp-text);
+  border: 1px solid var(--ctp-surface1);
   border-radius: 3px;
 }
