@@ -1,50 +1,69 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Brainbout</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♜</text></svg>">
-  <link rel="stylesheet" href="/src/style.css">
-</head>
-<body>
-  <div id="app">
-    <header>
-      <h1>Brainbout</h1>
-      <div id="controls">
-        <button id="new-game">New Game</button>
-        <button id="flip">Flip Board</button>
-      </div>
-    </header>
-    <main>
-      <div id="board-container">
-        <div id="board"></div>
-      </div>
-      <aside id="sidebar">
-        <div id="status">Loading engine...</div>
-        <div id="settings">
-          <h3>Settings</h3>
-          <label>
-            Difficulty (Elo)
-            <input type="range" id="elo-slider" min="1320" max="3190" value="1500" step="10">
-            <span id="elo-value">1500</span>
-          </label>
-          <label>
-            Position ID (0-959, blank = random)
-            <input type="number" id="position-id" min="0" max="959" placeholder="random">
-          </label>
-          <label>
-            Play as
-            <select id="color-select">
-              <option value="white">White</option>
-              <option value="black">Black</option>
-              <option value="random">Random</option>
-            </select>
-          </label>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>Brainbout</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♜</text></svg>"
+    />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header>
+        <h1>Brainbout</h1>
+        <div id="controls">
+          <button id="new-game">New Game</button>
+          <button id="flip">Flip Board</button>
         </div>
-      </aside>
-    </main>
-  </div>
-  <script type="module" src="/src/main.ts"></script>
-</body>
+      </header>
+      <main>
+        <div id="board-container">
+          <div id="board"></div>
+        </div>
+        <aside id="sidebar">
+          <div id="status">Loading engine...</div>
+          <div id="settings">
+            <h3>Settings</h3>
+            <label>
+              Difficulty (Elo)
+              <input
+                type="range"
+                id="elo-slider"
+                min="1320"
+                max="3190"
+                value="1500"
+                step="10"
+              />
+              <span id="elo-value">1500</span>
+            </label>
+            <label>
+              Position ID (0-959, blank = random)
+              <input
+                type="number"
+                id="position-id"
+                min="0"
+                max="959"
+                placeholder="random"
+              />
+            </label>
+            <label>
+              Play as
+              <select id="color-select">
+                <option value="white">White</option>
+                <option value="black">Black</option>
+                <option value="random">Random</option>
+              </select>
+            </label>
+          </div>
+        </aside>
+      </main>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
 </html>

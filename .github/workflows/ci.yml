@@ -7,7 +7,8 @@ on:
     branches: [master, main]
 
 jobs:
-  test:
+  lint-ts:
+    name: TypeScript lint & format
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,5 +18,40 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run lint
+      - run: npm run lint:css
       - run: npm run format:check
+
+  lint-go:
+    name: Go lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+      - run: go install honnef.co/go/tools/cmd/staticcheck@latest
+      - run: gofmt -l server/ | grep . && exit 1 || true
+      - run: cd server && go vet ./...
+      - run: cd server && staticcheck ./...
+
+  lint-kt:
+    name: Kotlin lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          curl -sSL https://github.com/pinterest/ktlint/releases/latest/download/ktlint -o /usr/local/bin/ktlint
+          chmod +x /usr/local/bin/ktlint
+      - run: ktlint "android/**/*.kt"
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
       - run: npm test
