@@ -16,13 +16,11 @@ export default tseslint.config(
     rules: {
       // Chess is inherently mathematical — positions, indices, board geometry
       '@typescript-eslint/no-magic-numbers': 'off',
-      // Functions are hoisted in JS — defining helpers after main logic is idiomatic
-      '@typescript-eslint/no-use-before-define': ['error', { functions: false }],
       // External library types (chessops, chessground) are not readonly
       '@typescript-eslint/prefer-readonly-parameter-types': 'off',
-      // Conflicts with switch/let patterns
+      // Conflicts with switch/let and late-initialized module state
       '@typescript-eslint/init-declarations': 'off',
-      // Some functions naturally need multiple params (e.g. makeMove)
+      // 4-param functions (makeMove, goWithMoves) read better than options objects
       '@typescript-eslint/max-params': ['error', { max: 5 }],
     },
   },

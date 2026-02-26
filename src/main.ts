@@ -21,6 +21,17 @@ let engine: StockfishEngine;
 let playerColor: 'white' | 'black' = 'white';
 let engineThinking = false;
 
+function parseSquare(name: string): number {
+  return name.charCodeAt(0) - 97 + (parseInt(name[1], 10) - 1) * 8;
+}
+
+function updateStatus(text: string): void {
+  const el = document.getElementById('status');
+  if (el) {
+    el.textContent = text;
+  }
+}
+
 function getSettings(): {
   elo: number;
   positionId: number | undefined;
@@ -63,106 +74,6 @@ function setupSliderLabels(): void {
       label.textContent = slider.value;
     });
   }
-}
-
-function startNewGame(positionId?: number): void {
-  const { fen, id } =
-    positionId !== undefined ? chess960Fen(positionId) : randomChess960();
-
-  game = createGame(fen);
-
-  const boardEl = document.getElementById('board');
-  if (!boardEl) return;
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions
-  if (api) api.destroy();
-
-  api = Chessground(boardEl, {
-    fen: game.currentFen,
-    orientation: playerColor,
-    turnColor: game.turn,
-    movable: {
-      free: false,
-      color: playerColor,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
-      dests: game.dests as Dests,
-      showDests: true,
-      events: { after: onUserMove },
-    },
-    draggable: { enabled: true, showGhost: true },
-    animation: { enabled: true, duration: 200 },
-    premovable: { enabled: false },
-  });
-
-  sound.playNewGame();
-  updateStatus(`Position #${String(id)} — Your move`);
-
-  if (playerColor === 'black') {
-    engineMove();
-  }
-}
-
-function onUserMove(orig: string, dest: string): void {
-  if (engineThinking) return;
-
-  // Auto-queen promotions for now
-  const piece = game.position.board.get(parseSquare(orig));
-  const isPromotion =
-    piece?.role === 'pawn' &&
-    ((game.turn === 'white' && dest[1] === '8') ||
-      (game.turn === 'black' && dest[1] === '1'));
-
-  const promotion = isPromotion ? 'queen' : undefined;
-  const newGame = makeMove(game, orig, dest, promotion);
-  if (!newGame) {
-    api.set({ fen: game.currentFen });
-    return;
-  }
-
-  game = newGame;
-  updateBoard();
-
-  const status = getGameStatus(game);
-  playMoveSound(status);
-  if (status.status !== 'playing') {
-    showResult(status);
-    return;
-  }
-
-  engineMove();
-}
-
-function engineMove(): void {
-  engineThinking = true;
-  updateStatus('Engine thinking...');
-
-  api.set({
-    movable: { color: undefined, dests: new Map() },
-  });
-
-  engine.goWithMoves(game.startFen, game.moves, (bestMove: string) => {
-    void humanDelay().then(() => {
-      engineThinking = false;
-      const newGame = applyUciMove(game, bestMove);
-      if (!newGame) return;
-
-      game = newGame;
-
-      if (game.lastMove) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
-        api.move(game.lastMove[0] as Key, game.lastMove[1] as Key);
-      }
-      updateBoard();
-
-      const status = getGameStatus(game);
-      playMoveSound(status);
-      if (status.status !== 'playing') {
-        showResult(status);
-        return;
-      }
-
-      updateStatus('Your move');
-    });
-  });
 }
 
 function playMoveSound(status: GameStatus): void {
@@ -221,15 +132,104 @@ function showResult(status: GameStatus): void {
   api.set({ movable: { color: undefined, dests: new Map() } });
 }
 
-function updateStatus(text: string): void {
-  const el = document.getElementById('status');
-  if (el) {
-    el.textContent = text;
-  }
+function engineMove(): void {
+  engineThinking = true;
+  updateStatus('Engine thinking...');
+
+  api.set({
+    movable: { color: undefined, dests: new Map() },
+  });
+
+  engine.goWithMoves(game.startFen, game.moves, (bestMove: string) => {
+    void humanDelay().then(() => {
+      engineThinking = false;
+      const newGame = applyUciMove(game, bestMove);
+      if (!newGame) return;
+
+      game = newGame;
+
+      if (game.lastMove) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
+        api.move(game.lastMove[0] as Key, game.lastMove[1] as Key);
+      }
+      updateBoard();
+
+      const status = getGameStatus(game);
+      playMoveSound(status);
+      if (status.status !== 'playing') {
+        showResult(status);
+        return;
+      }
+
+      updateStatus('Your move');
+    });
+  });
 }
 
-function parseSquare(name: string): number {
-  return name.charCodeAt(0) - 97 + (parseInt(name[1], 10) - 1) * 8;
+function onUserMove(orig: string, dest: string): void {
+  if (engineThinking) return;
+
+  // Auto-queen promotions for now
+  const piece = game.position.board.get(parseSquare(orig));
+  const isPromotion =
+    piece?.role === 'pawn' &&
+    ((game.turn === 'white' && dest[1] === '8') ||
+      (game.turn === 'black' && dest[1] === '1'));
+
+  const promotion = isPromotion ? 'queen' : undefined;
+  const newGame = makeMove(game, orig, dest, promotion);
+  if (!newGame) {
+    api.set({ fen: game.currentFen });
+    return;
+  }
+
+  game = newGame;
+  updateBoard();
+
+  const status = getGameStatus(game);
+  playMoveSound(status);
+  if (status.status !== 'playing') {
+    showResult(status);
+    return;
+  }
+
+  engineMove();
+}
+
+function startNewGame(positionId?: number): void {
+  const { fen, id } =
+    positionId !== undefined ? chess960Fen(positionId) : randomChess960();
+
+  game = createGame(fen);
+
+  const boardEl = document.getElementById('board');
+  if (!boardEl) return;
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions
+  if (api) api.destroy();
+
+  api = Chessground(boardEl, {
+    fen: game.currentFen,
+    orientation: playerColor,
+    turnColor: game.turn,
+    movable: {
+      free: false,
+      color: playerColor,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
+      dests: game.dests as Dests,
+      showDests: true,
+      events: { after: onUserMove },
+    },
+    draggable: { enabled: true, showGhost: true },
+    animation: { enabled: true, duration: 200 },
+    premovable: { enabled: false },
+  });
+
+  sound.playNewGame();
+  updateStatus(`Position #${String(id)} — Your move`);
+
+  if (playerColor === 'black') {
+    engineMove();
+  }
 }
 
 async function main(): Promise<void> {
