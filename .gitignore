@@ -1,6 +1,10 @@
 node_modules/
 dist/
 server/web/
+*.local
+*.apk
+.claude/
+
 /chess960
 /chess960-linux-amd64
 /chess960-windows-amd64.exe
