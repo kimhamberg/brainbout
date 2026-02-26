@@ -1,0 +1,35 @@
+name: Update screenshot
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "src/**"
+      - "index.html"
+      - "scripts/screenshot.ts"
+
+permissions:
+  contents: write
+
+jobs:
+  screenshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run screenshot
+
+      - run: |
+          git diff --quiet docs/screenshot.png && exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/screenshot.png
+          git commit -m "docs: auto-update screenshot"
+          git push
