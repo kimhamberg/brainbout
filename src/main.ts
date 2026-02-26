@@ -63,7 +63,7 @@ async function startNewGame(positionId?: number): Promise<void> {
     premovable: { enabled: false },
   });
 
-  updateStatus(`Chess960 #${id} — Your move`);
+  updateStatus(`Position #${id} — Your move`);
 
   if (playerColor === 'black') {
     engineMove();
