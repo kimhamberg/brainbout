@@ -23,9 +23,6 @@ export default tseslint.config(
       // Type boundaries with chessground/chessops and Vite's import.meta.env
       '@typescript-eslint/no-unsafe-type-assertion': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
-      // Late-initialized module state (let api/game/engine before async init)
-      '@typescript-eslint/no-unnecessary-condition': 'off',
-      '@typescript-eslint/strict-boolean-expressions': 'off',
     },
   },
   prettier,

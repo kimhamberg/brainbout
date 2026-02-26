@@ -14,7 +14,7 @@ import * as sound from './sounds';
 
 const sfScript = `${String(import.meta.env.BASE_URL)}stockfish/stockfish-18-lite-single.js`;
 
-let api: Api;
+let api: Api | undefined;
 let game: GameState;
 let engine: StockfishEngine;
 let playerColor: 'white' | 'black' = 'white';
