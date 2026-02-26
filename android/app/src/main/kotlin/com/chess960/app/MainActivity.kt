@@ -19,29 +19,32 @@ class MainActivity : AppCompatActivity() {
         webView = WebView(this)
         setContentView(webView)
 
-        val assetLoader = WebViewAssetLoader.Builder()
-            .addPathHandler("/", AssetsPathHandler(this))
-            .build()
+        val assetLoader =
+            WebViewAssetLoader.Builder()
+                .addPathHandler("/", AssetsPathHandler(this))
+                .build()
 
-        webView.webViewClient = object : WebViewClient() {
-            override fun shouldInterceptRequest(
-                view: WebView,
-                request: WebResourceRequest
-            ): WebResourceResponse? {
-                val response = assetLoader.shouldInterceptRequest(request.url)
+        webView.webViewClient =
+            object : WebViewClient() {
+                override fun shouldInterceptRequest(
+                    view: WebView,
+                    request: WebResourceRequest,
+                ): WebResourceResponse? {
+                    val response = assetLoader.shouldInterceptRequest(request.url)
 
-                // Fix WASM MIME type — Android doesn't know application/wasm
-                if (response != null &&
-                    request.url.lastPathSegment?.endsWith(".wasm") == true) {
-                    return WebResourceResponse(
-                        "application/wasm",
-                        response.encoding,
-                        response.data
-                    )
+                    // Fix WASM MIME type — Android doesn't know application/wasm
+                    if (response != null &&
+                        request.url.lastPathSegment?.endsWith(".wasm") == true
+                    ) {
+                        return WebResourceResponse(
+                            "application/wasm",
+                            response.encoding,
+                            response.data,
+                        )
+                    }
+                    return response
                 }
-                return response
             }
-        }
 
         webView.settings.apply {
             javaScriptEnabled = true
@@ -54,7 +57,10 @@ class MainActivity : AppCompatActivity() {
 
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
-        if (webView.canGoBack()) webView.goBack()
-        else super.onBackPressed()
+        if (webView.canGoBack()) {
+            webView.goBack()
+        } else {
+            super.onBackPressed()
+        }
     }
 }

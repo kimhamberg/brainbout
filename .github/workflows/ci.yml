@@ -30,6 +30,7 @@ jobs:
         with:
           go-version: "1.23"
       - run: go install honnef.co/go/tools/cmd/staticcheck@latest
+      - run: mkdir -p server/web && touch server/web/index.html
       - run: gofmt -l server/ | grep . && exit 1 || true
       - run: cd server && go vet ./...
       - run: cd server && staticcheck ./...
