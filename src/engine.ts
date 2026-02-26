@@ -2,7 +2,7 @@
 
 export interface EngineInfo {
   depth: number;
-  score: { type: 'cp' | 'mate'; value: number };
+  score: { type: "cp" | "mate"; value: number };
   pv: string[];
 }
 
@@ -48,7 +48,7 @@ export function parseInfoLine(line: string): EngineInfo | null {
   return {
     depth: parseInt(depthMatch[1], 10),
     score: {
-      type: scoreMatch[1] as 'cp' | 'mate',
+      type: scoreMatch[1] as "cp" | "mate",
       value: parseInt(scoreMatch[2], 10),
     },
     pv,
@@ -80,7 +80,7 @@ export class StockfishEngine {
     return new Promise((resolve) => {
       this.worker = new Worker(this.scriptUrl);
       this.worker.addEventListener(
-        'message',
+        "message",
         (e: MessageEvent<string>): void => {
           this.handleLine(e.data);
         },
@@ -88,7 +88,7 @@ export class StockfishEngine {
 
       const origHandler = this.handleLine.bind(this);
       const initHandler = (line: string): void => {
-        if (line === 'readyok') {
+        if (line === "readyok") {
           this._ready = true;
           this.handleLine = origHandler;
           resolve();
@@ -96,9 +96,9 @@ export class StockfishEngine {
       };
       this.handleLine = initHandler;
 
-      this.send('uci');
+      this.send("uci");
       this.applyOptions(options);
-      this.send('isready');
+      this.send("isready");
     });
   }
 
@@ -109,7 +109,7 @@ export class StockfishEngine {
   ): void {
     this.onBestMove = callback;
     this.onInfo = infoCallback ?? null;
-    this.send('ucinewgame');
+    this.send("ucinewgame");
     this.send(`position fen ${fen}`);
     this.send(`go nodes ${String(nodesForElo(this.options.elo))}`);
   }
@@ -122,18 +122,18 @@ export class StockfishEngine {
   ): void {
     this.onBestMove = callback;
     this.onInfo = infoCallback ?? null;
-    const movesStr = moves.length > 0 ? ` moves ${moves.join(' ')}` : '';
+    const movesStr = moves.length > 0 ? ` moves ${moves.join(" ")}` : "";
     this.send(`position fen ${startFen}${movesStr}`);
     this.send(`go nodes ${String(nodesForElo(this.options.elo))}`);
   }
 
   public newGame(): void {
-    this.send('ucinewgame');
-    this.send('isready');
+    this.send("ucinewgame");
+    this.send("isready");
   }
 
   public stop(): void {
-    this.send('stop');
+    this.send("stop");
   }
 
   public destroy(): void {

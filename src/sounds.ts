@@ -17,23 +17,23 @@ function play(name: string): void {
 }
 
 export function playMove(): void {
-  play('Move');
+  play("Move");
 }
 export function playCapture(): void {
-  play('Capture');
+  play("Capture");
 }
 export function playCheck(): void {
-  play('Check');
+  play("Check");
 }
 export function playVictory(): void {
-  play('Victory');
+  play("Victory");
 }
 export function playDefeat(): void {
-  play('Defeat');
+  play("Defeat");
 }
 export function playDraw(): void {
-  play('Draw');
+  play("Draw");
 }
 export function playNewGame(): void {
-  play('GenericNotify');
+  play("GenericNotify");
 }

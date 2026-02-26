@@ -4,11 +4,11 @@ export function chess960Backrank(id: number): string[] {
   const pieces = new Array<string | null>(8).fill(null);
 
   // 1. Light-square bishop: files b(1), d(3), f(5), h(7)
-  pieces[(id % 4) * 2 + 1] = 'B';
+  pieces[(id % 4) * 2 + 1] = "B";
   let n = Math.floor(id / 4);
 
   // 2. Dark-square bishop: files a(0), c(2), e(4), g(6)
-  pieces[(n % 4) * 2] = 'B';
+  pieces[(n % 4) * 2] = "B";
   n = Math.floor(n / 4);
 
   // 3. Queen placed in nth empty square (0-5)
@@ -17,7 +17,7 @@ export function chess960Backrank(id: number): string[] {
   for (let i = 0; i < 8; i++) {
     if (pieces[i] === null) {
       if (count === q) {
-        pieces[i] = 'Q';
+        pieces[i] = "Q";
         break;
       }
       count++;
@@ -43,14 +43,14 @@ export function chess960Backrank(id: number): string[] {
   for (let i = 0; i < 8; i++) {
     if (pieces[i] === null) {
       if (count === kn1 || count === kn2) {
-        pieces[i] = 'N';
+        pieces[i] = "N";
       }
       count++;
     }
   }
 
   // 5. Remaining 3 squares: R, K, R (left to right)
-  const rkr = ['R', 'K', 'R'];
+  const rkr = ["R", "K", "R"];
   let ri = 0;
   for (let i = 0; i < 8; i++) {
     if (pieces[i] === null) {
@@ -65,12 +65,12 @@ export function chess960Backrank(id: number): string[] {
 
 export function chess960Fen(id: number): { fen: string; id: number } {
   const backrank = chess960Backrank(id);
-  const blackRank = backrank.map((p) => p.toLowerCase()).join('');
-  const whiteRank = backrank.join('');
+  const blackRank = backrank.map((p) => p.toLowerCase()).join("");
+  const whiteRank = backrank.join("");
 
   const rookFiles: string[] = [];
   for (let i = 0; i < 8; i++) {
-    if (backrank[i] === 'R') {
+    if (backrank[i] === "R") {
       rookFiles.push(String.fromCharCode(65 + i)); // A-H
     }
   }
