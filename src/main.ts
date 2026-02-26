@@ -18,7 +18,7 @@ let engine: StockfishEngine;
 let playerColor: 'white' | 'black' = 'white';
 let engineThinking = false;
 
-const sfScript = '/stockfish/stockfish-18-lite-single.js';
+const sfScript = import.meta.env.BASE_URL + 'stockfish/stockfish-18-lite-single.js';
 
 function getSettings(): { elo: number; skillLevel: number; moveTime: number; positionId: number | undefined; playerColor: 'white' | 'black' } {
   const elo = parseInt((document.getElementById('elo-slider') as HTMLInputElement).value);
