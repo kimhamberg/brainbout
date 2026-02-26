@@ -7,14 +7,14 @@ import { chessgroundDests } from 'chessops/compat';
 export interface GameState {
   startFen: string;
   currentFen: string;
-  moves: string[];          // UCI strings: ['e2e4', 'e7e5', ...]
+  moves: string[]; // UCI strings: ['e2e4', 'e7e5', ...]
   turn: 'white' | 'black';
   isOver: boolean;
   isCheck: boolean;
   isCapture: boolean;
   lastMove: [string, string] | null;
-  dests: Map<string, string[]>;  // legal move destinations for chessground
-  position: Chess;               // internal chessops position
+  dests: Map<string, string[]>; // legal move destinations for chessground
+  position: Chess; // internal chessops position
 }
 
 export type GameStatus =
@@ -31,7 +31,7 @@ export function createGame(fen: string): GameState {
     startFen: fen,
     currentFen: fen,
     moves: [],
-    turn: pos.turn as 'white' | 'black',
+    turn: pos.turn,
     isOver: pos.isEnd(),
     isCheck: pos.isCheck(),
     isCapture: false,
@@ -54,10 +54,10 @@ export function makeMove(
   const pos = game.position.clone();
   if (!pos.isLegal(move)) return null;
 
-  const isCapture = 'from' in move && (
-    pos.board.occupied.has(move.to) ||
-    (pos.board.get(move.from)?.role === 'pawn' && move.to === pos.epSquare)
-  );
+  const isCapture =
+    'from' in move &&
+    (pos.board.occupied.has(move.to) ||
+      (pos.board.get(move.from)?.role === 'pawn' && move.to === pos.epSquare));
   pos.play(move);
   const newFen = makeFen(pos.toSetup());
 
@@ -65,7 +65,7 @@ export function makeMove(
     startFen: game.startFen,
     currentFen: newFen,
     moves: [...game.moves, uciStr],
-    turn: pos.turn as 'white' | 'black',
+    turn: pos.turn,
     isOver: pos.isEnd(),
     isCheck: pos.isCheck(),
     isCapture,
@@ -75,7 +75,10 @@ export function makeMove(
   };
 }
 
-export function applyUciMove(game: GameState, uciStr: string): GameState | null {
+export function applyUciMove(
+  game: GameState,
+  uciStr: string,
+): GameState | null {
   const move = parseUci(uciStr);
   if (!move) return null;
 
@@ -85,17 +88,17 @@ export function applyUciMove(game: GameState, uciStr: string): GameState | null 
   let orig: string;
   let dest: string;
   if ('from' in move) {
-    orig = makeSquare(move.from) as string;
-    dest = makeSquare(move.to) as string;
+    orig = makeSquare(move.from);
+    dest = makeSquare(move.to);
   } else {
-    orig = makeSquare(move.to) as string;
+    orig = makeSquare(move.to);
     dest = orig;
   }
 
-  const isCapture = 'from' in move && (
-    pos.board.occupied.has(move.to) ||
-    (pos.board.get(move.from)?.role === 'pawn' && move.to === pos.epSquare)
-  );
+  const isCapture =
+    'from' in move &&
+    (pos.board.occupied.has(move.to) ||
+      (pos.board.get(move.from)?.role === 'pawn' && move.to === pos.epSquare));
   pos.play(move);
   const newFen = makeFen(pos.toSetup());
 
@@ -103,7 +106,7 @@ export function applyUciMove(game: GameState, uciStr: string): GameState | null 
     startFen: game.startFen,
     currentFen: newFen,
     moves: [...game.moves, uciStr],
-    turn: pos.turn as 'white' | 'black',
+    turn: pos.turn,
     isOver: pos.isEnd(),
     isCheck: pos.isCheck(),
     isCapture,

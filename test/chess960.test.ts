@@ -4,9 +4,16 @@ import { chess960Backrank, chess960Fen } from '../src/chess960';
 
 describe('chess960Backrank', () => {
   it('returns standard chess position for id 518', () => {
-    expect(chess960Backrank(518)).toEqual(
-      ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
-    );
+    expect(chess960Backrank(518)).toEqual([
+      'R',
+      'N',
+      'B',
+      'Q',
+      'K',
+      'B',
+      'N',
+      'R',
+    ]);
   });
 
   it('returns position 0 correctly', () => {
@@ -25,7 +32,8 @@ describe('chess960Backrank', () => {
     for (let id = 0; id < 960; id++) {
       const rank = chess960Backrank(id);
       const rookIndices = rank.reduce<number[]>(
-        (acc, p, i) => (p === 'R' ? [...acc, i] : acc), []
+        (acc, p, i) => (p === 'R' ? [...acc, i] : acc),
+        [],
       );
       const kingIndex = rank.indexOf('K');
       expect(rookIndices).toHaveLength(2);
@@ -38,7 +46,8 @@ describe('chess960Backrank', () => {
     for (let id = 0; id < 960; id++) {
       const rank = chess960Backrank(id);
       const bishopIndices = rank.reduce<number[]>(
-        (acc, p, i) => (p === 'B' ? [...acc, i] : acc), []
+        (acc, p, i) => (p === 'B' ? [...acc, i] : acc),
+        [],
       );
       expect(bishopIndices).toHaveLength(2);
       expect(bishopIndices[0] % 2).not.toBe(bishopIndices[1] % 2);

@@ -1,6 +1,12 @@
 // test/engine.test.ts
 import { describe, it, expect } from 'vitest';
-import { parseBestMove, parseInfoLine, DEFAULT_OPTIONS, nodesForElo, humanDelay } from '../src/engine';
+import {
+  parseBestMove,
+  parseInfoLine,
+  DEFAULT_OPTIONS,
+  nodesForElo,
+  humanDelay,
+} from '../src/engine';
 
 describe('parseBestMove', () => {
   it('parses a simple bestmove', () => {
@@ -24,27 +30,25 @@ describe('parseBestMove', () => {
 describe('parseInfoLine', () => {
   it('parses centipawn score', () => {
     const info = parseInfoLine(
-      'info depth 15 seldepth 21 score cp 34 nodes 123456 nps 1234567 time 100 pv e2e4 e7e5'
+      'info depth 15 seldepth 21 score cp 34 nodes 123456 nps 1234567 time 100 pv e2e4 e7e5',
     );
     expect(info).not.toBeNull();
-    expect(info!.depth).toBe(15);
-    expect(info!.score).toEqual({ type: 'cp', value: 34 });
-    expect(info!.pv[0]).toBe('e2e4');
+    expect(info?.depth).toBe(15);
+    expect(info?.score).toEqual({ type: 'cp', value: 34 });
+    expect(info?.pv[0]).toBe('e2e4');
   });
 
   it('parses mate score', () => {
     const info = parseInfoLine(
-      'info depth 20 seldepth 20 score mate 3 nodes 500000 nps 5000000 time 100 pv d1h5 g6h5'
+      'info depth 20 seldepth 20 score mate 3 nodes 500000 nps 5000000 time 100 pv d1h5 g6h5',
     );
     expect(info).not.toBeNull();
-    expect(info!.score).toEqual({ type: 'mate', value: 3 });
+    expect(info?.score).toEqual({ type: 'mate', value: 3 });
   });
 
   it('parses negative mate score', () => {
-    const info = parseInfoLine(
-      'info depth 20 score mate -2 pv e1d1 d8d1'
-    );
-    expect(info!.score).toEqual({ type: 'mate', value: -2 });
+    const info = parseInfoLine('info depth 20 score mate -2 pv e1d1 d8d1');
+    expect(info?.score).toEqual({ type: 'mate', value: -2 });
   });
 
   it('returns null for non-info lines', () => {

@@ -27,9 +27,9 @@ describe('makeMove', () => {
     const game = createGame(fen);
     const result = makeMove(game, 'e2', 'e4');
     expect(result).not.toBeNull();
-    expect(result!.turn).toBe('black');
-    expect(result!.moves).toEqual(['e2e4']);
-    expect(result!.lastMove).toEqual(['e2', 'e4']);
+    expect(result?.turn).toBe('black');
+    expect(result?.moves).toEqual(['e2e4']);
+    expect(result?.lastMove).toEqual(['e2', 'e4']);
   });
 
   it('returns null for illegal moves', () => {
@@ -42,9 +42,18 @@ describe('makeMove', () => {
   it('tracks UCI moves for Stockfish', () => {
     const fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w HAha - 0 1';
     let game = createGame(fen);
-    game = makeMove(game, 'e2', 'e4')!;
-    game = makeMove(game, 'e7', 'e5')!;
-    game = makeMove(game, 'g1', 'f3')!;
+    const g1 = makeMove(game, 'e2', 'e4');
+    expect(g1).not.toBeNull();
+    if (!g1) return;
+    game = g1;
+    const g2 = makeMove(game, 'e7', 'e5');
+    expect(g2).not.toBeNull();
+    if (!g2) return;
+    game = g2;
+    const g3 = makeMove(game, 'g1', 'f3');
+    expect(g3).not.toBeNull();
+    if (!g3) return;
+    game = g3;
     expect(game.moves).toEqual(['e2e4', 'e7e5', 'g1f3']);
   });
 });
@@ -62,7 +71,9 @@ describe('getGameStatus', () => {
     const game = createGame(fen);
     const status = getGameStatus(game);
     expect(status.status).toBe('checkmate');
-    expect(status.winner).toBe('black');
+    if (status.status === 'checkmate') {
+      expect(status.winner).toBe('black');
+    }
   });
 
   it('detects stalemate', () => {
@@ -77,7 +88,8 @@ describe('getGameStatus', () => {
     const game = createGame(fen);
     expect(game.isCheck).toBe(false);
 
-    const checkFen = 'rnb1kbnr/pppp1ppp/8/4p3/7q/4PP2/PPPP2PP/RNBQKBNR w KQkq - 0 1';
+    const checkFen =
+      'rnb1kbnr/pppp1ppp/8/4p3/7q/4PP2/PPPP2PP/RNBQKBNR w KQkq - 0 1';
     const game2 = createGame(checkFen);
     expect(game2.isCheck).toBe(true);
   });

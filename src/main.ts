@@ -5,12 +5,15 @@ import './style.css';
 
 import { Chessground } from '@lichess-org/chessground';
 import type { Api } from '@lichess-org/chessground/api';
-import type { Color as CgColor, Key, Dests } from '@lichess-org/chessground/types';
+import type { Key, Dests } from '@lichess-org/chessground/types';
 import { randomChess960, chess960Fen } from './chess960';
 import { StockfishEngine, DEFAULT_OPTIONS, humanDelay } from './engine';
 import { createGame, makeMove, applyUciMove, getGameStatus } from './game';
-import type { GameState } from './game';
+import type { GameState, GameStatus } from './game';
 import * as sound from './sounds';
+
+// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+const sfScript = `${String(import.meta.env.BASE_URL)}stockfish/stockfish-18-lite-single.js`;
 
 let api: Api;
 let game: GameState;
@@ -18,42 +21,69 @@ let engine: StockfishEngine;
 let playerColor: 'white' | 'black' = 'white';
 let engineThinking = false;
 
-const sfScript = import.meta.env.BASE_URL + 'stockfish/stockfish-18-lite-single.js';
+function getSettings(): {
+  elo: number;
+  positionId: number | undefined;
+  playerColor: 'white' | 'black';
+} {
+  const eloSlider = document.getElementById('elo-slider');
+  const posIdEl = document.getElementById('position-id');
+  const colorEl = document.getElementById('color-select');
 
-function getSettings(): { elo: number; positionId: number | undefined; playerColor: 'white' | 'black' } {
-  const elo = parseInt((document.getElementById('elo-slider') as HTMLInputElement).value);
-  const posIdInput = (document.getElementById('position-id') as HTMLInputElement).value;
-  const positionId = posIdInput ? parseInt(posIdInput) : undefined;
-  const colorSelect = (document.getElementById('color-select') as HTMLSelectElement).value;
-  const color = colorSelect === 'random'
-    ? (Math.random() < 0.5 ? 'white' : 'black')
-    : colorSelect as 'white' | 'black';
+  if (
+    !(eloSlider instanceof HTMLInputElement) ||
+    !(posIdEl instanceof HTMLInputElement) ||
+    !(colorEl instanceof HTMLSelectElement)
+  ) {
+    return {
+      elo: DEFAULT_OPTIONS.elo,
+      positionId: undefined,
+      playerColor: 'white',
+    };
+  }
+
+  const elo = parseInt(eloSlider.value, 10);
+  const positionId =
+    posIdEl.value === '' ? undefined : parseInt(posIdEl.value, 10);
+  const color =
+    colorEl.value === 'random'
+      ? Math.random() < 0.5
+        ? 'white'
+        : 'black'
+      : // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
+        (colorEl.value as 'white' | 'black');
   return { elo, positionId, playerColor: color };
 }
 
 function setupSliderLabels(): void {
-  const slider = document.getElementById('elo-slider') as HTMLInputElement;
-  const label = document.getElementById('elo-value')!;
-  slider.addEventListener('input', () => { label.textContent = slider.value; });
+  const slider = document.getElementById('elo-slider');
+  const label = document.getElementById('elo-value');
+  if (slider instanceof HTMLInputElement && label) {
+    slider.addEventListener('input', () => {
+      label.textContent = slider.value;
+    });
+  }
 }
 
-async function startNewGame(positionId?: number): Promise<void> {
-  const { fen, id } = positionId !== undefined
-    ? chess960Fen(positionId)
-    : randomChess960();
+function startNewGame(positionId?: number): void {
+  const { fen, id } =
+    positionId !== undefined ? chess960Fen(positionId) : randomChess960();
 
   game = createGame(fen);
 
-  const boardEl = document.getElementById('board')!;
+  const boardEl = document.getElementById('board');
+  if (!boardEl) return;
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions
   if (api) api.destroy();
 
   api = Chessground(boardEl, {
     fen: game.currentFen,
     orientation: playerColor,
-    turnColor: game.turn as CgColor,
+    turnColor: game.turn,
     movable: {
       free: false,
-      color: playerColor as CgColor,
+      color: playerColor,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
       dests: game.dests as Dests,
       showDests: true,
       events: { after: onUserMove },
@@ -64,7 +94,7 @@ async function startNewGame(positionId?: number): Promise<void> {
   });
 
   sound.playNewGame();
-  updateStatus(`Position #${id} — Your move`);
+  updateStatus(`Position #${String(id)} — Your move`);
 
   if (playerColor === 'black') {
     engineMove();
@@ -76,9 +106,10 @@ function onUserMove(orig: string, dest: string): void {
 
   // Auto-queen promotions for now
   const piece = game.position.board.get(parseSquare(orig));
-  const isPromotion = piece?.role === 'pawn' &&
+  const isPromotion =
+    piece?.role === 'pawn' &&
     ((game.turn === 'white' && dest[1] === '8') ||
-     (game.turn === 'black' && dest[1] === '1'));
+      (game.turn === 'black' && dest[1] === '1'));
 
   const promotion = isPromotion ? 'queen' : undefined;
   const newGame = makeMove(game, orig, dest, promotion);
@@ -108,11 +139,8 @@ function engineMove(): void {
     movable: { color: undefined, dests: new Map() },
   });
 
-  engine.goWithMoves(
-    game.startFen,
-    game.moves,
-    async (bestMove: string) => {
-      await humanDelay();
+  engine.goWithMoves(game.startFen, game.moves, (bestMove: string) => {
+    void humanDelay().then(() => {
       engineThinking = false;
       const newGame = applyUciMove(game, bestMove);
       if (!newGame) return;
@@ -120,6 +148,7 @@ function engineMove(): void {
       game = newGame;
 
       if (game.lastMove) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
         api.move(game.lastMove[0] as Key, game.lastMove[1] as Key);
       }
       updateBoard();
@@ -132,15 +161,17 @@ function engineMove(): void {
       }
 
       updateStatus('Your move');
-    },
-    () => {},
-  );
+    });
+  });
 }
 
-function playMoveSound(status: ReturnType<typeof getGameStatus>): void {
+function playMoveSound(status: GameStatus): void {
   if (status.status === 'checkmate') {
-    if (status.winner === playerColor) sound.playVictory();
-    else sound.playDefeat();
+    if (status.winner === playerColor) {
+      sound.playVictory();
+    } else {
+      sound.playDefeat();
+    }
   } else if (status.status === 'stalemate' || status.status === 'draw') {
     sound.playDraw();
   } else if (game.isCheck) {
@@ -155,30 +186,36 @@ function playMoveSound(status: ReturnType<typeof getGameStatus>): void {
 function updateBoard(): void {
   api.set({
     fen: game.currentFen,
-    turnColor: game.turn as CgColor,
-    lastMove: game.lastMove as Key[] ?? undefined,
-    check: game.isCheck ? (game.turn as CgColor) : undefined,
+    turnColor: game.turn,
+    lastMove: game.lastMove ?? undefined,
+    check: game.isCheck ? game.turn : undefined,
     movable: {
-      color: game.turn === playerColor ? (playerColor as CgColor) : undefined,
-      dests: game.turn === playerColor ? game.dests as Dests : new Map(),
+      color: game.turn === playerColor ? playerColor : undefined,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
+      dests: game.turn === playerColor ? (game.dests as Dests) : new Map(),
     },
   });
 }
 
-function showResult(status: ReturnType<typeof getGameStatus>): void {
+function showResult(status: GameStatus): void {
   let msg: string;
   switch (status.status) {
-    case 'checkmate':
+    case 'checkmate': {
       msg = `Checkmate! ${status.winner === playerColor ? 'You win!' : 'Engine wins.'}`;
       break;
-    case 'stalemate':
+    }
+    case 'stalemate': {
       msg = 'Stalemate — Draw';
       break;
-    case 'draw':
+    }
+    case 'draw': {
       msg = `Draw — ${status.reason}`;
       break;
-    default:
+    }
+    case 'playing': {
       msg = 'Game over';
+      break;
+    }
   }
   updateStatus(msg);
   api.set({ movable: { color: undefined, dests: new Map() } });
@@ -186,28 +223,31 @@ function showResult(status: ReturnType<typeof getGameStatus>): void {
 
 function updateStatus(text: string): void {
   const el = document.getElementById('status');
-  if (el) el.textContent = text;
+  if (el) {
+    el.textContent = text;
+  }
 }
 
 function parseSquare(name: string): number {
-  return (name.charCodeAt(0) - 97) + (parseInt(name[1]) - 1) * 8;
+  return name.charCodeAt(0) - 97 + (parseInt(name[1], 10) - 1) * 8;
 }
 
 async function main(): Promise<void> {
   engine = new StockfishEngine(sfScript);
   await engine.init(DEFAULT_OPTIONS);
 
-  document.getElementById('new-game')?.addEventListener('click', async () => {
-    const settings = getSettings();
-    playerColor = settings.playerColor;
+  document.getElementById('new-game')?.addEventListener('click', () => {
+    const { elo, positionId, playerColor: color } = getSettings();
+    playerColor = color;
     const options = {
       ...DEFAULT_OPTIONS,
-      elo: settings.elo,
+      elo,
     };
     engine.destroy();
     engine = new StockfishEngine(sfScript);
-    await engine.init(options);
-    startNewGame(settings.positionId);
+    void engine.init(options).then(() => {
+      startNewGame(positionId);
+    });
   });
 
   document.getElementById('flip')?.addEventListener('click', () => {
@@ -216,7 +256,7 @@ async function main(): Promise<void> {
   });
 
   setupSliderLabels();
-  await startNewGame();
+  startNewGame();
 }
 
-main().catch(console.error);
+void main();

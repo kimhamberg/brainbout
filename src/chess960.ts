@@ -27,9 +27,15 @@ export function chess960Backrank(id: number): string[] {
 
   // 4. Two knights — n encodes which 2 of 5 remaining squares
   const knightTable = [
-    [0, 1], [0, 2], [0, 3], [0, 4],
-    [1, 2], [1, 3], [1, 4],
-    [2, 3], [2, 4],
+    [0, 1],
+    [0, 2],
+    [0, 3],
+    [0, 4],
+    [1, 2],
+    [1, 3],
+    [1, 4],
+    [2, 3],
+    [2, 4],
     [3, 4],
   ];
   const [kn1, kn2] = knightTable[n];
@@ -48,10 +54,13 @@ export function chess960Backrank(id: number): string[] {
   let ri = 0;
   for (let i = 0; i < 8; i++) {
     if (pieces[i] === null) {
-      pieces[i] = rkr[ri++];
+      pieces[i] = rkr[ri];
+      ri += 1;
     }
   }
 
+  // All null slots filled — safe to assert as string[]
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
   return pieces as string[];
 }
 
@@ -68,8 +77,10 @@ export function chess960Fen(id: number): { fen: string; id: number } {
   }
   // Rightmost rook file first (kingside), then leftmost (queenside)
   const castling =
-    rookFiles[1] + rookFiles[0] +
-    rookFiles[1].toLowerCase() + rookFiles[0].toLowerCase();
+    rookFiles[1] +
+    rookFiles[0] +
+    rookFiles[1].toLowerCase() +
+    rookFiles[0].toLowerCase();
 
   const fen = `${blackRank}/pppppppp/8/8/8/8/PPPPPPPP/${whiteRank} w ${castling} - 0 1`;
   return { fen, id };
