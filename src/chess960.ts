@@ -60,7 +60,6 @@ export function chess960Backrank(id: number): string[] {
   }
 
   // All null slots filled — safe to assert as string[]
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
   return pieces as string[];
 }
 

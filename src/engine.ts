@@ -48,7 +48,6 @@ export function parseInfoLine(line: string): EngineInfo | null {
   return {
     depth: parseInt(depthMatch[1], 10),
     score: {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
       type: scoreMatch[1] as 'cp' | 'mate',
       value: parseInt(scoreMatch[2], 10),
     },

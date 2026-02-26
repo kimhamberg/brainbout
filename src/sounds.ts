@@ -1,4 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 const BASE = `${String(import.meta.env.BASE_URL)}sounds/`;
 
 const cache = new Map<string, HTMLAudioElement>();

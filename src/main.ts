@@ -12,7 +12,6 @@ import { createGame, makeMove, applyUciMove, getGameStatus } from './game';
 import type { GameState, GameStatus } from './game';
 import * as sound from './sounds';
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 const sfScript = `${String(import.meta.env.BASE_URL)}stockfish/stockfish-18-lite-single.js`;
 
 let api: Api;
@@ -61,8 +60,7 @@ function getSettings(): {
       ? Math.random() < 0.5
         ? 'white'
         : 'black'
-      : // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
-        (colorEl.value as 'white' | 'black');
+      : (colorEl.value as 'white' | 'black');
   return { elo, positionId, playerColor: color };
 }
 
@@ -102,7 +100,6 @@ function updateBoard(): void {
     check: game.isCheck ? game.turn : undefined,
     movable: {
       color: game.turn === playerColor ? playerColor : undefined,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
       dests: game.turn === playerColor ? (game.dests as Dests) : new Map(),
     },
   });
@@ -149,7 +146,6 @@ function engineMove(): void {
       game = newGame;
 
       if (game.lastMove) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
         api.move(game.lastMove[0] as Key, game.lastMove[1] as Key);
       }
       updateBoard();
@@ -204,7 +200,6 @@ function startNewGame(positionId?: number): void {
 
   const boardEl = document.getElementById('board');
   if (!boardEl) return;
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions
   if (api) api.destroy();
 
   api = Chessground(boardEl, {
@@ -214,7 +209,6 @@ function startNewGame(positionId?: number): void {
     movable: {
       free: false,
       color: playerColor,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
       dests: game.dests as Dests,
       showDests: true,
       events: { after: onUserMove },
