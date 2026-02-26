@@ -30,8 +30,9 @@ jobs:
           mkdir -p android/app/src/main/assets
           cp -r dist/* android/app/src/main/assets/
 
-      - run: chmod +x android/gradlew
-      - run: cd android && ./gradlew assembleDebug
+      - uses: gradle/actions/setup-gradle@v4
+
+      - run: cd android && gradle assembleDebug
 
       - run: cp android/app/build/outputs/apk/debug/app-debug.apk brainbout.apk
 
