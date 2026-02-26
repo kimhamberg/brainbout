@@ -6,7 +6,7 @@ A Chess960 sparring partner. Train your brain, not your scroll thumb.
 
 Play Fischer Random chess against Stockfish locally — in your browser, as a desktop app, or on Android. All 960 starting positions, adjustable difficulty, no internet required.
 
-**[Play online](https://kimhamberg.github.io/brainbout/)** | [Linux](https://github.com/kimhamberg/brainbout/releases/latest/download/brainbout-linux-amd64) | [Windows](https://github.com/kimhamberg/brainbout/releases/latest/download/brainbout-windows-amd64.exe) | [Android APK](https://github.com/kimhamberg/brainbout/releases/latest/download/brainbout.apk)
+**[Play online](https://kimhamberg.github.io/brainbout/)** | [Linux](https://github.com/kimhamberg/brainbout/releases/latest/download/brainbout-linux-amd64) | [Windows](https://github.com/kimhamberg/brainbout/releases/latest/download/brainbout-windows-amd64.exe) | [Android](https://github.com/kimhamberg/brainbout/releases/latest/download/brainbout.apk)
 
 ![Screenshot](docs/screenshot.png)
 
