@@ -17,6 +17,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         webView = WebView(this)
+        webView.fitsSystemWindows = true
         setContentView(webView)
 
         val assetLoader = WebViewAssetLoader.Builder()
