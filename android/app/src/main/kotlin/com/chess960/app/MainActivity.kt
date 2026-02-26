@@ -20,7 +20,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(webView)
 
         val assetLoader = WebViewAssetLoader.Builder()
-            .addPathHandler("/assets/", AssetsPathHandler(this))
+            .addPathHandler("/", AssetsPathHandler(this))
             .build()
 
         webView.webViewClient = object : WebViewClient() {
@@ -49,7 +49,7 @@ class MainActivity : AppCompatActivity() {
             cacheMode = WebSettings.LOAD_NO_CACHE
         }
 
-        webView.loadUrl("https://appassets.androidplatform.net/assets/index.html")
+        webView.loadUrl("https://appassets.androidplatform.net/index.html")
     }
 
     @Deprecated("Deprecated in Java")
