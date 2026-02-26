@@ -14,7 +14,7 @@ Play Fischer Random chess against Stockfish locally — in your browser, as a de
 
 - [Node.js](https://nodejs.org) 20+
 - [Go](https://go.dev) 1.23+ (desktop builds only)
-- [Android SDK](https://developer.android.com/studio) + Gradle (Android builds only)
+- [Android SDK](https://developer.android.com/studio) + [Gradle](https://gradle.org) (Android builds only)
 
 ## Quick start
 
