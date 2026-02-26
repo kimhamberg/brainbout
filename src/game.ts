@@ -85,15 +85,8 @@ export function applyUciMove(
   const pos = game.position.clone();
   if (!pos.isLegal(move)) return null;
 
-  let orig: string;
-  let dest: string;
-  if ('from' in move) {
-    orig = makeSquare(move.from);
-    dest = makeSquare(move.to);
-  } else {
-    orig = makeSquare(move.to);
-    dest = orig;
-  }
+  const orig = 'from' in move ? makeSquare(move.from) : makeSquare(move.to);
+  const dest = 'from' in move ? makeSquare(move.to) : orig;
 
   const isCapture =
     'from' in move &&

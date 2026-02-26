@@ -16,7 +16,7 @@ export default tseslint.config(
       '@typescript-eslint/no-magic-numbers': 'off',
       // External library types (chessops, chessground) are not readonly
       '@typescript-eslint/prefer-readonly-parameter-types': 'off',
-      // Conflicts with switch/let and late-initialized module state
+      // Module-level let game/engine are initialized in async main() before any use
       '@typescript-eslint/init-declarations': 'off',
       // 4-param functions (makeMove, goWithMoves) read better than options objects
       '@typescript-eslint/max-params': ['error', { max: 5 }],

@@ -126,8 +126,11 @@ function showResult(status: GameStatus): void {
     }
   }
   updateStatus(msg);
-  api.set({ movable: { color: undefined, dests: new Map() } });
+  api?.set({ movable: { color: undefined, dests: new Map() } });
 }
+
+
+
 
 function engineMove(): void {
   engineThinking = true;
