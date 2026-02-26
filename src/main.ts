@@ -11,6 +11,7 @@ import { StockfishEngine, DEFAULT_OPTIONS, humanDelay } from './engine';
 import { createGame, makeMove, applyUciMove, getGameStatus } from './game';
 import type { GameState } from './game';
 import type { EngineInfo } from './engine';
+import * as sound from './sounds';
 
 let api: Api;
 let game: GameState;
@@ -63,6 +64,7 @@ async function startNewGame(positionId?: number): Promise<void> {
     premovable: { enabled: false },
   });
 
+  sound.playNewGame();
   updateStatus(`Position #${id} — Your move`);
 
   if (playerColor === 'black') {
@@ -90,6 +92,7 @@ function onUserMove(orig: string, dest: string): void {
   updateBoard();
 
   const status = getGameStatus(game);
+  playMoveSound(status);
   if (status.status !== 'playing') {
     showResult(status);
     return;
@@ -123,6 +126,7 @@ function engineMove(): void {
       updateBoard();
 
       const status = getGameStatus(game);
+      playMoveSound(status);
       if (status.status !== 'playing') {
         showResult(status);
         return;
@@ -137,6 +141,21 @@ function engineMove(): void {
       updateEval(`Depth ${info.depth}: ${evalText}`);
     },
   );
+}
+
+function playMoveSound(status: ReturnType<typeof getGameStatus>): void {
+  if (status.status === 'checkmate') {
+    if (status.winner === playerColor) sound.playVictory();
+    else sound.playDefeat();
+  } else if (status.status === 'stalemate' || status.status === 'draw') {
+    sound.playDraw();
+  } else if (game.isCheck) {
+    sound.playCheck();
+  } else if (game.isCapture) {
+    sound.playCapture();
+  } else {
+    sound.playMove();
+  }
 }
 
 function updateBoard(): void {
