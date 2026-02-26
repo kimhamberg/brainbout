@@ -1,4 +1,4 @@
-.PHONY: dev build build-server build-linux build-windows build-android clean lint lint-go lint-kt
+.PHONY: dev build build-server build-linux build-windows build-android clean lint lint-go lint-kt screenshot
 
 dev:
 	npx vite
@@ -36,6 +36,9 @@ lint-go:
 
 lint-kt:
 	@command -v ktlint >/dev/null 2>&1 && ktlint "android/**/*.kt" || echo "ktlint not installed, skipping"
+
+screenshot:
+	npm run screenshot
 
 clean:
 	rm -rf dist server/web chess960 chess960-linux-amd64 chess960-windows-amd64.exe
