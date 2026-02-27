@@ -22,14 +22,19 @@
 .reaction-cell {
   aspect-ratio: 1;
   background: var(--ctp-surface0);
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: transform 0.1s;
+  box-shadow: var(--ctp-shadow);
+  transition:
+    transform 0.1s ease,
+    background-color 0.1s ease,
+    box-shadow 0.1s ease;
 }
 
 .reaction-cell.active {
   background: var(--ctp-blue);
   transform: scale(1.05);
+  box-shadow: var(--ctp-shadow-lg);
 }
 
 .reaction-cell.hit {
@@ -58,8 +63,27 @@
   background: var(--ctp-blue);
   color: var(--ctp-mantle);
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
+  box-shadow: var(--ctp-shadow);
+  transition:
+    box-shadow 0.15s ease,
+    transform 0.1s ease;
+}
+
+.result button:hover {
+  box-shadow: var(--ctp-shadow-lg);
+  transform: translateY(-1px);
+}
+
+.result button:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.result button:focus-visible {
+  outline: none;
+  box-shadow: var(--ctp-focus-ring);
 }

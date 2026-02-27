@@ -13,6 +13,9 @@
   --ctp-red: #e78284;
   --ctp-yellow: #e5c890;
   --ctp-peach: #ef9f76;
+  --ctp-shadow: 0 1px 3px rgba(35, 38, 52, 0.4);
+  --ctp-shadow-lg: 0 4px 12px rgba(35, 38, 52, 0.3);
+  --ctp-focus-ring: 0 0 0 2px rgba(140, 170, 238, 0.5);
 }
 
 /* Catppuccin Latte (light) */
@@ -29,6 +32,9 @@
   --ctp-red: #d20f39;
   --ctp-yellow: #df8e1d;
   --ctp-peach: #fe640b;
+  --ctp-shadow: 0 1px 3px rgba(172, 176, 190, 0.5);
+  --ctp-shadow-lg: 0 4px 12px rgba(172, 176, 190, 0.35);
+  --ctp-focus-ring: 0 0 0 2px rgba(30, 102, 245, 0.4);
 }
 
 * {
@@ -45,6 +51,9 @@ body {
     -apple-system,
     sans-serif;
   min-height: 100vh;
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
 }
 
 #app {
@@ -80,11 +89,24 @@ header h1 {
   border-radius: 4px;
   padding: 0.25rem 0.75rem;
   cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease,
+    background-color 0.15s ease;
 }
 
 .skip-btn:hover {
   border-color: var(--ctp-blue);
   color: var(--ctp-text);
+}
+
+.skip-btn:active {
+  background: var(--ctp-surface0);
+}
+
+.skip-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--ctp-focus-ring);
 }
 
 .theme-toggle {
@@ -98,9 +120,24 @@ header h1 {
   border-radius: 4px;
   color: var(--ctp-subtext0);
   cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease,
+    background-color 0.15s ease,
+    transform 0.2s ease;
 }
 
 .theme-toggle:hover {
   border-color: var(--ctp-blue);
   color: var(--ctp-text);
+}
+
+.theme-toggle:active {
+  transform: scale(0.92);
+  background: var(--ctp-surface0);
+}
+
+.theme-toggle:focus-visible {
+  outline: none;
+  box-shadow: var(--ctp-focus-ring);
 }
