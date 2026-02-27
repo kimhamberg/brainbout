@@ -64,7 +64,7 @@
 
   &.active {
     transform: scale(1.05);
-    background: var(--ctp-blue);
+    background: var(--game-accent, var(--ctp-blue));
     box-shadow: var(--ctp-shadow-lg);
   }
 
@@ -114,7 +114,7 @@
     font-weight: 600;
     color: var(--ctp-mantle);
 
-    background: var(--ctp-blue);
+    background: var(--game-accent, var(--ctp-blue));
     box-shadow: var(--ctp-shadow);
 
     transition:

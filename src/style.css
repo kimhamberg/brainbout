@@ -129,3 +129,71 @@ header {
     box-shadow: var(--ctp-focus-ring);
   }
 }
+
+/* ── page transitions ──────────────────────────────────────────────── */
+
+@keyframes page-exit {
+  from {
+    clip-path: circle(0% at var(--tx, 50%) var(--ty, 50%));
+  }
+
+  to {
+    clip-path: circle(150% at var(--tx, 50%) var(--ty, 50%));
+  }
+}
+
+@keyframes page-enter {
+  from {
+    clip-path: circle(150% at 50% 50%);
+  }
+
+  to {
+    clip-path: circle(0% at 50% 50%);
+  }
+}
+
+@media (--motion-reduce) {
+  @keyframes page-exit {
+    from {
+      opacity: 1;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes page-enter {
+    from {
+      opacity: 1;
+    }
+
+    to {
+      opacity: 0;
+    }
+  }
+}
+
+.page-transition {
+  pointer-events: none;
+
+  position: fixed;
+  z-index: 9999;
+  inset: 0;
+
+  background: var(--transition-color, var(--ctp-blue));
+
+  animation: page-exit 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.page-enter-overlay {
+  pointer-events: none;
+
+  position: fixed;
+  z-index: 9999;
+  inset: 0;
+
+  background: var(--game-accent, var(--ctp-blue));
+
+  animation: page-enter 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.05s both;
+}
