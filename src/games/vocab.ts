@@ -112,7 +112,7 @@ function handleSubmit(answer: string): void {
     score += points;
     streak++;
     recordAnswer(lang, currentWord.word, true, today);
-    sound.playMove();
+    sound.playCorrect();
     input.classList.add("correct");
     if (feedback) {
       feedback.classList.add("correct");
@@ -124,7 +124,7 @@ function handleSubmit(answer: string): void {
     const mult = streakMultiplier();
     const points = (5 + bonus) * mult;
     score += points;
-    sound.playMove();
+    sound.playCorrect();
     input.classList.add("close");
     input.value = "";
     input.placeholder = `Type: ${currentWord.word}`;
@@ -136,7 +136,7 @@ function handleSubmit(answer: string): void {
   } else {
     streak = 0;
     recordAnswer(lang, currentWord.word, false, today);
-    sound.playCheck();
+    sound.playWrong();
     input.classList.add("wrong");
     input.disabled = true;
     if (feedback) {

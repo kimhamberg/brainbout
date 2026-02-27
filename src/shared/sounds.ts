@@ -5,7 +5,7 @@ const cache = new Map<string, HTMLAudioElement>();
 function load(name: string): HTMLAudioElement {
   const cached = cache.get(name);
   if (cached) return cached;
-  const audio = new Audio(`${BASE}${name}.mp3`);
+  const audio = new Audio(`${BASE}${name}.wav`);
   cache.set(name, audio);
   return audio;
 }
@@ -16,24 +16,37 @@ function play(name: string): void {
   void audio.play();
 }
 
+// Brain-training games
+export function playCorrect(): void {
+  play("correct");
+}
+export function playWrong(): void {
+  play("wrong");
+}
+
+// Chess
 export function playMove(): void {
-  play("Move");
+  play("move");
 }
 export function playCapture(): void {
-  play("Capture");
+  play("capture");
 }
 export function playCheck(): void {
-  play("Check");
+  play("check");
 }
+
+// Outcomes
 export function playVictory(): void {
-  play("Victory");
+  play("victory");
 }
 export function playDefeat(): void {
-  play("Defeat");
+  play("defeat");
 }
 export function playDraw(): void {
-  play("Draw");
+  play("draw");
 }
-export function playNewGame(): void {
-  play("GenericNotify");
+
+// UI
+export function playNotify(): void {
+  play("notify");
 }
