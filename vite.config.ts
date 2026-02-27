@@ -7,9 +7,9 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, "index.html"),
-        blitz: resolve(__dirname, "games/blitz.html"),
-        memory: resolve(__dirname, "games/memory.html"),
-        stroop: resolve(__dirname, "games/stroop.html"),
+        rapid: resolve(__dirname, "games/rapid.html"),
+        reaction: resolve(__dirname, "games/reaction.html"),
+        vocab: resolve(__dirname, "games/vocab.html"),
         math: resolve(__dirname, "games/math.html"),
       },
     },
