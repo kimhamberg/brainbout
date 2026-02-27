@@ -1,24 +1,26 @@
 {
-  "extends": "stylelint-config-standard",
-  "plugins": ["stylelint-value-no-unknown-custom-properties"],
+  "extends": ["stylelint-config-standard", "stylelint-config-clean-order"],
+  "plugins": [
+    "stylelint-value-no-unknown-custom-properties",
+    "stylelint-declaration-block-no-ignored-properties"
+  ],
   "rules": {
-    "color-no-invalid-hex": true,
     "color-hex-alpha": "never",
+    "color-named": "never",
     "declaration-no-important": true,
-    "function-linear-gradient-no-nonstandard-direction": true,
-    "function-no-unknown": true,
+    "font-weight-notation": "numeric",
     "function-url-no-scheme-relative": true,
-    "unit-no-unknown": true,
     "no-unknown-custom-properties": null,
+    "no-unknown-custom-media": true,
+    "no-unknown-animations": true,
+    "selector-no-qualifying-type": true,
+    "selector-type-no-unknown": null,
     "csstools/value-no-unknown-custom-properties": [
       true,
       {
         "importFrom": ["src/style.css", "src/shared/board-theme.css"]
       }
     ],
-    "no-unknown-custom-media": true,
-    "no-unknown-animations": true,
-    "selector-no-qualifying-type": true,
-    "selector-type-no-unknown": null
+    "plugin/declaration-block-no-ignored-properties": true
   }
 }

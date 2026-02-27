@@ -138,9 +138,9 @@ function render(): void {
 
   // Action button
   if (sessionJustCompleted) {
-    html += `<button id="new-session-btn">New Session</button>`;
+    html += `<button class="new-session-btn">New Session</button>`;
   } else if (next !== null) {
-    html += `<button id="start-btn">${session.size === 0 ? "Start" : "Next"}</button>`;
+    html += `<button class="start-btn">${session.size === 0 ? "Start" : "Next"}</button>`;
   }
 
   // Collapsible stats
@@ -174,14 +174,14 @@ function render(): void {
   hub.innerHTML = html;
 
   // Wire buttons
-  const startBtn = document.getElementById("start-btn");
+  const startBtn = hub.querySelector(".start-btn");
   if (startBtn && next !== null) {
     startBtn.addEventListener("click", () => {
       window.location.href = GAME_URLS[next];
     });
   }
 
-  const newBtn = document.getElementById("new-session-btn");
+  const newBtn = hub.querySelector(".new-session-btn");
   if (newBtn) {
     newBtn.addEventListener("click", startNewSession);
   }

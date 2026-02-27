@@ -1,20 +1,24 @@
-#game {
+.game {
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 0.75rem;
+  align-items: center;
+
   padding-top: 0.5rem;
 }
 
 .clock {
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+
   font-size: 1.5rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--ctp-text);
-  padding: 0.25rem 0.75rem;
+
   background: var(--ctp-surface0);
-  border-radius: 6px;
   box-shadow: var(--ctp-shadow);
+
   transition:
     color 0.3s ease,
     background-color 0.25s ease;
@@ -37,43 +41,47 @@
 }
 
 .game-status {
+  min-height: 1.5rem;
   font-size: 1rem;
   color: var(--ctp-subtext0);
-  min-height: 1.5rem;
   transition: color 0.25s ease;
 }
 
 .result {
-  text-align: center;
   padding: 2rem 0;
+  text-align: center;
 }
 
 .result .final-score {
+  margin-bottom: 0.5rem;
   font-size: 2rem;
   font-weight: 700;
   color: var(--ctp-green);
-  margin-bottom: 0.5rem;
 }
 
 .result button {
+  cursor: pointer;
+
   margin-top: 1rem;
   padding: 0.75rem 2rem;
-  background: var(--ctp-blue);
-  color: var(--ctp-mantle);
   border: none;
   border-radius: 6px;
+
   font-size: 1rem;
   font-weight: 600;
-  cursor: pointer;
+  color: var(--ctp-mantle);
+
+  background: var(--ctp-blue);
   box-shadow: var(--ctp-shadow);
+
   transition:
     box-shadow 0.15s ease,
     transform 0.1s ease;
 }
 
 .result button:hover {
-  box-shadow: var(--ctp-shadow-lg);
   transform: translateY(-1px);
+  box-shadow: var(--ctp-shadow-lg);
 }
 
 .result button:active {

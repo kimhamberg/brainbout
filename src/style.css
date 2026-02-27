@@ -38,25 +38,28 @@
 }
 
 * {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
 }
 
 body {
-  background: var(--ctp-base);
-  color: var(--ctp-text);
+  min-height: 100vh;
+
   font-family:
     system-ui,
     -apple-system,
     sans-serif;
-  min-height: 100vh;
+  color: var(--ctp-text);
+
+  background: var(--ctp-base);
+
   transition:
     background-color 0.25s ease,
     color 0.25s ease;
 }
 
-#app {
+.app {
   max-width: 480px;
   margin: 0 auto;
   padding: 1rem;
@@ -65,15 +68,15 @@ body {
 
 header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   margin-bottom: 1rem;
 }
 
 header div {
   display: flex;
-  align-items: center;
   gap: 0.5rem;
+  align-items: center;
 }
 
 header h1 {
@@ -82,16 +85,21 @@ header h1 {
 }
 
 .theme-toggle {
+  cursor: pointer;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
   width: 32px;
   height: 32px;
-  background: none;
   border: 1px solid var(--ctp-surface1);
   border-radius: 6px;
+
   color: var(--ctp-subtext0);
-  cursor: pointer;
+
+  background: none;
+
   transition:
     border-color 0.15s ease,
     color 0.15s ease,

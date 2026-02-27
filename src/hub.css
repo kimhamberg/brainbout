@@ -1,18 +1,21 @@
 .hub-stats-bar {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.75rem;
   margin-bottom: 1rem;
-  flex-wrap: wrap;
 }
 
 .streak-badge,
 .sessions-badge {
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+
   font-size: 0.85rem;
   color: var(--ctp-subtext0);
-  padding: 0.2rem 0.6rem;
+
   background: var(--ctp-surface0);
-  border-radius: 6px;
   box-shadow: var(--ctp-shadow);
+
   transition: background-color 0.25s ease;
 }
 
@@ -29,12 +32,15 @@
 
 .game-card {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+
   padding: 0.75rem;
-  background: var(--ctp-surface0);
   border-radius: 6px;
+
+  background: var(--ctp-surface0);
   box-shadow: var(--ctp-shadow);
+
   transition:
     background-color 0.25s ease,
     box-shadow 0.25s ease,
@@ -60,38 +66,42 @@
   transition: color 0.25s ease;
 }
 
-#start-btn,
-#new-session-btn {
+.start-btn,
+.new-session-btn {
+  cursor: pointer;
+
   width: 100%;
   padding: 0.75rem;
-  background: var(--ctp-blue);
-  color: var(--ctp-mantle);
   border: none;
   border-radius: 6px;
+
   font-size: 1rem;
   font-weight: 600;
-  cursor: pointer;
+  color: var(--ctp-mantle);
+
+  background: var(--ctp-blue);
   box-shadow: var(--ctp-shadow);
+
   transition:
     background-color 0.15s ease,
     box-shadow 0.15s ease,
     transform 0.1s ease;
 }
 
-#start-btn:hover,
-#new-session-btn:hover {
-  box-shadow: var(--ctp-shadow-lg);
+.start-btn:hover,
+.new-session-btn:hover {
   transform: translateY(-1px);
+  box-shadow: var(--ctp-shadow-lg);
 }
 
-#start-btn:active,
-#new-session-btn:active {
+.start-btn:active,
+.new-session-btn:active {
   transform: translateY(0);
   box-shadow: none;
 }
 
-#start-btn:focus-visible,
-#new-session-btn:focus-visible {
+.start-btn:focus-visible,
+.new-session-btn:focus-visible {
   outline: none;
   box-shadow: var(--ctp-focus-ring);
 }
@@ -99,15 +109,15 @@
 /* --- Session summary --- */
 
 .session-summary {
-  text-align: center;
   margin-bottom: 1rem;
+  text-align: center;
 }
 
 .session-summary h2 {
+  margin-bottom: 0.75rem;
   font-size: 1.1rem;
   font-weight: 600;
   color: var(--ctp-green);
-  margin-bottom: 0.75rem;
 }
 
 .session-scores {
@@ -123,14 +133,18 @@
 }
 
 .stats-panel summary {
+  cursor: pointer;
+
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+
+  padding: 0.5rem 0;
+
   font-size: 0.9rem;
   color: var(--ctp-subtext0);
-  cursor: pointer;
-  padding: 0.5rem 0;
   list-style: none;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
+
   transition: color 0.15s ease;
 }
 
@@ -140,14 +154,18 @@
 
 .stats-panel summary::before {
   content: "";
+
+  transform: rotate(-45deg);
+
   display: inline-block;
+  flex-shrink: 0;
+
   width: 0.45em;
   height: 0.45em;
   border-right: 2px solid currentcolor;
   border-bottom: 2px solid currentcolor;
-  transform: rotate(-45deg);
+
   transition: transform 0.2s ease;
-  flex-shrink: 0;
 }
 
 .stats-panel[open] summary::before {
@@ -163,13 +181,14 @@
 }
 
 .stats-content h3 {
+  margin-top: 0.75rem;
+  margin-bottom: 0.4rem;
+
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--ctp-subtext0);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 0.4rem;
-  margin-top: 0.75rem;
 }
 
 .stats-content h3:first-child {
@@ -184,21 +203,23 @@
 
 .stat-row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  font-size: 0.85rem;
+  justify-content: space-between;
+
   padding: 0.3rem 0;
+
+  font-size: 0.85rem;
 }
 
 .session-scores .stat-row {
-  font-size: 0.85rem;
   padding: 0.3rem 0;
+  font-size: 0.85rem;
 }
 
 .stat-value {
-  color: var(--ctp-text);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+  color: var(--ctp-text);
   transition: color 0.25s ease;
 }
 
@@ -206,7 +227,9 @@
   margin-top: 0.75rem;
   padding-top: 0.5rem;
   border-top: 1px solid var(--ctp-surface1);
+
   color: var(--ctp-subtext0);
+
   transition:
     color 0.25s ease,
     border-color 0.25s ease;
