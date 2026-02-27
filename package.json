@@ -12,7 +12,8 @@
     "lint:css": "stylelint \"src/**/*.css\"",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "screenshot": "tsx scripts/screenshot.ts"
+    "screenshot": "tsx scripts/screenshot.ts",
+    "readme": "tsx scripts/readme-stats.ts"
   },
   "keywords": [],
   "author": "",

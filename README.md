@@ -4,7 +4,7 @@
 
 A daily brain workout. Train your brain, not your scroll thumb.
 
-Four timed cognitive games in ~8 minutes. No accounts, no ads, no internet required. Progress tracked locally.
+4 timed cognitive games in ~8 minutes. No accounts, no ads, no internet required. Progress tracked locally.
 
 - **Chess960 Rapid** — 15+10 vs Stockfish
 - **Reaction Grid** — fast-attention target clicking (60s)
@@ -18,6 +18,7 @@ Four timed cognitive games in ~8 minutes. No accounts, no ads, no internet requi
 ## Requirements
 
 - [Node.js](https://nodejs.org) 20+
+- [uv](https://docs.astral.sh/uv/) (Python scripts)
 - [Go](https://go.dev) 1.23+ (desktop builds only)
 - [Android SDK](https://developer.android.com/studio) + [Gradle](https://gradle.org) (Android builds only)
 
@@ -31,7 +32,7 @@ make dev
 ## Build
 
 | Target  | Command              | Output                       |
-| ------- | -------------------- | ---------------------------- |
+| :------ | :------------------- | :--------------------------- |
 | Dev     | `make dev`           | `localhost:5173`             |
 | Desktop | `make build-server`  | `chess960`                   |
 | Linux   | `make build-linux`   | `chess960-linux-amd64`       |
@@ -47,7 +48,7 @@ The desktop build embeds all web assets into a single binary — no runtime depe
 make lint
 ```
 
-Runs ESLint (TypeScript), Stylelint (CSS), staticcheck + go vet (Go), ktlint (Kotlin), and Prettier (all files).
+Runs ESLint (TypeScript), Stylelint (CSS), Ruff (Python), staticcheck + go vet (Go), ktlint (Kotlin), and Prettier (all files).
 
 ## Tests
 
@@ -55,7 +56,15 @@ Runs ESLint (TypeScript), Stylelint (CSS), staticcheck + go vet (Go), ktlint (Ko
 npm test
 ```
 
-57 tests across 8 files covering position generation, chess clock, cognitive games, engine parsing, timer, and progress tracking.
+57 tests across 9 files covering position generation, chess clock, cognitive games, engine parsing, timer, and progress tracking.
+
+## Sound
+
+9 synthesised sounds generated with NumPy + SciPy + Pedalboard — modal wood synthesis for chess pieces, FM bells, additive warm tones.
+
+```
+.venv/bin/python scripts/gen-sounds.py
+```
 
 ## Stack
 
@@ -63,7 +72,7 @@ npm test
 - [chessops](https://github.com/niklasf/chessops) — Chess960 move validation (rapid)
 - [Stockfish WASM](https://github.com/nicfab/stockfish.wasm) — chess engine (rapid)
 - [Vite](https://vite.dev) — multi-page build tooling
-- [Catppuccin Frappe](https://github.com/catppuccin/catppuccin) — color theme
+- [Catppuccin](https://github.com/catppuccin/catppuccin) — color theme (Frappe dark / Latte light)
 - [Go](https://go.dev) — desktop server (single binary with embedded assets)
 - [Kotlin](https://kotlinlang.org) + [Android WebView](https://developer.android.com/develop/ui/views/layout/webapps/webview) — mobile wrapper
 - localStorage — progress tracking
