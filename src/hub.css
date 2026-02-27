@@ -108,6 +108,12 @@
 }
 
 .game-card {
+  --accent-wash: color-mix(
+    in srgb,
+    var(--accent, var(--ctp-surface1)) 12%,
+    transparent
+  );
+
   display: flex;
   gap: 0.75rem;
   align-items: center;
@@ -119,11 +125,14 @@
   color: inherit;
   text-decoration: none;
 
-  background: var(--ctp-surface0);
+  background:
+    linear-gradient(var(--accent-wash), var(--accent-wash)) no-repeat left / 0%
+      100%,
+    var(--ctp-surface0);
   box-shadow: var(--ctp-shadow);
 
   transition:
-    background-color 0.25s ease,
+    background-size 0.3s ease,
     box-shadow 0.25s ease,
     opacity 0.25s ease,
     transform 0.1s ease;
@@ -136,6 +145,9 @@
 
   &:hover:not(.done) {
     transform: translateY(-1px);
+    background-size:
+      100% 100%,
+      auto;
     box-shadow: var(--ctp-shadow-lg);
   }
 
