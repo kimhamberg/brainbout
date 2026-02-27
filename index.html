@@ -9,7 +9,7 @@
     <title>Brainbout</title>
     <link
       rel="icon"
-      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♜</text></svg>"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>"
     />
     <link rel="stylesheet" href="/src/style.css" />
   </head>
@@ -18,52 +18,8 @@
       <header>
         <h1>Brainbout</h1>
       </header>
-      <main>
-        <div id="board-container">
-          <div id="board"></div>
-        </div>
-        <aside id="sidebar">
-          <div id="status">Loading engine...</div>
-          <div id="settings">
-            <h3>Settings</h3>
-            <label>
-              Difficulty (Elo)
-              <input
-                type="range"
-                id="elo-slider"
-                min="1320"
-                max="3190"
-                value="1500"
-                step="10"
-              />
-              <span id="elo-value">1500</span>
-            </label>
-            <label>
-              Position ID (0-959, blank = random)
-              <input
-                type="number"
-                id="position-id"
-                min="0"
-                max="959"
-                placeholder="random"
-              />
-            </label>
-            <label>
-              Play as
-              <select id="color-select">
-                <option value="white">White</option>
-                <option value="black">Black</option>
-                <option value="random">Random</option>
-              </select>
-            </label>
-            <div id="controls">
-              <button id="new-game">New Game</button>
-              <button id="flip">Flip Board</button>
-            </div>
-          </div>
-        </aside>
-      </main>
+      <main id="hub"></main>
     </div>
-    <script type="module" src="/src/main.ts"></script>
+    <script type="module" src="/src/hub.ts"></script>
   </body>
 </html>
