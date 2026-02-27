@@ -27,14 +27,16 @@ export function generateRound(): StroopRound {
 }
 
 const DURATION = 60;
-const game = document.getElementById("game")!;
+const game = document.getElementById("game");
+if (!game) throw new Error("Missing #game element");
 
 let score = 0;
 let round: StroopRound;
+let currentRemaining = DURATION;
 
-function renderPlaying(remaining: number): void {
+function renderPlaying(): void {
   game.innerHTML = `
-    <div class="timer">${String(remaining)}s</div>
+    <div class="timer">${String(currentRemaining)}s</div>
     <div class="stroop-word" style="color: ${COLOR_HEX[round.ink]}">${round.word}</div>
     <div class="score-display">Score: ${String(score)}</div>
     <div class="color-buttons">
@@ -44,12 +46,6 @@ function renderPlaying(remaining: number): void {
       ).join("")}
     </div>
   `;
-
-  for (const btn of game.querySelectorAll<HTMLButtonElement>(".color-btn")) {
-    btn.addEventListener("click", () => {
-      handleAnswer(btn.dataset.color as Color);
-    });
-  }
 }
 
 function handleAnswer(chosen: Color): void {
@@ -60,10 +56,7 @@ function handleAnswer(chosen: Color): void {
     sound.playCheck();
   }
   round = generateRound();
-  const timerEl = game.querySelector(".timer");
-  if (timerEl) {
-    renderPlaying(Number(timerEl.textContent?.replace("s", "")));
-  }
+  renderPlaying();
 }
 
 function showResult(): void {
@@ -84,17 +77,28 @@ function showResult(): void {
   });
 }
 
+// Use event delegation to avoid circular reference between renderPlaying and handleAnswer
+game.addEventListener("click", (e) => {
+  const btn = (e.target as HTMLElement).closest<HTMLButtonElement>(
+    ".color-btn",
+  );
+  if (btn?.dataset.color != null) {
+    handleAnswer(btn.dataset.color as Color);
+  }
+});
+
 round = generateRound();
 
 const timer = createTimer({
   seconds: DURATION,
   onTick: (remaining) => {
-    renderPlaying(remaining);
+    currentRemaining = remaining;
+    renderPlaying();
   },
   onDone: () => {
     showResult();
   },
 });
 
-renderPlaying(DURATION);
+renderPlaying();
 timer.start();

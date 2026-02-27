@@ -21,6 +21,26 @@ function rand(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function shuffle<T>(arr: T[]): T[] {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function generateChoices(answer: number): number[] {
+  const choices = new Set<number>([answer]);
+  while (choices.size < 4) {
+    const offset = rand(1, Math.max(5, Math.abs(answer)));
+    const wrong = answer + (Math.random() < 0.5 ? offset : -offset);
+    if (wrong !== answer) {
+      choices.add(wrong);
+    }
+  }
+  return shuffle([...choices]);
+}
+
 export function generateProblem(level: number): MathProblem {
   const ops = OPS_BY_LEVEL[Math.min(level - 1, OPS_BY_LEVEL.length - 1)];
   const op = ops[Math.floor(Math.random() * ops.length)];
@@ -53,49 +73,25 @@ export function generateProblem(level: number): MathProblem {
   return { a, b, op, answer, choices };
 }
 
-function generateChoices(answer: number): number[] {
-  const choices = new Set<number>([answer]);
-  while (choices.size < 4) {
-    const offset = rand(1, Math.max(5, Math.abs(answer)));
-    const wrong = answer + (Math.random() < 0.5 ? offset : -offset);
-    if (wrong !== answer) {
-      choices.add(wrong);
-    }
-  }
-  return shuffle([...choices]);
-}
-
-function shuffle<T>(arr: T[]): T[] {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
-
 const DURATION = 60;
-const game = document.getElementById("game")!;
+const game = document.getElementById("game");
+if (!game) throw new Error("Missing #game element");
 
 let score = 0;
 let streak = 0;
 let level = 1;
 let problem: MathProblem;
+let currentRemaining = DURATION;
 
-function renderPlaying(remaining: number): void {
+function renderPlaying(): void {
   game.innerHTML = `
-    <div class="timer">${String(remaining)}s</div>
+    <div class="timer">${String(currentRemaining)}s</div>
     <div class="problem">${String(problem.a)} ${problem.op} ${String(problem.b)}</div>
     <div class="score-display">Score: ${String(score)}</div>
     <div class="choices">
       ${problem.choices.map((c) => `<button class="choice-btn" data-val="${String(c)}">${String(c)}</button>`).join("")}
     </div>
   `;
-
-  for (const btn of game.querySelectorAll<HTMLButtonElement>(".choice-btn")) {
-    btn.addEventListener("click", () => {
-      handleAnswer(Number(btn.dataset.val));
-    });
-  }
 }
 
 function handleAnswer(chosen: number): void {
@@ -113,10 +109,7 @@ function handleAnswer(chosen: number): void {
     sound.playCheck();
   }
   problem = generateProblem(level);
-  const timerEl = game.querySelector(".timer");
-  if (timerEl) {
-    renderPlaying(Number(timerEl.textContent?.replace("s", "")));
-  }
+  renderPlaying();
 }
 
 function showResult(): void {
@@ -137,17 +130,28 @@ function showResult(): void {
   });
 }
 
+// Use event delegation to avoid circular reference between renderPlaying and handleAnswer
+game.addEventListener("click", (e) => {
+  const btn = (e.target as HTMLElement).closest<HTMLButtonElement>(
+    ".choice-btn",
+  );
+  if (btn?.dataset.val != null) {
+    handleAnswer(Number(btn.dataset.val));
+  }
+});
+
 problem = generateProblem(level);
 
 const timer = createTimer({
   seconds: DURATION,
   onTick: (remaining) => {
-    renderPlaying(remaining);
+    currentRemaining = remaining;
+    renderPlaying();
   },
   onDone: () => {
     showResult();
   },
 });
 
-renderPlaying(DURATION);
+renderPlaying();
 timer.start();

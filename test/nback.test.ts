@@ -5,9 +5,8 @@ import { describe, it, expect } from "vitest";
 // runs document.getElementById("game") at the top level on import.
 document.body.innerHTML = '<main id="game"></main>';
 
-const { generateStimulus, checkMatch, LETTERS, GRID_SIZE } = await import(
-  "../src/games/nback"
-);
+const { generateStimulus, checkMatch, LETTERS, GRID_SIZE } =
+  await import("../src/games/nback");
 
 describe("generateStimulus", () => {
   it("returns a position (0-8) and a letter", () => {

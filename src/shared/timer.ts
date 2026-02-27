@@ -13,6 +13,13 @@ export function createTimer(options: TimerOptions): Timer {
   let intervalId: ReturnType<typeof setInterval> | null = null;
   let remaining = options.seconds;
 
+  function stop(): void {
+    if (intervalId !== null) {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+  }
+
   function tick(): void {
     remaining--;
     options.onTick(remaining);
@@ -25,13 +32,6 @@ export function createTimer(options: TimerOptions): Timer {
   function start(): void {
     remaining = options.seconds;
     intervalId = setInterval(tick, 1000);
-  }
-
-  function stop(): void {
-    if (intervalId !== null) {
-      clearInterval(intervalId);
-      intervalId = null;
-    }
   }
 
   return { start, stop };

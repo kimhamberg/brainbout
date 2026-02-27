@@ -17,7 +17,9 @@ describe("createTimer", () => {
       onTick: (remaining) => {
         ticks.push(remaining);
       },
-      onDone: () => {},
+      onDone: () => {
+        /* noop */
+      },
     });
     timer.start();
 
@@ -29,10 +31,12 @@ describe("createTimer", () => {
   });
 
   it("calls onDone when time runs out", () => {
-    const done = vi.fn();
+    const done = vi.fn<() => void>();
     const timer = createTimer({
       seconds: 2,
-      onTick: () => {},
+      onTick: () => {
+        /* noop */
+      },
       onDone: done,
     });
     timer.start();
@@ -49,7 +53,9 @@ describe("createTimer", () => {
       onTick: (remaining) => {
         ticks.push(remaining);
       },
-      onDone: () => {},
+      onDone: () => {
+        /* noop */
+      },
     });
     timer.start();
 

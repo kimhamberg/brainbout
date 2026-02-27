@@ -7,6 +7,18 @@ function key(...parts: string[]): string {
   return `${PREFIX}:${parts.join(":")}`;
 }
 
+function formatDate(d: Date): string {
+  const y = String(d.getFullYear());
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+export function getBest(game: GameId): number | null {
+  const val = localStorage.getItem(key("best", game));
+  return val === null ? null : Number(val);
+}
+
 export function recordScore(game: GameId, score: number, date: string): void {
   localStorage.setItem(key("daily", date, game), String(score));
 
@@ -18,11 +30,6 @@ export function recordScore(game: GameId, score: number, date: string): void {
 
 export function getDailyScore(game: GameId, date: string): number | null {
   const val = localStorage.getItem(key("daily", date, game));
-  return val === null ? null : Number(val);
-}
-
-export function getBest(game: GameId): number | null {
-  const val = localStorage.getItem(key("best", game));
   return val === null ? null : Number(val);
 }
 
@@ -42,13 +49,6 @@ export function getStreak(today: string): number {
 
 export function todayString(): string {
   return formatDate(new Date());
-}
-
-function formatDate(d: Date): string {
-  const y = String(d.getFullYear());
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
 }
 
 export function nextGame(date: string): GameId | null {

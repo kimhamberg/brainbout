@@ -34,10 +34,11 @@ export function checkMatch(
 
 const DURATION = 120;
 const ROUND_MS = 2500;
-const game = document.getElementById("game")!;
+const game = document.getElementById("game");
+if (!game) throw new Error("Missing #game element");
 
 let nLevel = 2;
-let history: Stimulus[] = [];
+const history: Stimulus[] = [];
 let current: Stimulus | null = null;
 let correct = 0;
 let total = 0;

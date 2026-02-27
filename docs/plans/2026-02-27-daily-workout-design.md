@@ -54,12 +54,12 @@ public/
 
 All data in localStorage, no accounts, no cloud sync.
 
-| Key | Value |
-|---|---|
-| `brainbout:streak` | Consecutive days completed (resets if a day is missed) |
-| `brainbout:lastDate` | ISO date string of last completed workout |
-| `brainbout:daily:{date}:{game}` | Score for that game on that date |
-| `brainbout:best:{game}` | Personal best per game |
+| Key                             | Value                                                  |
+| ------------------------------- | ------------------------------------------------------ |
+| `brainbout:streak`              | Consecutive days completed (resets if a day is missed) |
+| `brainbout:lastDate`            | ISO date string of last completed workout              |
+| `brainbout:daily:{date}:{game}` | Score for that game on that date                       |
+| `brainbout:best:{game}`         | Personal best per game                                 |
 
 Each game saves its own score. The hub reads localStorage keys to determine completion and display scores.
 
