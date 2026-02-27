@@ -1,10 +1,6 @@
 import { createTimer } from "../shared/timer";
 import { recordScore, todayString, SKIP_SCORE } from "../shared/progress";
-import {
-  getDueWords,
-  recordAnswer,
-  levenshtein,
-} from "./vocab-srs";
+import { getDueWords, recordAnswer, levenshtein } from "./vocab-srs";
 import * as sound from "../shared/sounds";
 
 interface WordEntry {
@@ -93,15 +89,57 @@ function buildQueue(): void {
   }
 }
 
-function nextRound(): void {
-  if (dueQueue.length === 0) {
-    buildQueue();
+function handleSubmit(answer: string): void {
+  if (inputLocked || !currentWord) return;
+  inputLocked = true;
+
+  const trimmed = answer.trim().toLowerCase();
+  const target = currentWord.word.toLowerCase();
+  const elapsed = Date.now() - roundStart;
+  const input = document.getElementById("vocab-input") as HTMLInputElement;
+  const feedback = document.getElementById("feedback");
+  const today = todayString();
+
+  if (trimmed === target) {
+    const bonus = speedBonus(elapsed);
+    const mult = streakMultiplier();
+    const points = (10 + bonus) * mult;
+    score += points;
+    streak++;
+    recordAnswer(lang, currentWord.word, true, today);
+    sound.playMove();
+    input.classList.add("correct");
+    if (feedback) {
+      feedback.classList.add("correct");
+      feedback.textContent = `+${String(Math.floor(points))}`;
+    }
+    setTimeout(nextRound, 500); // eslint-disable-line @typescript-eslint/no-use-before-define -- mutual recursion via setTimeout
+  } else if (levenshtein(trimmed, target) <= CLOSE_THRESHOLD) {
+    const bonus = speedBonus(elapsed);
+    const mult = streakMultiplier();
+    const points = (5 + bonus) * mult;
+    score += points;
+    sound.playMove();
+    input.classList.add("close");
+    input.value = "";
+    input.placeholder = `Type: ${currentWord.word}`;
+    if (feedback) {
+      feedback.classList.add("close");
+      feedback.textContent = `Close! +${String(Math.floor(points))} — retype correctly`;
+    }
+    inputLocked = false;
+  } else {
+    streak = 0;
+    recordAnswer(lang, currentWord.word, false, today);
+    sound.playCheck();
+    input.classList.add("wrong");
+    input.disabled = true;
+    if (feedback) {
+      feedback.classList.add("wrong");
+      feedback.textContent = `Answer: ${currentWord.word}`;
+    }
+    setTimeout(nextRound, WRONG_PAUSE_MS); // eslint-disable-line @typescript-eslint/no-use-before-define -- mutual recursion via setTimeout
   }
-  currentWord = dueQueue.shift() ?? words[0];
-  currentCue = pickCue(currentWord);
-  roundStart = Date.now();
-  inputLocked = false;
-  renderRound();
 }
 
 function renderRound(): void {
@@ -125,61 +163,15 @@ function renderRound(): void {
   });
 }
 
-function handleSubmit(answer: string): void {
-  if (inputLocked || !currentWord) return;
-  inputLocked = true;
-
-  const trimmed = answer.trim().toLowerCase();
-  const target = currentWord.word.toLowerCase();
-  const elapsed = Date.now() - roundStart;
-  const input = document.getElementById("vocab-input") as HTMLInputElement;
-  const feedback = document.getElementById("feedback");
-  const today = todayString();
-
-  if (trimmed === target) {
-    const bonus = speedBonus(elapsed);
-    const mult = streakMultiplier();
-    const points = (10 + bonus) * mult;
-    score += points;
-    streak++;
-    recordAnswer(lang, currentWord.word, true, today);
-    sound.playMove();
-    if (input) input.classList.add("correct");
-    if (feedback) {
-      feedback.classList.add("correct");
-      feedback.textContent = `+${String(Math.floor(points))}`;
-    }
-    setTimeout(nextRound, 500);
-  } else if (levenshtein(trimmed, target) <= CLOSE_THRESHOLD) {
-    const bonus = speedBonus(elapsed);
-    const mult = streakMultiplier();
-    const points = (5 + bonus) * mult;
-    score += points;
-    sound.playMove();
-    if (input) {
-      input.classList.add("close");
-      input.value = "";
-      input.placeholder = `Type: ${currentWord.word}`;
-    }
-    if (feedback) {
-      feedback.classList.add("close");
-      feedback.textContent = `Close! +${String(Math.floor(points))} — retype correctly`;
-    }
-    inputLocked = false;
-  } else {
-    streak = 0;
-    recordAnswer(lang, currentWord.word, false, today);
-    sound.playCheck();
-    if (input) {
-      input.classList.add("wrong");
-      input.disabled = true;
-    }
-    if (feedback) {
-      feedback.classList.add("wrong");
-      feedback.textContent = `Answer: ${currentWord.word}`;
-    }
-    setTimeout(nextRound, WRONG_PAUSE_MS);
+function nextRound(): void {
+  if (dueQueue.length === 0) {
+    buildQueue();
   }
+  currentWord = dueQueue.shift() ?? words[0];
+  currentCue = pickCue(currentWord);
+  roundStart = Date.now();
+  inputLocked = false;
+  renderRound();
 }
 
 function showResult(): void {
@@ -205,19 +197,6 @@ function updateLangButton(): void {
   const btn = document.getElementById("lang-btn");
   if (btn) btn.textContent = lang.toUpperCase();
 }
-
-document.getElementById("lang-btn")?.addEventListener("click", () => {
-  lang = lang === "no" ? "en" : "no";
-  localStorage.setItem("brainbout:vocab-lang", lang);
-  updateLangButton();
-  void startGame();
-});
-
-document.getElementById("skip-btn")?.addEventListener("click", () => {
-  if (timerRef) timerRef.stop();
-  recordScore("vocab", SKIP_SCORE, todayString());
-  window.location.href = "../";
-});
 
 async function startGame(): Promise<void> {
   score = 0;
@@ -245,6 +224,19 @@ async function startGame(): Promise<void> {
   nextRound();
   timerRef.start();
 }
+
+document.getElementById("lang-btn")?.addEventListener("click", () => {
+  lang = lang === "no" ? "en" : "no";
+  localStorage.setItem("brainbout:vocab-lang", lang);
+  updateLangButton();
+  void startGame();
+});
+
+document.getElementById("skip-btn")?.addEventListener("click", () => {
+  if (timerRef) timerRef.stop();
+  recordScore("vocab", SKIP_SCORE, todayString());
+  window.location.href = "../";
+});
 
 updateLangButton();
 void startGame();

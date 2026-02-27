@@ -37,8 +37,10 @@ function renderGrid(): void {
   game.innerHTML = `
     <div class="timer">${String(currentRemaining)}s</div>
     <div class="reaction-grid">
-      ${Array.from({ length: GRID_SIZE }, (_, i) =>
-        `<div class="reaction-cell${i === activeCell ? " active" : ""}" data-cell="${String(i)}"></div>`,
+      ${Array.from(
+        { length: GRID_SIZE },
+        (_, i) =>
+          `<div class="reaction-cell${i === activeCell ? " active" : ""}" data-cell="${String(i)}"></div>`,
       ).join("")}
     </div>
     <div class="score-display">Score: ${String(score)}</div>

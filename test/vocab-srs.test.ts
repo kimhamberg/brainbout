@@ -69,7 +69,12 @@ describe("recordAnswer", () => {
   it("caps at max box", () => {
     const maxBox = BOX_INTERVALS.length - 1;
     for (let i = 0; i <= maxBox + 2; i++) {
-      recordAnswer("no", "tapper", true, `2026-03-${String(i + 1).padStart(2, "0")}`);
+      recordAnswer(
+        "no",
+        "tapper",
+        true,
+        `2026-03-${String(i + 1).padStart(2, "0")}`,
+      );
     }
     const state = getWordState("no", "tapper");
     expect(state.box).toBeLessThanOrEqual(maxBox);

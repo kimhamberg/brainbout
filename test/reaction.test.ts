@@ -5,9 +5,7 @@ import { describe, it, expect } from "vitest";
 // runs document.getElementById("game") at the top level on import.
 document.body.innerHTML = '<main id="game"></main>';
 
-const { pickNextCell, getVisibilityMs } = await import(
-  "../src/games/reaction"
-);
+const { pickNextCell, getVisibilityMs } = await import("../src/games/reaction");
 
 describe("pickNextCell", () => {
   it("returns a number between 0 and gridSize-1", () => {
