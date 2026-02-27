@@ -81,8 +81,12 @@ function formatClock(ms: number): string {
 
 const INITIAL_MS = 15 * 60 * 1000;
 const INCREMENT_MS = 10 * 1000;
-const game = document.getElementById("game");
-if (!game) throw new Error("Missing #game element");
+function getEl(id: string): HTMLElement {
+  const el = document.getElementById(id);
+  if (el === null) throw new Error(`Missing #${id} element`);
+  return el;
+}
+const game = getEl("game");
 
 let api: Api | undefined;
 let pos: Chess;

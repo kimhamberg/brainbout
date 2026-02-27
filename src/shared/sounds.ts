@@ -1,4 +1,4 @@
-const BASE = `${String(import.meta.env.BASE_URL)}sounds/`;
+const BASE = `${import.meta.env.BASE_URL}sounds/`;
 
 const cache = new Map<string, HTMLAudioElement>();
 

@@ -17,8 +17,12 @@ const DURATION = 120;
 const WRONG_PAUSE_MS = 2000;
 const CLOSE_THRESHOLD = 2;
 
-const game = document.getElementById("game");
-if (!game) throw new Error("Missing #game element");
+function getEl(id: string): HTMLElement {
+  const el = document.getElementById(id);
+  if (el === null) throw new Error(`Missing #${id} element`);
+  return el;
+}
+const game = getEl("game");
 
 let lang = localStorage.getItem("brainbout:vocab-lang") ?? "no";
 let words: WordEntry[] = [];
@@ -73,7 +77,7 @@ function streakMultiplier(): number {
 }
 
 async function loadWords(): Promise<void> {
-  const base = import.meta.env.BASE_URL as string;
+  const base = import.meta.env.BASE_URL;
   const url = `${base}words-${lang}.json`;
   const resp = await fetch(url);
   words = (await resp.json()) as WordEntry[];
