@@ -77,8 +77,8 @@ function formatClock(ms: number): string {
 
 // --- Game state ---
 
-const INITIAL_MS = 3 * 60 * 1000;
-const INCREMENT_MS = 2 * 1000;
+const INITIAL_MS = 15 * 60 * 1000;
+const INCREMENT_MS = 10 * 1000;
 const game = document.getElementById("game");
 if (!game) throw new Error("Missing #game element");
 
@@ -99,7 +99,7 @@ function updateStatus(text: string): void {
 }
 
 function finishGame(result: number, message: string): void {
-  recordScore("blitz", result, todayString());
+  recordScore("rapid", result, todayString());
 
   const label = result === 1 ? "Won" : result === 0.5 ? "Draw" : "Lost";
 
@@ -227,11 +227,11 @@ function onFlag(): void {
 function renderGame(): void {
   game.innerHTML = `
     <div class="clock" id="player-clock">${formatClock(INITIAL_MS)}</div>
-    <div class="blitz-board"></div>
+    <div class="rapid-board"></div>
     <div class="game-status">Loading engine...</div>
   `;
 
-  const boardEl = game.querySelector<HTMLElement>(".blitz-board");
+  const boardEl = game.querySelector<HTMLElement>(".rapid-board");
   if (!boardEl) return;
 
   api = Chessground(boardEl, {
@@ -264,7 +264,7 @@ async function main(): Promise<void> {
       const el = document.getElementById("player-clock");
       if (el) {
         el.textContent = formatClock(ms);
-        el.classList.toggle("low", ms < 30000);
+        el.classList.toggle("low", ms < 60000);
       }
     },
     onFlag,
@@ -284,7 +284,7 @@ document.getElementById("skip-btn")?.addEventListener("click", () => {
   gameOver = true;
   clock.stop();
   engine.destroy();
-  recordScore("blitz", SKIP_SCORE, todayString());
+  recordScore("rapid", SKIP_SCORE, todayString());
   window.location.href = "../";
 });
 

@@ -20,13 +20,13 @@
   color: var(--ctp-red);
 }
 
-.blitz-board {
+.rapid-board {
   width: 320px;
   height: 320px;
 }
 
 @media (width >= 480px) {
-  .blitz-board {
+  .rapid-board {
     width: 400px;
     height: 400px;
   }
