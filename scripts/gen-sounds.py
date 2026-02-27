@@ -307,14 +307,16 @@ def move() -> np.ndarray:
     Noise residual capped at 500 Hz for the woody texture.
     Moderate hardness — felt-bottom piece on wooden board.
     """
-    return wood_hit(WoodParams(
-        body_freq=98.00,  # G2 - board fundamental
-        dur=0.12,
-        noise_level=0.55,
-        body_decay=40,
-        brightness=500,  # wood resonance caps ~500 Hz
-        hardness=0.45,
-    ))
+    return wood_hit(
+        WoodParams(
+            body_freq=98.00,  # G2 - board fundamental
+            dur=0.12,
+            noise_level=0.55,
+            body_decay=40,
+            brightness=500,  # wood resonance caps ~500 Hz
+            hardness=0.45,
+        ),
+    )
 
 
 def capture() -> np.ndarray:
@@ -327,23 +329,27 @@ def capture() -> np.ndarray:
          gentler transient (piece settling on board)
     """
     # piece clack — higher, harder, brighter
-    clack = wood_hit(WoodParams(
-        body_freq=196.00,  # G3 - small piece resonance
-        dur=0.05,
-        noise_level=0.6,
-        body_decay=55,
-        brightness=500,
-        hardness=0.7,
-    ))
+    clack = wood_hit(
+        WoodParams(
+            body_freq=196.00,  # G3 - small piece resonance
+            dur=0.05,
+            noise_level=0.6,
+            body_decay=55,
+            brightness=500,
+            hardness=0.7,
+        ),
+    )
     # board thud — deeper, softer, follows the clack
-    thud = wood_hit(WoodParams(
-        body_freq=110.00,  # A2 - board resonance
-        dur=0.10,
-        noise_level=0.45,
-        body_decay=38,
-        brightness=450,
-        hardness=0.35,
-    ))
+    thud = wood_hit(
+        WoodParams(
+            body_freq=110.00,  # A2 - board resonance
+            dur=0.10,
+            noise_level=0.45,
+            body_decay=38,
+            brightness=450,
+            hardness=0.35,
+        ),
+    )
     return np.concatenate([clack, thud])
 
 

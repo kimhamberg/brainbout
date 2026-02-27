@@ -1,4 +1,4 @@
-.PHONY: dev build build-server build-linux build-windows build-android clean lint lint-go lint-kt screenshot
+.PHONY: dev build build-server build-linux build-windows build-android clean lint lint-go lint-kt lint-py screenshot
 
 dev:
 	npx vite
@@ -24,7 +24,7 @@ build-android: build
 	cd android && ./gradlew assembleDebug
 	@echo "APK: android/app/build/outputs/apk/debug/app-debug.apk"
 
-lint: lint-go lint-kt
+lint: lint-go lint-kt lint-py
 	npm run lint
 	npm run lint:css
 	npm run format:check
@@ -33,6 +33,10 @@ lint-go:
 	gofmt -l server/ | grep . && exit 1 || true
 	cd server && go vet ./...
 	cd server && staticcheck ./...
+
+lint-py:
+	uv run ruff check
+	uv run ruff format --check
 
 lint-kt:
 	@command -v ktlint >/dev/null 2>&1 && ktlint "android/**/*.kt" || echo "ktlint not installed, skipping"
