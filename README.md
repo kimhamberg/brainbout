@@ -2,9 +2,14 @@
 
 [![CI](https://github.com/kimhamberg/brainbout/actions/workflows/ci.yml/badge.svg)](https://github.com/kimhamberg/brainbout/actions/workflows/ci.yml)
 
-A Chess960 sparring partner. Train your brain, not your scroll thumb.
+A daily brain workout. Train your brain, not your scroll thumb.
 
-Play Fischer Random chess against Stockfish locally — in your browser, as a desktop app, or on Android. All 960 starting positions, adjustable difficulty, no internet required.
+Four timed cognitive games in ~8 minutes. No accounts, no ads, no internet required. Progress tracked locally.
+
+- **Chess960 Puzzles** — spatial reasoning (120s)
+- **Dual N-back** — working memory (120s)
+- **Stroop** — inhibitory control (60s)
+- **Quick Math** — processing speed (60s)
 
 **[Play online](https://kimhamberg.github.io/brainbout/)** | [Linux](https://github.com/kimhamberg/brainbout/releases/latest/download/brainbout-linux-amd64) | [Windows](https://github.com/kimhamberg/brainbout/releases/latest/download/brainbout-windows-amd64.exe) | [Android](https://github.com/kimhamberg/brainbout/releases/latest/download/brainbout.apk)
 
@@ -50,16 +55,17 @@ Runs ESLint (TypeScript), Stylelint (CSS), staticcheck + go vet (Go), ktlint (Ko
 npm test
 ```
 
-31 tests covering position generation, engine UCI parsing, and game state logic.
+36 tests across 7 files covering position generation, puzzle logic, cognitive games, timer, and progress tracking.
 
 ## Stack
 
-- [Chessground](https://github.com/lichess-org/chessground) — board UI
-- [chessops](https://github.com/niklasf/chessops) — Chess960 move validation
-- [Stockfish WASM](https://www.npmjs.com/package/stockfish) — engine, single-threaded, runs locally
-- [Vite](https://vite.dev) — build tooling
+- [Chessground](https://github.com/lichess-org/chessground) — board UI (puzzles)
+- [chessops](https://github.com/niklasf/chessops) — Chess960 move validation (puzzles)
+- [Vite](https://vite.dev) — multi-page build tooling
+- [Catppuccin Frappe](https://github.com/catppuccin/catppuccin) — color theme
 - [Go](https://go.dev) — desktop server (single binary with embedded assets)
 - [Kotlin](https://kotlinlang.org) + [Android WebView](https://developer.android.com/develop/ui/views/layout/webapps/webview) — mobile wrapper
+- localStorage — progress tracking
 
 ## License
 

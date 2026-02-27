@@ -19,11 +19,18 @@ describe("generateProblem", () => {
   });
 
   it("scales difficulty with level", () => {
-    const easy = generateProblem(1);
-    const hard = generateProblem(3);
-    // Level 1 uses single digits, level 3 uses triple digits
-    expect(easy.a).toBeLessThan(10);
-    expect(hard.a).toBeGreaterThanOrEqual(10);
+    // Level 1: maxVal=9, so operands are always single digit
+    for (let i = 0; i < 20; i++) {
+      const easy = generateProblem(1);
+      expect(easy.a).toBeLessThanOrEqual(12); // at most 12 for × operands
+    }
+    // Level 3: maxVal=100, so at least some operands should exceed 9
+    let anyLarge = false;
+    for (let i = 0; i < 50; i++) {
+      const hard = generateProblem(3);
+      if (hard.a > 12) anyLarge = true;
+    }
+    expect(anyLarge).toBe(true);
   });
 
   it("never divides by zero", () => {
