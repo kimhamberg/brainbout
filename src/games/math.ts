@@ -107,11 +107,11 @@ function handleAnswer(chosen: number): void {
       level++;
       streak = 0;
     }
-    sound.playMove();
+    sound.playCorrect();
   } else {
     streak = 0;
     if (level > 1) level--;
-    sound.playCheck();
+    sound.playWrong();
   }
   problem = generateProblem(level);
   renderPlaying();

@@ -77,7 +77,7 @@ function handleCellClick(cellIndex: number): void {
 
   clearTarget();
   score++;
-  sound.playMove();
+  sound.playCorrect();
 
   const cell = game.querySelector(`[data-cell="${String(cellIndex)}"]`);
   if (cell) {
