@@ -13,11 +13,13 @@
 ### Task 1: Create Pixel-style phone frame SVG
 
 **Files:**
+
 - Create: `docs/phone-frame.svg`
 
 **Step 1: Create the SVG**
 
 Create `docs/phone-frame.svg` — a Pixel 9-style phone frame with:
+
 - Canvas size: 556x756 (480+38+38 width, 640+58+58 height — 38px side bezels, 58px top/bottom)
 - Outer body: rounded rect with rx=40, fill #1a1a1a, subtle 1px #333 stroke for edge highlight
 - Screen cutout: transparent rect at (38, 58) sized 480x640 with rx=8 (subtle inner corners)
@@ -44,6 +46,7 @@ git commit -m "feat: add Pixel-style phone frame SVG for screenshot"
 ### Task 2: Add sharp and composite screenshot into phone frame
 
 **Files:**
+
 - Modify: `scripts/screenshot.ts`
 - Modify: `package.json` (via npm install)
 
@@ -67,7 +70,7 @@ In `scripts/screenshot.ts`, after the existing `page.screenshot({ path: OUTPUT }
 const FRAME_SVG = join(import.meta.dirname, "../docs/phone-frame.svg");
 const BEZEL_X = 38; // left bezel width
 const BEZEL_Y = 58; // top bezel height
-const FRAME_W = WIDTH + BEZEL_X * 2;  // 556
+const FRAME_W = WIDTH + BEZEL_X * 2; // 556
 const FRAME_H = HEIGHT + BEZEL_Y * 2; // 756
 
 const framePng = await sharp(FRAME_SVG, { density: 72 })
@@ -115,13 +118,14 @@ git commit -m "feat: composite screenshot into Pixel phone frame with sharp"
 ### Task 3: Create README template with placeholders
 
 **Files:**
+
 - Create: `README.md.tpl`
 
 **Step 1: Create the template**
 
 Create `README.md.tpl` with the updated README content. Use `{{PLACEHOLDER}}` syntax for dynamic values:
 
-```markdown
+````markdown
 # Brainbout
 
 [![CI](https://github.com/kimhamberg/brainbout/actions/workflows/ci.yml/badge.svg)](https://github.com/kimhamberg/brainbout/actions/workflows/ci.yml)
@@ -204,7 +208,7 @@ npm test
 ## License
 
 [GPL-3.0](LICENSE)
-```
+````
 
 Note: The triple backticks in the template need to be actual backticks (the backslashes above are just escaping for this plan doc).
 
@@ -220,6 +224,7 @@ git commit -m "feat: add README template with dynamic placeholders"
 ### Task 4: Create README stats generator script
 
 **Files:**
+
 - Create: `scripts/readme-stats.ts`
 
 **Step 1: Write the script**
@@ -232,29 +237,38 @@ const TPL = readFileSync("README.md.tpl", "utf-8");
 
 // Test stats from vitest JSON reporter
 const vitest = JSON.parse(
-  execSync("npx vitest run --reporter=json", { encoding: "utf-8", stdio: ["pipe", "pipe", "pipe"] }),
+  execSync("npx vitest run --reporter=json", {
+    encoding: "utf-8",
+    stdio: ["pipe", "pipe", "pipe"],
+  }),
 );
 const testCount = vitest.numTotalTests;
 const testFiles = vitest.numTotalTestSuites;
 
 // File counts
-const gameCount = readdirSync("games").filter((f: string) => f.endsWith(".html")).length;
-const soundCount = readdirSync("public/sounds").filter((f: string) => f.endsWith(".wav")).length;
+const gameCount = readdirSync("games").filter((f: string) =>
+  f.endsWith(".html"),
+).length;
+const soundCount = readdirSync("public/sounds").filter((f: string) =>
+  f.endsWith(".wav"),
+).length;
 
-const readme = TPL
-  .replace(/\{\{TEST_COUNT\}\}/g, String(testCount))
+const readme = TPL.replace(/\{\{TEST_COUNT\}\}/g, String(testCount))
   .replace(/\{\{TEST_FILES\}\}/g, String(testFiles))
   .replace(/\{\{GAME_COUNT\}\}/g, String(gameCount))
   .replace(/\{\{SOUND_COUNT\}\}/g, String(soundCount));
 
 writeFileSync("README.md", readme);
 
-console.log(`README.md generated: ${testCount} tests, ${testFiles} files, ${gameCount} games, ${soundCount} sounds`);
+console.log(
+  `README.md generated: ${testCount} tests, ${testFiles} files, ${gameCount} games, ${soundCount} sounds`,
+);
 ```
 
 **Step 2: Add npm script**
 
 Add to `package.json` scripts:
+
 ```json
 "readme": "tsx scripts/readme-stats.ts"
 ```
@@ -279,6 +293,7 @@ git commit -m "feat: auto-generate README from template with codebase stats"
 ### Task 5: Update CI workflow to auto-generate README
 
 **Files:**
+
 - Modify: `.github/workflows/screenshot.yml`
 
 **Step 1: Add README generation step**
@@ -286,33 +301,33 @@ git commit -m "feat: auto-generate README from template with codebase stats"
 After the `npm run screenshot` step, add:
 
 ```yaml
-      - run: npm run readme
+- run: npm run readme
 ```
 
 Update the commit step to include README.md:
 
 ```yaml
-      - name: Push screenshot and README if changed
-        run: |
-          git diff --quiet docs/screenshot.png README.md && echo "No changes" && exit 0
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/screenshot.png README.md
-          git commit -m "docs: auto-update screenshot and README [skip ci]"
-          git push origin master
+- name: Push screenshot and README if changed
+  run: |
+    git diff --quiet docs/screenshot.png README.md && echo "No changes" && exit 0
+    git config user.name "github-actions[bot]"
+    git config user.email "github-actions[bot]@users.noreply.github.com"
+    git add docs/screenshot.png README.md
+    git commit -m "docs: auto-update screenshot and README [skip ci]"
+    git push origin master
 ```
 
 Also add `README.md.tpl` and `scripts/readme-stats.ts` to the paths trigger so changes to the template also trigger regeneration:
 
 ```yaml
-    paths:
-      - "src/**"
-      - "index.html"
-      - "games/**"
-      - "scripts/screenshot.ts"
-      - "scripts/readme-stats.ts"
-      - "README.md.tpl"
-      - "test/**"
+paths:
+  - "src/**"
+  - "index.html"
+  - "games/**"
+  - "scripts/screenshot.ts"
+  - "scripts/readme-stats.ts"
+  - "README.md.tpl"
+  - "test/**"
 ```
 
 **Step 2: Commit**

@@ -3,6 +3,7 @@
 ## 1. Pixel-style Phone Frame
 
 Create a static SVG phone bezel in Pixel 9 style:
+
 - Thin uniform bezels (~3% of width)
 - Large rounded corners (device-level ~40px radius)
 - Centered punch-hole camera cutout (small circle, top center)
@@ -15,6 +16,7 @@ File: `docs/phone-frame.svg` (static, committed once)
 ### Compositing in screenshot script
 
 `scripts/screenshot.ts` changes:
+
 1. Add `sharp` as a dev dependency
 2. After Playwright captures the raw screenshot (480x640):
    - Render `phone-frame.svg` to PNG at target size using sharp
@@ -29,17 +31,18 @@ The SVG uses a transparent screen area so the screenshot shows through.
 
 Markdown file with `{{PLACEHOLDER}}` tokens:
 
-| Placeholder       | Source                                     |
-| ----------------- | ------------------------------------------ |
-| `{{TEST_COUNT}}`  | vitest --reporter=json, count tests        |
-| `{{TEST_FILES}}`  | vitest --reporter=json, count test suites  |
-| `{{GAME_COUNT}}`  | count `games/*.html`                       |
-| `{{SOUND_COUNT}}` | count `public/sounds/*.wav`                |
-| `{{LINT_TOOLS}}`  | hardcoded list (changes rarely)            |
+| Placeholder       | Source                                    |
+| ----------------- | ----------------------------------------- |
+| `{{TEST_COUNT}}`  | vitest --reporter=json, count tests       |
+| `{{TEST_FILES}}`  | vitest --reporter=json, count test suites |
+| `{{GAME_COUNT}}`  | count `games/*.html`                      |
+| `{{SOUND_COUNT}}` | count `public/sounds/*.wav`               |
+| `{{LINT_TOOLS}}`  | hardcoded list (changes rarely)           |
 
 ### Generator: `scripts/readme-stats.ts`
 
 TypeScript script that:
+
 1. Runs `npx vitest run --reporter=json` and parses output
 2. Globs for countable files
 3. Reads `README.md.tpl`, replaces placeholders, writes `README.md`
