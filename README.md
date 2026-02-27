@@ -13,7 +13,7 @@ A daily brain workout. Train your brain, not your scroll thumb.
 
 **[Play online](https://kimhamberg.github.io/brainbout/)** | [Linux](https://github.com/kimhamberg/brainbout/releases/latest/download/brainbout-linux-amd64) | [Windows](https://github.com/kimhamberg/brainbout/releases/latest/download/brainbout-windows-amd64.exe) | [Android](https://github.com/kimhamberg/brainbout/releases/latest/download/brainbout.apk)
 
-![Screenshot](docs/screenshot.png)
+<p align="center"><img src="docs/screenshot.png" alt="Screenshot" width="280" /></p>
 
 ## Requirements
 
