@@ -12,7 +12,7 @@ import { parseUci, makeSquare } from "chessops/util";
 import { chessgroundDests } from "chessops/compat";
 import { randomChess960 } from "../chess960";
 import { StockfishEngine } from "../shared/engine";
-import { recordScore, todayString, SKIP_SCORE } from "../shared/progress";
+import { recordSessionScore } from "../shared/progress";
 import { initTheme, wireToggle } from "../shared/theme";
 import * as sound from "../shared/sounds";
 
@@ -101,7 +101,7 @@ function updateStatus(text: string): void {
 }
 
 function finishGame(result: number, message: string): void {
-  recordScore("rapid", result, todayString());
+  recordSessionScore("rapid", result);
 
   const label = result === 1 ? "Won" : result === 0.5 ? "Draw" : "Lost";
 
@@ -118,7 +118,7 @@ function finishGame(result: number, message: string): void {
   else sound.playDraw();
 
   document.getElementById("back-btn")?.addEventListener("click", () => {
-    window.location.href = "../";
+    window.location.href = "../?completed=rapid";
   });
 }
 
@@ -281,14 +281,6 @@ async function main(): Promise<void> {
   updateStatus("Your move");
   clock.start();
 }
-
-document.getElementById("skip-btn")?.addEventListener("click", () => {
-  gameOver = true;
-  clock.stop();
-  engine.destroy();
-  recordScore("rapid", SKIP_SCORE, todayString());
-  window.location.href = "../";
-});
 
 void main();
 

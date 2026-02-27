@@ -1,6 +1,6 @@
 import { initTheme, wireToggle } from "../shared/theme";
 import { createTimer } from "../shared/timer";
-import { recordScore, todayString, SKIP_SCORE } from "../shared/progress";
+import { recordSessionScore, todayString } from "../shared/progress";
 import { getDueWords, recordAnswer, levenshtein } from "./vocab-srs";
 import * as sound from "../shared/sounds";
 
@@ -177,7 +177,7 @@ function nextRound(): void {
 
 function showResult(): void {
   const finalScore = Math.floor(score);
-  recordScore("vocab", finalScore, todayString());
+  recordSessionScore("vocab", finalScore);
 
   game.innerHTML = `
     <div class="result">
@@ -190,7 +190,7 @@ function showResult(): void {
   sound.playVictory();
 
   document.getElementById("back-btn")?.addEventListener("click", () => {
-    window.location.href = "../";
+    window.location.href = "../?completed=vocab";
   });
 }
 
@@ -231,12 +231,6 @@ document.getElementById("lang-btn")?.addEventListener("click", () => {
   localStorage.setItem("brainbout:vocab-lang", lang);
   updateLangButton();
   void startGame();
-});
-
-document.getElementById("skip-btn")?.addEventListener("click", () => {
-  if (timerRef) timerRef.stop();
-  recordScore("vocab", SKIP_SCORE, todayString());
-  window.location.href = "../";
 });
 
 updateLangButton();

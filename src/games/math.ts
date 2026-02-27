@@ -1,6 +1,6 @@
 import { initTheme, wireToggle } from "../shared/theme";
 import { createTimer } from "../shared/timer";
-import { recordScore, todayString, SKIP_SCORE } from "../shared/progress";
+import { recordSessionScore } from "../shared/progress";
 import * as sound from "../shared/sounds";
 
 type Op = "+" | "−" | "×" | "÷";
@@ -114,7 +114,7 @@ function handleAnswer(chosen: number): void {
 }
 
 function showResult(): void {
-  recordScore("math", score, todayString());
+  recordSessionScore("math", score);
 
   game.innerHTML = `
     <div class="result">
@@ -127,7 +127,7 @@ function showResult(): void {
   sound.playVictory();
 
   document.getElementById("back-btn")?.addEventListener("click", () => {
-    window.location.href = "../";
+    window.location.href = "../?completed=math";
   });
 }
 
@@ -152,12 +152,6 @@ const timer = createTimer({
   onDone: () => {
     showResult();
   },
-});
-
-document.getElementById("skip-btn")?.addEventListener("click", () => {
-  timer.stop();
-  recordScore("math", SKIP_SCORE, todayString());
-  window.location.href = "../";
 });
 
 renderPlaying();

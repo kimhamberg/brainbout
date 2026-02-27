@@ -1,6 +1,6 @@
 import { initTheme, wireToggle } from "../shared/theme";
 import { createTimer } from "../shared/timer";
-import { recordScore, todayString, SKIP_SCORE } from "../shared/progress";
+import { recordSessionScore } from "../shared/progress";
 import * as sound from "../shared/sounds";
 
 const GRID_SIZE = 16;
@@ -90,7 +90,7 @@ function handleCellClick(cellIndex: number): void {
 }
 
 function showResult(): void {
-  recordScore("reaction", score, todayString());
+  recordSessionScore("reaction", score);
 
   game.innerHTML = `
     <div class="result">
@@ -103,7 +103,7 @@ function showResult(): void {
   sound.playVictory();
 
   document.getElementById("back-btn")?.addEventListener("click", () => {
-    window.location.href = "../";
+    window.location.href = "../?completed=reaction";
   });
 }
 
@@ -112,14 +112,6 @@ game.addEventListener("click", (e) => {
   if (el?.dataset.cell != null) {
     handleCellClick(Number(el.dataset.cell));
   }
-});
-
-document.getElementById("skip-btn")?.addEventListener("click", () => {
-  gameActive = false;
-  clearTarget();
-  if (timerRef) timerRef.stop();
-  recordScore("reaction", SKIP_SCORE, todayString());
-  window.location.href = "../";
 });
 
 timerRef = createTimer({

@@ -81,34 +81,6 @@ header h1 {
   font-weight: 600;
 }
 
-.skip-btn {
-  font-size: 0.85rem;
-  color: var(--ctp-subtext0);
-  background: none;
-  border: 1px solid var(--ctp-surface1);
-  border-radius: 4px;
-  padding: 0.25rem 0.75rem;
-  cursor: pointer;
-  transition:
-    border-color 0.15s ease,
-    color 0.15s ease,
-    background-color 0.15s ease;
-}
-
-.skip-btn:hover {
-  border-color: var(--ctp-blue);
-  color: var(--ctp-text);
-}
-
-.skip-btn:active {
-  background: var(--ctp-surface0);
-}
-
-.skip-btn:focus-visible {
-  outline: none;
-  box-shadow: var(--ctp-focus-ring);
-}
-
 .theme-toggle {
   display: flex;
   align-items: center;
