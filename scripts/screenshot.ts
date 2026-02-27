@@ -1,8 +1,8 @@
 import { chromium } from "playwright";
 import { createServer } from "vite";
 
-const WIDTH = 1280;
-const HEIGHT = 800;
+const WIDTH = 480;
+const HEIGHT = 640;
 const OUTPUT = "docs/screenshot.png";
 
 async function main(): Promise<void> {
@@ -15,9 +15,14 @@ async function main(): Promise<void> {
   });
 
   await page.goto("http://localhost:5199");
-  await page.waitForSelector("#board cg-board piece", { timeout: 10_000 });
-  // Let chessground animations settle
-  await page.waitForTimeout(500);
+  // Force dark theme (Frappe) for a richer screenshot
+  await page.evaluate(() => {
+    localStorage.setItem("theme", "frappe");
+    document.documentElement.dataset.theme = "frappe";
+  });
+  await page.waitForSelector(".game-list", { timeout: 10_000 });
+  // Let transitions settle
+  await page.waitForTimeout(300);
 
   await page.screenshot({ path: OUTPUT });
 
