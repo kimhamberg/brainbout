@@ -86,6 +86,12 @@ npm test
 - [Go](https://go.dev) — desktop server (single binary with embedded assets)
 - [Kotlin](https://kotlinlang.org) + [Android WebView](https://developer.android.com/develop/ui/views/layout/webapps/webview) — mobile wrapper
 
+## Roadmap
+
+- [ ] Every game feels vital and polished — tight animations, satisfying sounds, zero rough edges
+- [ ] Chess960 matches feel like playing a real human — natural move timing, personality, tension
+- [ ] Word Recall actually trains vocabulary — spaced repetition that sticks, real progress over weeks
+
 ## Contributing
 
 Contributions are welcome. Please open an issue first to discuss what you'd like to change.
