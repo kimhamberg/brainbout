@@ -1,5 +1,5 @@
 import { createTimer } from "../shared/timer";
-import { recordScore, todayString } from "../shared/progress";
+import { recordScore, todayString, SKIP_SCORE } from "../shared/progress";
 import * as sound from "../shared/sounds";
 
 export const COLORS = ["red", "blue", "green", "yellow"] as const;
@@ -98,6 +98,12 @@ const timer = createTimer({
   onDone: () => {
     showResult();
   },
+});
+
+document.getElementById("skip-btn")?.addEventListener("click", () => {
+  timer.stop();
+  recordScore("stroop", SKIP_SCORE, todayString());
+  window.location.href = "/";
 });
 
 renderPlaying();

@@ -1,5 +1,5 @@
 import { createTimer } from "../shared/timer";
-import { recordScore, todayString } from "../shared/progress";
+import { recordScore, todayString, SKIP_SCORE } from "../shared/progress";
 import * as sound from "../shared/sounds";
 
 type Op = "+" | "−" | "×" | "÷";
@@ -151,6 +151,12 @@ const timer = createTimer({
   onDone: () => {
     showResult();
   },
+});
+
+document.getElementById("skip-btn")?.addEventListener("click", () => {
+  timer.stop();
+  recordScore("math", SKIP_SCORE, todayString());
+  window.location.href = "/";
 });
 
 renderPlaying();
