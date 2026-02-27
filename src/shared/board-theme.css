@@ -12,26 +12,26 @@
 [data-theme="frappe"] {
   --board-light: #51576d;
   --board-dark: #414559;
-  --board-last-move: rgb(140 170 238 / 35%);
-  --board-selected: rgb(140 170 238 / 40%);
+  --board-last-move: rgb(140 170 238 / 0.35);
+  --board-selected: rgb(140 170 238 / 0.4);
   --board-move-dest: 166 209 137;
   --board-check: 231 130 132;
   --board-premove: 239 159 118;
-  --board-coord-dark: rgb(198 208 245 / 80%);
-  --board-coord-light: rgb(65 69 89 / 80%);
+  --board-coord-dark: rgb(198 208 245 / 0.8);
+  --board-coord-light: rgb(65 69 89 / 0.8);
   --board-crust: 35 38 52;
 }
 
 [data-theme="latte"] {
   --board-light: #e6e9ef;
   --board-dark: #bcc0cc;
-  --board-last-move: rgb(30 102 245 / 25%);
-  --board-selected: rgb(30 102 245 / 30%);
+  --board-last-move: rgb(30 102 245 / 0.25);
+  --board-selected: rgb(30 102 245 / 0.3);
   --board-move-dest: 64 160 43;
   --board-check: 210 15 57;
   --board-premove: 254 100 11;
-  --board-coord-dark: rgb(76 79 105 / 80%);
-  --board-coord-light: rgb(188 192 204 / 80%);
+  --board-coord-dark: rgb(76 79 105 / 0.8);
+  --board-coord-light: rgb(188 192 204 / 0.8);
   --board-crust: 220 224 232;
 }
 
@@ -49,14 +49,14 @@ cg-board {
   /* Interactive states */
   & square.move-dest {
     background: radial-gradient(
-      rgb(var(--board-move-dest) / 50%) 22%,
+      rgb(var(--board-move-dest) / 0.5) 22%,
       rgb(var(--board-move-dest)) 0,
-      rgb(var(--board-crust) / 30%) 0,
-      rgb(var(--board-crust) / 0%) 0
+      rgb(var(--board-crust) / 0.3) 0,
+      rgb(var(--board-crust) / 0) 0
     );
 
     &:hover {
-      background: rgb(var(--board-move-dest) / 30%);
+      background: rgb(var(--board-move-dest) / 0.3);
     }
   }
 
@@ -64,20 +64,20 @@ cg-board {
     background: radial-gradient(
       transparent 0%,
       transparent 80%,
-      rgb(var(--board-move-dest) / 30%) 80%
+      rgb(var(--board-move-dest) / 0.3) 80%
     );
   }
 
   & square.premove-dest {
     background: radial-gradient(
-      rgb(var(--board-premove) / 50%) 22%,
+      rgb(var(--board-premove) / 0.5) 22%,
       rgb(var(--board-premove)) 0,
-      rgb(var(--board-crust) / 30%) 0,
-      rgb(var(--board-crust) / 0%) 0
+      rgb(var(--board-crust) / 0.3) 0,
+      rgb(var(--board-crust) / 0) 0
     );
 
     &:hover {
-      background: rgb(var(--board-premove) / 20%);
+      background: rgb(var(--board-premove) / 0.2);
     }
   }
 
@@ -85,7 +85,7 @@ cg-board {
     background: radial-gradient(
       transparent 0%,
       transparent 80%,
-      rgb(var(--board-premove) / 20%) 80%
+      rgb(var(--board-premove) / 0.2) 80%
     );
   }
 
@@ -101,14 +101,14 @@ cg-board {
     background: radial-gradient(
       ellipse at center,
       rgb(var(--board-check)) 0%,
-      rgb(var(--board-check) / 80%) 25%,
-      rgb(var(--board-check) / 0%) 89%,
-      rgb(var(--board-check) / 0%) 100%
+      rgb(var(--board-check) / 0.8) 25%,
+      rgb(var(--board-check) / 0) 89%,
+      rgb(var(--board-check) / 0) 100%
     );
   }
 
   & square.current-premove {
-    background-color: rgb(var(--board-premove) / 50%);
+    background-color: rgb(var(--board-premove) / 0.5);
   }
 }
 
