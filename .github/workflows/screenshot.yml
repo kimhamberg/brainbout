@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   screenshot:
@@ -26,10 +27,19 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run screenshot
 
-      - run: |
-          git diff --quiet docs/screenshot.png && exit 0
+      - name: Create and auto-merge PR if screenshot changed
+        run: |
+          git diff --quiet docs/screenshot.png && echo "No changes" && exit 0
+          BRANCH="bot/update-screenshot-$(date +%s)"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
           git add docs/screenshot.png
           git commit -m "docs: auto-update screenshot"
-          git push
+          git push origin "$BRANCH"
+          PR_URL=$(gh pr create --title "docs: auto-update screenshot" \
+            --body "Automated screenshot update from CI." \
+            --base master --head "$BRANCH")
+          gh pr merge "$PR_URL" --auto --squash --delete-branch
+        env:
+          GH_TOKEN: ${{ github.token }}
