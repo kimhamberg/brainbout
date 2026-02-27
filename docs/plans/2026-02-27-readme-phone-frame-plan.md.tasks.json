@@ -1,0 +1,12 @@
+{
+  "planPath": "docs/plans/2026-02-27-readme-phone-frame-plan.md",
+  "tasks": [
+    {"id": 29, "subject": "Task 1: Create Pixel-style phone frame SVG", "status": "pending"},
+    {"id": 30, "subject": "Task 2: Add sharp and composite screenshot into phone frame", "status": "pending", "blockedBy": [29]},
+    {"id": 31, "subject": "Task 3: Create README template with placeholders", "status": "pending"},
+    {"id": 32, "subject": "Task 4: Create README stats generator script", "status": "pending", "blockedBy": [31]},
+    {"id": 33, "subject": "Task 5: Update CI workflow to auto-generate README", "status": "pending", "blockedBy": [30, 32]},
+    {"id": 34, "subject": "Task 6: Final verification and push", "status": "pending", "blockedBy": [33]}
+  ],
+  "lastUpdated": "2026-02-27T21:10:00Z"
+}
