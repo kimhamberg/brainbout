@@ -1,11 +1,17 @@
-# Brainbout
+<p align="center">
+  <img src="public/favicon.svg" alt="Brainbout" width="96" />
+</p>
 
-[![CI](https://github.com/kimhamberg/brainbout/actions/workflows/ci.yml/badge.svg)](https://github.com/kimhamberg/brainbout/actions/workflows/ci.yml)
-[![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
-[![Web](https://img.shields.io/badge/Web-Play_Online-8caaee)](https://kimhamberg.github.io/brainbout/)
-[![Linux](https://img.shields.io/badge/Linux-Download-a6d189)](https://github.com/kimhamberg/brainbout/releases/latest/download/brainbout-linux-amd64)
-[![Windows](https://img.shields.io/badge/Windows-Download-e5c890)](https://github.com/kimhamberg/brainbout/releases/latest/download/brainbout-windows-amd64.exe)
-[![Android](https://img.shields.io/badge/Android-APK-ef9f76)](https://github.com/kimhamberg/brainbout/releases/latest/download/brainbout.apk)
+<h1 align="center">Brainbout</h1>
+
+<p align="center">
+  <a href="https://github.com/kimhamberg/brainbout/actions/workflows/ci.yml"><img src="https://github.com/kimhamberg/brainbout/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPL--3.0-blue.svg" alt="License: GPL-3.0" /></a>
+  <a href="https://kimhamberg.github.io/brainbout/"><img src="https://img.shields.io/badge/Web-Play_Online-8caaee" alt="Web" /></a>
+  <a href="https://github.com/kimhamberg/brainbout/releases/latest/download/brainbout-linux-amd64"><img src="https://img.shields.io/badge/Linux-Download-a6d189" alt="Linux" /></a>
+  <a href="https://github.com/kimhamberg/brainbout/releases/latest/download/brainbout-windows-amd64.exe"><img src="https://img.shields.io/badge/Windows-Download-e5c890" alt="Windows" /></a>
+  <a href="https://github.com/kimhamberg/brainbout/releases/latest/download/brainbout.apk"><img src="https://img.shields.io/badge/Android-APK-ef9f76" alt="Android" /></a>
+</p>
 
 A daily brain workout. Train your brain, not your scroll thumb.
 
