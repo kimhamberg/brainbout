@@ -205,7 +205,7 @@
   &:hover:not(.done) {
     transform: translateY(-1px);
     background-size:
-      calc(0.75rem + 18px + 0.75rem) 100%,
+      calc(0.75rem + 18px + 3.5rem) 100%,
       auto;
     box-shadow: var(--ctp-shadow-lg);
 
