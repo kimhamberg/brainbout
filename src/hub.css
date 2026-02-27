@@ -1,16 +1,23 @@
-#streak {
-  font-size: 1.1rem;
-  color: var(--ctp-subtext0);
+.hub-stats-bar {
+  display: flex;
+  gap: 0.75rem;
   margin-bottom: 1rem;
+  flex-wrap: wrap;
 }
 
-#streak strong {
+.streak-badge,
+.sessions-badge {
+  font-size: 0.85rem;
+  color: var(--ctp-subtext0);
+  padding: 0.2rem 0.6rem;
+  background: var(--ctp-surface0);
+  border-radius: 6px;
+  box-shadow: var(--ctp-shadow);
+  transition: background-color 0.25s ease;
+}
+
+.streak-badge {
   color: var(--ctp-peach);
-}
-
-h2 {
-  font-size: 1.1rem;
-  margin-bottom: 0.75rem;
 }
 
 .game-list {
@@ -47,16 +54,12 @@ h2 {
   font-size: 0.95rem;
 }
 
-.game-score {
-  font-size: 0.85rem;
-  color: var(--ctp-subtext0);
-}
-
 .game-check {
   color: var(--ctp-green);
 }
 
-#start-btn {
+#start-btn,
+#new-session-btn {
   width: 100%;
   padding: 0.75rem;
   background: var(--ctp-blue);
@@ -73,31 +76,83 @@ h2 {
     transform 0.1s ease;
 }
 
-#start-btn:hover {
+#start-btn:hover,
+#new-session-btn:hover {
   box-shadow: var(--ctp-shadow-lg);
   transform: translateY(-1px);
 }
 
-#start-btn:active {
+#start-btn:active,
+#new-session-btn:active {
   transform: translateY(0);
   box-shadow: none;
 }
 
-#start-btn:focus-visible {
+#start-btn:focus-visible,
+#new-session-btn:focus-visible {
   outline: none;
   box-shadow: var(--ctp-focus-ring);
 }
 
-#start-btn:disabled {
-  background: var(--ctp-surface1);
-  color: var(--ctp-subtext0);
-  cursor: default;
-  box-shadow: none;
-  transform: none;
+/* --- Stats panel --- */
+
+.stats-panel {
+  margin-top: 1.5rem;
 }
 
-.summary {
-  text-align: center;
-  padding: 1rem;
+.stats-panel summary {
+  font-size: 0.9rem;
+  color: var(--ctp-subtext0);
+  cursor: pointer;
+  padding: 0.5rem 0;
+  transition: color 0.15s ease;
+}
+
+.stats-panel summary:hover {
+  color: var(--ctp-text);
+}
+
+.stats-panel[open] summary {
+  margin-bottom: 0.75rem;
+}
+
+.stats-content h3 {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ctp-subtext0);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.4rem;
+  margin-top: 0.75rem;
+}
+
+.stats-content h3:first-child {
+  margin-top: 0;
+}
+
+.stats-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  padding: 0.3rem 0;
+}
+
+.stat-value {
+  color: var(--ctp-text);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-total {
+  margin-top: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--ctp-surface1);
   color: var(--ctp-subtext0);
 }

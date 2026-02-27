@@ -1,11 +1,14 @@
 import { initTheme, wireToggle } from "./shared/theme";
 import {
   GAMES,
+  type GameId,
   todayString,
   getStreak,
-  getDailyScore,
-  nextGame,
-  isSkipped,
+  getSessionsToday,
+  getTotalSessions,
+  getBest,
+  getTodayBest,
+  completeSession,
 } from "./shared/progress";
 
 const GAME_LABELS: Record<string, string> = {
@@ -28,8 +31,57 @@ function formatScore(game: string, score: number): string {
     if (score === 0.5) return "Draw";
     return "Lost";
   }
-  return `Score: ${String(score)}`;
+  return String(score);
 }
+
+// --- Session state (in-memory, persisted via sessionStorage across page navigations) ---
+
+const session = new Set<GameId>();
+
+// Read completed game from URL params
+const params = new URLSearchParams(window.location.search);
+const completedParam = params.get("completed");
+
+// Restore previously completed games from sessionStorage
+const stored = sessionStorage.getItem("brainbout:current-session");
+if (stored !== null) {
+  for (const g of JSON.parse(stored) as string[]) {
+    if ((GAMES as readonly string[]).includes(g)) session.add(g as GameId);
+  }
+}
+
+// Add newly completed game
+if (completedParam !== null && (GAMES as readonly string[]).includes(completedParam)) {
+  session.add(completedParam as GameId);
+  sessionStorage.setItem("brainbout:current-session", JSON.stringify([...session]));
+  // Clean URL
+  window.history.replaceState({}, "", window.location.pathname);
+}
+
+// Check if session just completed
+let sessionJustCompleted = false;
+if (session.size === GAMES.length) {
+  completeSession();
+  sessionJustCompleted = true;
+  // Clear the session from sessionStorage so it doesn't re-trigger
+  sessionStorage.removeItem("brainbout:current-session");
+}
+
+function nextGame(): GameId | null {
+  for (const game of GAMES) {
+    if (!session.has(game)) return game;
+  }
+  return null;
+}
+
+function startNewSession(): void {
+  session.clear();
+  sessionStorage.removeItem("brainbout:current-session");
+  sessionJustCompleted = false;
+  render(); // eslint-disable-line @typescript-eslint/no-use-before-define -- called from event handler
+}
+
+// --- Render ---
 
 function render(): void {
   const hub = document.getElementById("hub");
@@ -37,46 +89,81 @@ function render(): void {
 
   const today = todayString();
   const streak = getStreak(today);
-  const next = nextGame(today);
+  const sessionsToday = getSessionsToday();
+  const next = nextGame();
 
   let html = "";
 
-  html += `<div id="streak"><strong>${String(streak)}-day streak</strong></div>`;
-  html += `<h2>Today's Workout</h2>`;
-  html += `<div class="game-list">`;
+  // Header stats badges
+  html += `<div class="hub-stats-bar">`;
+  if (streak > 0) html += `<span class="streak-badge">${String(streak)}-day streak</span>`;
+  if (sessionsToday > 0) html += `<span class="sessions-badge">${String(sessionsToday)} session${sessionsToday === 1 ? "" : "s"} today</span>`;
+  html += `</div>`;
 
+  // Game list
+  html += `<div class="game-list">`;
   for (const game of GAMES) {
-    const score = getDailyScore(game, today);
-    const done = score !== null;
-    const skipped = isSkipped(game, today);
+    const done = session.has(game);
     const current = game === next;
     const cls = done ? "done" : current ? "current" : "";
 
     html += `<div class="game-card ${cls}">`;
     html += `<span class="game-name">${GAME_LABELS[game]}</span>`;
-    if (skipped) {
-      html += `<span class="game-score">Skipped</span>`;
-    } else if (done) {
-      html += `<span class="game-score">${formatScore(game, score)} <span class="game-check">✓</span></span>`;
+    if (done) {
+      html += `<span class="game-check">\u2713</span>`;
+    }
+    html += `</div>`;
+  }
+  html += `</div>`;
+
+  // Action button
+  if (sessionJustCompleted) {
+    html += `<button id="new-session-btn">New Session</button>`;
+  } else if (next !== null) {
+    html += `<button id="start-btn">${session.size === 0 ? "Start" : "Next"}</button>`;
+  }
+
+  // Collapsible stats
+  html += `<details class="stats-panel">`;
+  html += `<summary>Stats</summary>`;
+  html += `<div class="stats-content">`;
+
+  html += `<h3>All-time best</h3>`;
+  html += `<div class="stats-grid">`;
+  for (const game of GAMES) {
+    const best = getBest(game);
+    html += `<div class="stat-row"><span>${GAME_LABELS[game]}</span><span class="stat-value">${best !== null ? formatScore(game, best) : "\u2014"}</span></div>`;
+  }
+  html += `</div>`;
+
+  const hasTodayBests = GAMES.some((g) => getTodayBest(g) !== null);
+  if (hasTodayBests) {
+    html += `<h3>Today's best</h3>`;
+    html += `<div class="stats-grid">`;
+    for (const game of GAMES) {
+      const todayBest = getTodayBest(game);
+      html += `<div class="stat-row"><span>${GAME_LABELS[game]}</span><span class="stat-value">${todayBest !== null ? formatScore(game, todayBest) : "\u2014"}</span></div>`;
     }
     html += `</div>`;
   }
 
-  html += `</div>`;
+  html += `<div class="stat-row stat-total"><span>Total sessions</span><span class="stat-value">${String(getTotalSessions())}</span></div>`;
 
-  if (next !== null) {
-    html += `<button id="start-btn">${streak === 0 && next === GAMES[0] ? "Start" : "Next"}</button>`;
-  } else {
-    html += `<div class="summary">All done for today!</div>`;
-  }
+  html += `</div></details>`;
 
   hub.innerHTML = html;
 
-  const btn = document.getElementById("start-btn");
-  if (btn && next !== null) {
-    btn.addEventListener("click", () => {
+  // Wire buttons
+  const startBtn = document.getElementById("start-btn");
+  if (startBtn && next !== null) {
+    startBtn.addEventListener("click", () => {
       window.location.href = GAME_URLS[next];
     });
+  }
+
+  const newBtn = document.getElementById("new-session-btn");
+  if (newBtn) {
+    newBtn.addEventListener("click", startNewSession);
   }
 }
 
