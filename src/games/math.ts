@@ -1,3 +1,4 @@
+import { initTheme, wireToggle } from "../shared/theme";
 import { createTimer } from "../shared/timer";
 import { recordScore, todayString, SKIP_SCORE } from "../shared/progress";
 import * as sound from "../shared/sounds";
@@ -161,3 +162,6 @@ document.getElementById("skip-btn")?.addEventListener("click", () => {
 
 renderPlaying();
 timer.start();
+
+initTheme();
+wireToggle();

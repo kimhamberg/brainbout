@@ -1,3 +1,4 @@
+import { initTheme, wireToggle } from "../shared/theme";
 import { createTimer } from "../shared/timer";
 import { recordScore, todayString, SKIP_SCORE } from "../shared/progress";
 import { getDueWords, recordAnswer, levenshtein } from "./vocab-srs";
@@ -240,3 +241,6 @@ document.getElementById("skip-btn")?.addEventListener("click", () => {
 
 updateLangButton();
 void startGame();
+
+initTheme();
+wireToggle();

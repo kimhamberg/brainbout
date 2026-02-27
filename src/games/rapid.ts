@@ -1,6 +1,7 @@
 import "@lichess-org/chessground/assets/chessground.base.css";
 import "@lichess-org/chessground/assets/chessground.brown.css";
 import "@lichess-org/chessground/assets/chessground.cburnett.css";
+import "../shared/board-theme.css";
 
 import { Chessground } from "@lichess-org/chessground";
 import type { Api } from "@lichess-org/chessground/api";
@@ -12,6 +13,7 @@ import { chessgroundDests } from "chessops/compat";
 import { randomChess960 } from "../chess960";
 import { StockfishEngine } from "../shared/engine";
 import { recordScore, todayString, SKIP_SCORE } from "../shared/progress";
+import { initTheme, wireToggle } from "../shared/theme";
 import * as sound from "../shared/sounds";
 
 // --- Chess clock ---
@@ -289,3 +291,6 @@ document.getElementById("skip-btn")?.addEventListener("click", () => {
 });
 
 void main();
+
+initTheme();
+wireToggle();

@@ -1,3 +1,4 @@
+import { initTheme, wireToggle } from "../shared/theme";
 import { createTimer } from "../shared/timer";
 import { recordScore, todayString, SKIP_SCORE } from "../shared/progress";
 import * as sound from "../shared/sounds";
@@ -139,3 +140,6 @@ gameActive = true;
 renderGrid();
 showTarget();
 timerRef.start();
+
+initTheme();
+wireToggle();

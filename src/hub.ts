@@ -1,3 +1,4 @@
+import { initTheme, wireToggle } from "./shared/theme";
 import {
   GAMES,
   todayString,
@@ -80,3 +81,6 @@ function render(): void {
 }
 
 render();
+
+initTheme();
+wireToggle();
