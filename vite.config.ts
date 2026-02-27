@@ -11,6 +11,7 @@ export default defineConfig({
         reaction: resolve(__dirname, "games/reaction.html"),
         vocab: resolve(__dirname, "games/vocab.html"),
         math: resolve(__dirname, "games/math.html"),
+        reaction: resolve(__dirname, "games/reaction.html"),
       },
     },
   },
