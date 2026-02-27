@@ -75,13 +75,5 @@
         "units": ["rem"]
       }
     ]
-  },
-  "overrides": [
-    {
-      "files": ["src/shared/board-theme.css"],
-      "rules": {
-        "csstools/use-nesting": null
-      }
-    }
-  ]
+  }
 }
