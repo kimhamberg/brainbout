@@ -1,5 +1,6 @@
 {
   "extends": "stylelint-config-standard",
+  "plugins": ["stylelint-value-no-unknown-custom-properties"],
   "rules": {
     "color-no-invalid-hex": true,
     "color-hex-alpha": "never",
@@ -9,6 +10,12 @@
     "function-url-no-scheme-relative": true,
     "unit-no-unknown": true,
     "no-unknown-custom-properties": null,
+    "csstools/value-no-unknown-custom-properties": [
+      true,
+      {
+        "importFrom": ["src/style.css", "src/shared/board-theme.css"]
+      }
+    ],
     "no-unknown-custom-media": true,
     "no-unknown-animations": true,
     "selector-no-qualifying-type": true,
