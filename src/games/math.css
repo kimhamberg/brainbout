@@ -46,7 +46,7 @@
   border: 2px solid var(--ctp-surface1);
   border-radius: 6px;
 
-  font-size: 1.2rem;
+  font-size: 1.25rem;
   font-weight: 600;
   color: var(--ctp-text);
 
@@ -77,7 +77,7 @@
 }
 
 .score-display {
-  font-size: 1.1rem;
+  font-size: 1.125rem;
   color: var(--ctp-subtext0);
   transition: color 0.25s ease;
 }
