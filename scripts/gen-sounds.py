@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate synthesised UI sound palette for Brainbout  (v3).
+"""Generate synthesised UI sound palette for Brainbout  (v4).
 
 Run:  .venv/bin/python scripts/gen-sounds.py
 
@@ -17,8 +17,12 @@ Design principles (informed by Duolingo / Apple / cross-modal research):
   • Pedalboard master chain — subtle room reverb + gentle compression.
   • Fade-out on every sound — 8ms raised-cosine eliminates pop/click
     when playback is interrupted or the file ends.
-  • Chess pieces use bandpass-filtered noise + resonant body for a
-    closer-to-wood character.
+  • Chess pieces use modal synthesis — multiple resonant modes with
+    frequency-dependent damping, bandpass-filtered noise residual,
+    and impact transient.  Based on research into wood acoustics:
+    wood modal frequencies cluster 100–500 Hz (free-free beam ratios),
+    wood has high damping (modes decay fast → thud not ring),
+    and higher modes decay faster than lower ones.
 
 Outputs WAV files to public/sounds/.
 """
@@ -151,32 +155,66 @@ def wood_hit(
     dur: float,
     noise_level: float = 0.5,
     body_decay: float = 35,
-    noise_decay: float = 55,
-    brightness: float = 1200,
+    brightness: float = 500,
+    hardness: float = 0.5,
 ) -> np.ndarray:
-    """Simulated wood-on-wood impact for chess pieces.
+    """Modal synthesis of wood-on-wood impact for chess pieces.
+
+    Based on acoustic research:
+      • Wood modal frequencies follow free-free beam ratios relative
+        to the fundamental: 1.0, 2.76, 5.40, 8.93 (non-harmonic).
+      • Wood has high damping — modes decay fast (thud, not ring).
+      • Higher modes decay faster: loss ∝ b₁ + b₃·f² (frequency-
+        dependent damping from Nathan Ho / modal synthesis lit).
+      • Audible wood resonance sits 100–500 Hz (Tsugi procedural
+        foley research), NOT the 30–170 kHz ultrasonic range.
 
     Layers:
-      1. Resonant body — sine at the board's natural frequency, fast decay
-      2. Board overtone — 2nd partial for warmth
-      3. Bandpass noise — the 'woody' texture of felt-on-board (200–brightness Hz)
-      4. Impact transient — very short high-frequency noise burst
+      1. Modal bank — 4 resonant modes at beam ratios, each with
+         frequency-dependent exponential decay
+      2. Residual noise — bandpass-filtered (200–brightness Hz) for
+         the 'woody' texture of contact
+      3. Impact transient — very short broadband noise burst (~3 ms)
+         filtered to 400–2000 Hz for the initial 'click'
+
+    Args:
+        body_freq: Fundamental mode frequency (Hz), typically 80–200.
+        dur: Total sound duration (seconds).
+        noise_level: Mix level of the noise residual (0–1).
+        body_decay: Base decay rate for the fundamental mode.
+        brightness: Upper cutoff of the noise residual bandpass (Hz).
+        hardness: Impact transient loudness (0–1); higher = harder surface.
     """
-    # resonant body
-    body = sine(body_freq, dur) * env(dur, decay=body_decay)
-    overtone = sine(body_freq * 2.3, dur) * env(dur, decay=body_decay * 1.4) * 0.2
+    t = _t(dur)
 
-    # woody texture — bandpass filtered noise
-    raw = noise(dur) * env(dur, decay=noise_decay)
-    woody = bpf(raw, 200, brightness) * noise_level
+    # Free-free beam modal ratios (first 4 modes)
+    # From beam vibration theory: f_n / f_1 for free-free boundary
+    mode_ratios = [1.0, 2.76, 5.40, 8.93]
+    mode_amps = [1.0, 0.35, 0.15, 0.06]
 
-    # sharp impact transient in first ~3ms
+    # Modal bank — each mode is a decaying sine with freq-dependent damping
+    # Higher modes decay faster: decay_k = body_decay * (f_k / f_1)^0.7
+    modal = np.zeros_like(t)
+    for ratio, amp in zip(mode_ratios, mode_amps):
+        freq_k = body_freq * ratio
+        if freq_k > SR / 2:
+            continue  # skip modes above Nyquist
+        decay_k = body_decay * (ratio**0.7)
+        modal += amp * sine(freq_k, dur) * env(dur, decay=decay_k)
+
+    # Residual noise — bandpass-filtered for woody texture (200–brightness Hz)
+    noise_decay_rate = body_decay * 1.5  # noise dies faster than body
+    raw = noise(dur) * env(dur, decay=noise_decay_rate)
+    woody = bpf(raw, 200, min(brightness, SR / 2 - 1)) * noise_level
+
+    # Impact transient — short broadband click (~3 ms)
     imp_dur = 0.003
-    imp = noise(imp_dur) * env(imp_dur, attack=0.0005, decay=200) * 0.6
-    imp = bpf(imp, 800, 3500)
+    imp_samples = int(SR * imp_dur)
+    imp = noise(imp_dur) * env(imp_dur, attack=0.0003, decay=300) * hardness
+    imp = bpf(imp, 400, 2000)
 
-    out = body + overtone + woody
-    out[: len(imp)] += imp
+    out = modal + woody
+    out[:imp_samples] += imp
     return out
 
 
@@ -237,42 +275,46 @@ def wrong() -> np.ndarray:
 def move() -> np.ndarray:
     """Wood-on-wood thud — chess piece placed on board.
 
-    Bandpass-filtered noise for woody texture, resonant body at G2,
-    short impact transient for the felt-and-wood contact.
+    Modal synthesis at G2 (98 Hz) — 4 beam modes with fast decay.
+    Noise residual capped at 500 Hz for the woody texture.
+    Moderate hardness — felt-bottom piece on wooden board.
     """
     return wood_hit(
-        body_freq=98.00,  # G2
-        dur=0.10,
+        body_freq=98.00,  # G2 — board fundamental
+        dur=0.12,
         noise_level=0.55,
-        body_decay=30,
-        noise_decay=45,
-        brightness=1000,
+        body_decay=40,
+        brightness=500,  # wood resonance caps ~500 Hz
+        hardness=0.45,
     )
 
 
 def capture() -> np.ndarray:
-    """Piece-on-piece clack then placement — chess capture.
+    """Piece-on-piece clack then board placement — chess capture.
 
-    Two layered wood hits: a brighter clack (pieces colliding)
-    followed immediately by the board thud.
+    Two layered modal wood hits:
+      1. Piece clack — higher fundamental (~196 Hz), brighter noise,
+         harder transient (wood-on-wood collision)
+      2. Board thud — lower fundamental (~110 Hz), softer noise,
+         gentler transient (piece settling on board)
     """
-    # piece clack — higher, brighter
+    # piece clack — higher, harder, brighter
     clack = wood_hit(
-        body_freq=220.00,  # A3
-        dur=0.04,
-        noise_level=0.7,
-        body_decay=60,
-        noise_decay=80,
-        brightness=2000,
+        body_freq=196.00,  # G3 — small piece resonance
+        dur=0.05,
+        noise_level=0.6,
+        body_decay=55,
+        brightness=500,
+        hardness=0.7,
     )
-    # board thud — deeper, follows the clack
+    # board thud — deeper, softer, follows the clack
     thud = wood_hit(
-        body_freq=110.00,  # A2
-        dur=0.08,
+        body_freq=110.00,  # A2 — board resonance
+        dur=0.10,
         noise_level=0.45,
-        body_decay=35,
-        noise_decay=50,
-        brightness=900,
+        body_decay=38,
+        brightness=450,
+        hardness=0.35,
     )
     return np.concatenate([clack, thud])
 
