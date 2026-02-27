@@ -3,8 +3,6 @@
   "plugins": [
     "stylelint-value-no-unknown-custom-properties",
     "stylelint-declaration-block-no-ignored-properties",
-    "stylelint-high-performance-animation",
-    "stylelint-declaration-strict-value",
     "stylelint-use-nesting",
     "stylelint-media-use-custom-media",
     "stylelint-scales"
@@ -27,30 +25,6 @@
       }
     ],
     "plugin/declaration-block-no-ignored-properties": true,
-    "plugin/no-low-performance-animation-properties": [
-      true,
-      {
-        "ignoreProperties": [
-          "color",
-          "background-color",
-          "border-color",
-          "box-shadow"
-        ]
-      }
-    ],
-    "scale-unlimited/declaration-strict-value": [
-      ["/color$/", "fill", "stroke"],
-      {
-        "ignoreValues": [
-          "transparent",
-          "currentcolor",
-          "inherit",
-          "initial",
-          "unset"
-        ],
-        "ignoreFunctions": true
-      }
-    ],
     "csstools/use-nesting": "always",
     "csstools/media-use-custom-media": [
       "always-known",

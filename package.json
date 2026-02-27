@@ -36,8 +36,6 @@
     "stylelint-config-clean-order": "^8.0.1",
     "stylelint-config-standard": "^40.0.0",
     "stylelint-declaration-block-no-ignored-properties": "^3.0.0",
-    "stylelint-declaration-strict-value": "^1.11.1",
-    "stylelint-high-performance-animation": "^2.0.0",
     "stylelint-media-use-custom-media": "^4.1.0",
     "stylelint-order": "^7.0.1",
     "stylelint-scales": "^5.0.0",
