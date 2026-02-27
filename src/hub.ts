@@ -8,21 +8,21 @@ import {
 } from "./shared/progress";
 
 const GAME_LABELS: Record<string, string> = {
-  blitz: "Chess960 Blitz",
-  memory: "Memory Match",
-  stroop: "Stroop",
+  rapid: "Chess960 Rapid",
+  reaction: "Reaction Grid",
+  vocab: "Word Recall",
   math: "Quick Math",
 };
 
 const GAME_URLS: Record<string, string> = {
-  blitz: "games/blitz.html",
-  memory: "games/memory.html",
-  stroop: "games/stroop.html",
+  rapid: "games/rapid.html",
+  reaction: "games/reaction.html",
+  vocab: "games/vocab.html",
   math: "games/math.html",
 };
 
 function formatScore(game: string, score: number): string {
-  if (game === "blitz") {
+  if (game === "rapid") {
     if (score === 1) return "Won";
     if (score === 0.5) return "Draw";
     return "Lost";
