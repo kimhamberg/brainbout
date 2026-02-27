@@ -1,0 +1,128 @@
+/* Catppuccin-complementary chess board — overrides chessground.brown.css */
+
+/*
+ * Board squares via conic-gradient + CSS vars (replaces hardcoded SVG).
+ * Frappe: cool slate (surface1/surface0)
+ * Latte: soft gray (mantle/surface1)
+ */
+
+:root,
+[data-theme="frappe"] {
+  --board-light: #51576d;
+  --board-dark: #414559;
+  --board-last-move: rgba(140, 170, 238, 0.35);
+  --board-selected: rgba(140, 170, 238, 0.4);
+  --board-move-dest: 166, 209, 137;
+  --board-check: 231, 130, 132;
+  --board-premove: 239, 159, 118;
+  --board-coord-dark: rgba(198, 208, 245, 0.8);
+  --board-coord-light: rgba(65, 69, 89, 0.8);
+}
+
+[data-theme="latte"] {
+  --board-light: #e6e9ef;
+  --board-dark: #bcc0cc;
+  --board-last-move: rgba(30, 102, 245, 0.25);
+  --board-selected: rgba(30, 102, 245, 0.3);
+  --board-move-dest: 64, 160, 43;
+  --board-check: 210, 15, 57;
+  --board-premove: 254, 100, 11;
+  --board-coord-dark: rgba(76, 79, 105, 0.8);
+  --board-coord-light: rgba(188, 192, 204, 0.8);
+}
+
+/* Board squares */
+cg-board {
+  background-color: var(--board-light);
+  background-image: conic-gradient(
+    var(--board-dark) 25%,
+    var(--board-light) 0 50%,
+    var(--board-dark) 0 75%,
+    var(--board-light) 0
+  );
+  background-size: 25% 25%;
+}
+
+/* Interactive states */
+cg-board square.move-dest {
+  background: radial-gradient(
+    rgba(var(--board-move-dest), 0.5) 22%,
+    rgb(var(--board-move-dest)) 0,
+    rgba(0, 0, 0, 0.3) 0,
+    rgba(0, 0, 0, 0) 0
+  );
+}
+
+cg-board square.oc.move-dest {
+  background: radial-gradient(
+    transparent 0%,
+    transparent 80%,
+    rgba(var(--board-move-dest), 0.3) 80%
+  );
+}
+
+cg-board square.move-dest:hover {
+  background: rgba(var(--board-move-dest), 0.3);
+}
+
+cg-board square.premove-dest {
+  background: radial-gradient(
+    rgba(var(--board-premove), 0.5) 22%,
+    rgb(var(--board-premove)) 0,
+    rgba(0, 0, 0, 0.3) 0,
+    rgba(0, 0, 0, 0) 0
+  );
+}
+
+cg-board square.oc.premove-dest {
+  background: radial-gradient(
+    transparent 0%,
+    transparent 80%,
+    rgba(var(--board-premove), 0.2) 80%
+  );
+}
+
+cg-board square.premove-dest:hover {
+  background: rgba(var(--board-premove), 0.2);
+}
+
+cg-board square.last-move {
+  background-color: var(--board-last-move);
+}
+
+cg-board square.selected {
+  background-color: var(--board-selected);
+}
+
+cg-board square.check {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(var(--board-check), 1) 0%,
+    rgba(var(--board-check), 0.8) 25%,
+    rgba(var(--board-check), 0) 89%,
+    rgba(var(--board-check), 0) 100%
+  );
+}
+
+cg-board square.current-premove {
+  background-color: rgba(var(--board-premove), 0.5);
+}
+
+/* Coordinate label colors */
+.orientation-white .ranks :nth-child(odd),
+.orientation-white .files :nth-child(even),
+.orientation-black .ranks :nth-child(even),
+.orientation-black .files :nth-child(odd),
+coords.squares:nth-of-type(odd) :nth-child(even),
+coords.squares:nth-of-type(even) :nth-child(odd) {
+  color: var(--board-coord-dark);
+}
+
+.orientation-white .ranks :nth-child(even),
+.orientation-white .files :nth-child(odd),
+.orientation-black .ranks :nth-child(odd),
+.orientation-black .files :nth-child(even),
+coords.squares:nth-of-type(odd) :nth-child(odd),
+coords.squares:nth-of-type(even) :nth-child(even) {
+  color: var(--board-coord-light);
+}
