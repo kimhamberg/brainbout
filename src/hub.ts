@@ -129,7 +129,6 @@ function render(): void {
       html += `</div>`;
     } else {
       html += `<a href="${GAME_URLS[game]}" class="game-card ${cls}" style="${style}">`;
-      html += `<span class="game-play">Play</span>`;
       html += `<span class="game-icon">${GAME_ICONS[game]}</span>`;
       html += `<span class="game-name">${GAME_LABELS[game]}</span>`;
       html += `</a>`;
