@@ -1,3 +1,9 @@
+.hub-title {
+  color: transparent;
+  background: linear-gradient(135deg, var(--ctp-blue), var(--ctp-peach));
+  background-clip: text;
+}
+
 .hub-stats-bar {
   display: flex;
   flex-wrap: wrap;
