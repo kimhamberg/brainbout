@@ -48,10 +48,7 @@
 body {
   min-height: 100vh;
 
-  font-family:
-    system-ui,
-    -apple-system,
-    sans-serif;
+  font-family: Montserrat, sans-serif;
   color: var(--ctp-text);
 
   background: var(--ctp-base);
