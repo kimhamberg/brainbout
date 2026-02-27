@@ -1,11 +1,13 @@
 name: Update screenshot
 
 on:
+  workflow_dispatch:
   push:
     branches: [master]
     paths:
       - "src/**"
       - "index.html"
+      - "games/**"
       - "scripts/screenshot.ts"
 
 permissions:
