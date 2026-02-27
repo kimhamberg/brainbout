@@ -1,0 +1,121 @@
+#game {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding-top: 1rem;
+}
+
+.timer {
+  font-size: 1.5rem;
+  color: var(--ctp-subtext0);
+}
+
+.cue-type {
+  font-size: 0.85rem;
+  color: var(--ctp-subtext0);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.cue-text {
+  font-size: 1.3rem;
+  text-align: center;
+  max-width: 320px;
+  min-height: 3rem;
+  line-height: 1.4;
+}
+
+.vocab-input {
+  width: 100%;
+  max-width: 280px;
+  padding: 0.6rem 0.75rem;
+  font-size: 1.1rem;
+  background: var(--ctp-surface0);
+  border: 2px solid var(--ctp-surface1);
+  border-radius: 4px;
+  color: var(--ctp-text);
+  text-align: center;
+  outline: none;
+}
+
+.vocab-input:focus {
+  border-color: var(--ctp-blue);
+}
+
+.vocab-input.correct {
+  border-color: var(--ctp-green);
+}
+
+.vocab-input.close {
+  border-color: var(--ctp-yellow);
+}
+
+.vocab-input.wrong {
+  border-color: var(--ctp-red);
+}
+
+.feedback {
+  font-size: 1rem;
+  min-height: 1.5rem;
+}
+
+.feedback.correct {
+  color: var(--ctp-green);
+}
+
+.feedback.close {
+  color: var(--ctp-yellow);
+}
+
+.feedback.wrong {
+  color: var(--ctp-red);
+}
+
+.score-display {
+  font-size: 1.1rem;
+  color: var(--ctp-subtext0);
+}
+
+.streak-display {
+  font-size: 0.9rem;
+  color: var(--ctp-subtext0);
+}
+
+.lang-toggle {
+  font-size: 0.75rem;
+  color: var(--ctp-subtext0);
+  background: none;
+  border: 1px solid var(--ctp-surface1);
+  border-radius: 4px;
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+}
+
+.lang-toggle:hover {
+  border-color: var(--ctp-blue);
+  color: var(--ctp-text);
+}
+
+.result {
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.result .final-score {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.result button {
+  margin-top: 1rem;
+  padding: 0.75rem 2rem;
+  background: var(--ctp-blue);
+  color: var(--ctp-mantle);
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
