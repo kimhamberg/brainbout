@@ -10,7 +10,7 @@ import { randomChess960, chess960Fen } from "./chess960";
 import { StockfishEngine, DEFAULT_OPTIONS, humanDelay } from "./engine";
 import { createGame, makeMove, applyUciMove, getGameStatus } from "./game";
 import type { GameState, GameStatus } from "./game";
-import * as sound from "./sounds";
+import * as sound from "./shared/sounds";
 
 const sfScript = `${String(import.meta.env.BASE_URL)}stockfish/stockfish-18-lite-single.js`;
 
