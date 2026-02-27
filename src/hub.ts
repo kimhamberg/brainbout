@@ -73,13 +73,6 @@ if (session.size === GAMES.length) {
   sessionStorage.removeItem("brainbout:current-session");
 }
 
-function nextGame(): GameId | null {
-  for (const game of GAMES) {
-    if (!session.has(game)) return game;
-  }
-  return null;
-}
-
 function startNewSession(): void {
   session.clear();
   sessionStorage.removeItem("brainbout:current-session");
@@ -96,8 +89,6 @@ function render(): void {
   const today = todayString();
   const streak = getStreak(today);
   const sessionsToday = getSessionsToday();
-  const next = nextGame();
-
   let html = "";
 
   // Header stats badges
@@ -112,15 +103,18 @@ function render(): void {
   html += `<div class="game-list">`;
   for (const game of GAMES) {
     const done = session.has(game);
-    const current = game === next;
-    const cls = done ? "done" : current ? "current" : "";
+    const cls = done ? "done" : "";
 
-    html += `<div class="game-card ${cls}">`;
-    html += `<span class="game-name">${GAME_LABELS[game]}</span>`;
     if (done) {
+      html += `<div class="game-card ${cls}">`;
+      html += `<span class="game-name">${GAME_LABELS[game]}</span>`;
       html += `<span class="game-check">\u2713</span>`;
+      html += `</div>`;
+    } else {
+      html += `<a href="${GAME_URLS[game]}" class="game-card ${cls}">`;
+      html += `<span class="game-name">${GAME_LABELS[game]}</span>`;
+      html += `</a>`;
     }
-    html += `</div>`;
   }
   html += `</div>`;
 
@@ -139,8 +133,6 @@ function render(): void {
   // Action button
   if (sessionJustCompleted) {
     html += `<button class="new-session-btn">New Session</button>`;
-  } else if (next !== null) {
-    html += `<button class="start-btn">${session.size === 0 ? "Start" : "Next"}</button>`;
   }
 
   // Collapsible stats
@@ -174,13 +166,6 @@ function render(): void {
   hub.innerHTML = html;
 
   // Wire buttons
-  const startBtn = hub.querySelector(".start-btn");
-  if (startBtn && next !== null) {
-    startBtn.addEventListener("click", () => {
-      window.location.href = GAME_URLS[next];
-    });
-  }
-
   const newBtn = hub.querySelector(".new-session-btn");
   if (newBtn) {
     newBtn.addEventListener("click", startNewSession);

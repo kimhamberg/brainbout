@@ -38,21 +38,30 @@
   padding: 0.75rem;
   border-radius: 6px;
 
+  color: inherit;
+  text-decoration: none;
+
   background: var(--ctp-surface0);
   box-shadow: var(--ctp-shadow);
 
   transition:
     background-color 0.25s ease,
     box-shadow 0.25s ease,
-    opacity 0.25s ease;
+    opacity 0.25s ease,
+    transform 0.1s ease;
 
   &.done {
     opacity: 0.6;
   }
 
-  &.current {
-    border-left: 4px solid var(--ctp-blue);
+  &:hover:not(.done) {
+    transform: translateY(-1px);
     box-shadow: var(--ctp-shadow-lg);
+  }
+
+  &:active:not(.done) {
+    transform: translateY(0);
+    box-shadow: none;
   }
 }
 
@@ -66,7 +75,6 @@
   transition: color 0.25s ease;
 }
 
-.start-btn,
 .new-session-btn {
   cursor: pointer;
 
@@ -86,24 +94,21 @@
     background-color 0.15s ease,
     box-shadow 0.15s ease,
     transform 0.1s ease;
-}
 
-.start-btn:hover,
-.new-session-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--ctp-shadow-lg);
-}
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--ctp-shadow-lg);
+  }
 
-.start-btn:active,
-.new-session-btn:active {
-  transform: translateY(0);
-  box-shadow: none;
-}
+  &:active {
+    transform: translateY(0);
+    box-shadow: none;
+  }
 
-.start-btn:focus-visible,
-.new-session-btn:focus-visible {
-  outline: none;
-  box-shadow: var(--ctp-focus-ring);
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--ctp-focus-ring);
+  }
 }
 
 /* --- Session summary --- */
