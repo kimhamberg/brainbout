@@ -24,8 +24,12 @@ export function getVisibilityMs(hits: number): number {
 }
 
 const DURATION = 60;
-const game = document.getElementById("game");
-if (!game) throw new Error("Missing #game element");
+function getEl(id: string): HTMLElement {
+  const el = document.getElementById(id);
+  if (el === null) throw new Error(`Missing #${id} element`);
+  return el;
+}
+const game = getEl("game");
 
 let score = 0;
 let activeCell = -1;
