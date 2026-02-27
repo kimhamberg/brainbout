@@ -52,10 +52,12 @@
 
 .game-name {
   font-size: 0.95rem;
+  transition: color 0.25s ease;
 }
 
 .game-check {
   color: var(--ctp-green);
+  transition: color 0.25s ease;
 }
 
 #start-btn,
@@ -94,6 +96,31 @@
   box-shadow: var(--ctp-focus-ring);
 }
 
+/* --- Session summary --- */
+
+.session-summary {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.session-summary h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--ctp-green);
+  margin-bottom: 0.75rem;
+}
+
+.session-scores {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.session-scores .stat-row {
+  font-size: 0.85rem;
+  padding: 0.3rem 0;
+}
+
 /* --- Stats panel --- */
 
 .stats-panel {
@@ -105,7 +132,31 @@
   color: var(--ctp-subtext0);
   cursor: pointer;
   padding: 0.5rem 0;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   transition: color 0.15s ease;
+}
+
+.stats-panel summary::-webkit-details-marker {
+  display: none;
+}
+
+.stats-panel summary::before {
+  content: "";
+  display: inline-block;
+  width: 0.45em;
+  height: 0.45em;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.stats-panel[open] summary::before {
+  transform: rotate(45deg);
 }
 
 .stats-panel summary:hover {
@@ -148,6 +199,7 @@
   color: var(--ctp-text);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+  transition: color 0.25s ease;
 }
 
 .stat-total {
@@ -155,4 +207,7 @@
   padding-top: 0.5rem;
   border-top: 1px solid var(--ctp-surface1);
   color: var(--ctp-subtext0);
+  transition:
+    color 0.25s ease,
+    border-color 0.25s ease;
 }

@@ -116,6 +116,18 @@ function render(): void {
   }
   html += `</div>`;
 
+  // Session completion summary
+  if (sessionJustCompleted) {
+    html += `<div class="session-summary">`;
+    html += `<h2>Session Complete!</h2>`;
+    html += `<div class="session-scores">`;
+    for (const game of GAMES) {
+      const best = getTodayBest(game);
+      html += `<div class="stat-row"><span>${GAME_LABELS[game]}</span><span class="stat-value">${best !== null ? formatScore(game, best) : "\u2014"}</span></div>`;
+    }
+    html += `</div></div>`;
+  }
+
   // Action button
   if (sessionJustCompleted) {
     html += `<button id="new-session-btn">New Session</button>`;

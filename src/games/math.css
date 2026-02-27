@@ -8,7 +8,16 @@
 
 .timer {
   font-size: 1.5rem;
-  color: var(--ctp-subtext0);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ctp-text);
+  padding: 0.25rem 0.75rem;
+  background: var(--ctp-surface0);
+  border-radius: 6px;
+  box-shadow: var(--ctp-shadow);
+  transition:
+    color 0.3s ease,
+    background-color 0.25s ease;
 }
 
 .problem {
@@ -61,6 +70,7 @@
 .score-display {
   font-size: 1.1rem;
   color: var(--ctp-subtext0);
+  transition: color 0.25s ease;
 }
 
 .result {
@@ -71,6 +81,7 @@
 .result .final-score {
   font-size: 2rem;
   font-weight: 700;
+  color: var(--ctp-green);
   margin-bottom: 0.5rem;
 }
 
