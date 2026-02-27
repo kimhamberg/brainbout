@@ -7,11 +7,19 @@ document.body.innerHTML = '<main id="game"></main>';
 
 // Stub Worker so StockfishEngine.init() doesn't throw when the
 // module-level main() fires during import.
-globalThis.Worker = class FakeWorker {
-  addEventListener(): void {}
-  postMessage(): void {}
-  terminate(): void {}
-} as unknown as typeof Worker;
+function fakeWorker(): void {
+  /* stub constructor */
+}
+fakeWorker.prototype.addEventListener = function addEventListener(): void {
+  /* stub */
+};
+fakeWorker.prototype.postMessage = function postMessage(): void {
+  /* stub */
+};
+fakeWorker.prototype.terminate = function terminate(): void {
+  /* stub */
+};
+globalThis.Worker = fakeWorker as unknown as typeof Worker;
 
 const { createClock } = await import("../src/games/blitz");
 
@@ -29,7 +37,7 @@ describe("createClock", () => {
     const clock = createClock({
       initialMs: 3000,
       incrementMs: 0,
-      onTick: (ms) => {
+      onTick: (ms: number) => {
         ticks.push(ms);
       },
       onFlag: () => {
@@ -47,7 +55,7 @@ describe("createClock", () => {
   });
 
   it("calls onFlag when time runs out", () => {
-    const onFlag = vi.fn();
+    const onFlag = vi.fn<() => void>();
     const clock = createClock({
       initialMs: 500,
       incrementMs: 0,
@@ -68,7 +76,7 @@ describe("createClock", () => {
     const clock = createClock({
       initialMs: 3000,
       incrementMs: 2000,
-      onTick: (ms) => {
+      onTick: (ms: number) => {
         lastMs = ms;
       },
       onFlag: () => {

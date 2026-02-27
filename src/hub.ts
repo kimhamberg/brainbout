@@ -55,7 +55,7 @@ function render(): void {
     html += `<span class="game-name">${GAME_LABELS[game]}</span>`;
     if (skipped) {
       html += `<span class="game-score">Skipped</span>`;
-    } else if (done && score !== null) {
+    } else if (done) {
       html += `<span class="game-score">${formatScore(game, score)} <span class="game-check">✓</span></span>`;
     }
     html += `</div>`;

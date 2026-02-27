@@ -43,9 +43,7 @@ export class StockfishEngine {
   public async init(): Promise<void> {
     const base = import.meta.env.BASE_URL as string;
     return new Promise((resolve) => {
-      this.worker = new Worker(
-        `${base}stockfish/stockfish-18-lite-single.js`,
-      );
+      this.worker = new Worker(`${base}stockfish/stockfish-18-lite-single.js`);
       this.worker.addEventListener(
         "message",
         (e: MessageEvent<string>): void => {

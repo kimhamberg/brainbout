@@ -35,6 +35,13 @@ export function createClock(options: ClockOptions): ChessClock {
   let intervalId: ReturnType<typeof setInterval> | null = null;
   let lastTick = 0;
 
+  function stop(): void {
+    if (intervalId !== null) {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+  }
+
   function start(): void {
     lastTick = Date.now();
     intervalId = setInterval(() => {
@@ -48,13 +55,6 @@ export function createClock(options: ClockOptions): ChessClock {
       }
       options.onTick(remainingMs);
     }, 100);
-  }
-
-  function stop(): void {
-    if (intervalId !== null) {
-      clearInterval(intervalId);
-      intervalId = null;
-    }
   }
 
   function addIncrement(): void {
@@ -85,11 +85,40 @@ if (!game) throw new Error("Missing #game element");
 let api: Api | undefined;
 let pos: Chess;
 let startFen: string;
-let moves: string[] = [];
+const moves: string[] = [];
 const playerColor: "white" | "black" = "white";
 let gameOver = false;
 let engine: StockfishEngine;
 let clock: ChessClock;
+
+// --- Functions (ordered to satisfy no-use-before-define) ---
+
+function updateStatus(text: string): void {
+  const el = game.querySelector(".game-status");
+  if (el) el.textContent = text;
+}
+
+function finishGame(result: number, message: string): void {
+  recordScore("blitz", result, todayString());
+
+  const label = result === 1 ? "Won" : result === 0.5 ? "Draw" : "Lost";
+
+  game.innerHTML = `
+    <div class="result">
+      <div class="final-score">${label}</div>
+      <div>${message}</div>
+      <button id="back-btn">Back to Hub</button>
+    </div>
+  `;
+
+  if (result === 1) sound.playVictory();
+  else if (result === 0) sound.playDefeat();
+  else sound.playDraw();
+
+  document.getElementById("back-btn")?.addEventListener("click", () => {
+    window.location.href = "/";
+  });
+}
 
 function updateBoard(): void {
   if (!api) return;
@@ -139,31 +168,6 @@ function checkGameEnd(): boolean {
   return false;
 }
 
-function onPlayerMove(orig: string, dest: string): void {
-  if (gameOver) return;
-
-  const uci = orig + dest;
-  const move = parseUci(uci);
-  if (!move || !pos.isLegal(move)) return;
-
-  const isCapture = pos.board.occupied.has(move.to);
-  pos.play(move);
-  moves.push(uci);
-
-  clock.stop();
-  clock.addIncrement();
-  updateBoard();
-
-  if (isCapture) sound.playCapture();
-  else sound.playMove();
-  if (pos.isCheck()) sound.playCheck();
-
-  if (checkGameEnd()) return;
-
-  updateStatus("Engine thinking...");
-  engine.go(startFen, moves, onEngineMove);
-}
-
 function onEngineMove(uci: string): void {
   if (gameOver) return;
 
@@ -190,46 +194,44 @@ function onEngineMove(uci: string): void {
   updateStatus("Your move");
 }
 
+function onPlayerMove(orig: string, dest: string): void {
+  if (gameOver) return;
+
+  const uci = orig + dest;
+  const move = parseUci(uci);
+  if (!move || !pos.isLegal(move)) return;
+
+  const isCapture = pos.board.occupied.has(move.to);
+  pos.play(move);
+  moves.push(uci);
+
+  clock.stop();
+  clock.addIncrement();
+  updateBoard();
+
+  if (isCapture) sound.playCapture();
+  else sound.playMove();
+  if (pos.isCheck()) sound.playCheck();
+
+  if (checkGameEnd()) return;
+
+  updateStatus("Engine thinking...");
+  engine.go(startFen, moves, onEngineMove);
+}
+
 function onFlag(): void {
   gameOver = true;
   finishGame(0, "Time's up — you lose");
 }
 
-function finishGame(result: number, message: string): void {
-  recordScore("blitz", result, todayString());
-
-  const label = result === 1 ? "Won" : result === 0.5 ? "Draw" : "Lost";
-
-  game!.innerHTML = `
-    <div class="result">
-      <div class="final-score">${label}</div>
-      <div>${message}</div>
-      <button id="back-btn">Back to Hub</button>
-    </div>
-  `;
-
-  if (result === 1) sound.playVictory();
-  else if (result === 0) sound.playDefeat();
-  else sound.playDraw();
-
-  document.getElementById("back-btn")?.addEventListener("click", () => {
-    window.location.href = "/";
-  });
-}
-
-function updateStatus(text: string): void {
-  const el = game!.querySelector(".game-status");
-  if (el) el.textContent = text;
-}
-
 function renderGame(): void {
-  game!.innerHTML = `
+  game.innerHTML = `
     <div class="clock" id="player-clock">${formatClock(INITIAL_MS)}</div>
     <div class="blitz-board"></div>
     <div class="game-status">Loading engine...</div>
   `;
 
-  const boardEl = game!.querySelector<HTMLElement>(".blitz-board");
+  const boardEl = game.querySelector<HTMLElement>(".blitz-board");
   if (!boardEl) return;
 
   api = Chessground(boardEl, {
@@ -280,8 +282,8 @@ async function main(): Promise<void> {
 
 document.getElementById("skip-btn")?.addEventListener("click", () => {
   gameOver = true;
-  clock?.stop();
-  engine?.destroy();
+  clock.stop();
+  engine.destroy();
   recordScore("blitz", SKIP_SCORE, todayString());
   window.location.href = "/";
 });

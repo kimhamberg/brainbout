@@ -88,6 +88,22 @@ function renderBoard(): void {
   `;
 }
 
+function startGrid(): void {
+  const [rows, cols] = currentGrid();
+  cards = createBoard(rows, cols);
+  flipped = [];
+  locked = true;
+
+  for (const card of cards) card.faceUp = true;
+  renderBoard();
+
+  setTimeout(() => {
+    for (const card of cards) card.faceUp = false;
+    locked = false;
+    renderBoard();
+  }, PREVIEW_MS);
+}
+
 function handleCardClick(id: number): void {
   if (locked) return;
   const card = cards.find((c) => c.id === id);
@@ -103,9 +119,9 @@ function handleCardClick(id: number): void {
     const a = cards.find((c) => c.id === first);
     const b = cards.find((c) => c.id === second);
 
-    if (a && b && a.symbol === b.symbol) {
-      a.matched = true;
-      b.matched = true;
+    if (a?.symbol === b?.symbol) {
+      if (a) a.matched = true;
+      if (b) b.matched = true;
       score++;
       sound.playMove();
       flipped = [];
@@ -127,22 +143,6 @@ function handleCardClick(id: number): void {
       }, MISMATCH_MS);
     }
   }
-}
-
-function startGrid(): void {
-  const [rows, cols] = currentGrid();
-  cards = createBoard(rows, cols);
-  flipped = [];
-  locked = true;
-
-  for (const card of cards) card.faceUp = true;
-  renderBoard();
-
-  setTimeout(() => {
-    for (const card of cards) card.faceUp = false;
-    locked = false;
-    renderBoard();
-  }, PREVIEW_MS);
 }
 
 function showResult(): void {

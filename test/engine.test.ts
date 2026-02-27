@@ -17,9 +17,7 @@ describe("parseBestMove", () => {
 
 describe("parseInfoLine", () => {
   it("parses an info line with centipawn score", () => {
-    const info = parseInfoLine(
-      "info depth 12 score cp 35 pv e2e4 e7e5 g1f3",
-    );
+    const info = parseInfoLine("info depth 12 score cp 35 pv e2e4 e7e5 g1f3");
     expect(info).toEqual({
       depth: 12,
       score: { type: "cp", value: 35 },
