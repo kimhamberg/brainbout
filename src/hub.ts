@@ -4,21 +4,31 @@ import {
   getStreak,
   getDailyScore,
   nextGame,
+  isSkipped,
 } from "./shared/progress";
 
 const GAME_LABELS: Record<string, string> = {
-  puzzles: "Chess960 Puzzles",
-  nback: "Dual N-back",
+  blitz: "Chess960 Blitz",
+  memory: "Memory Match",
   stroop: "Stroop",
   math: "Quick Math",
 };
 
 const GAME_URLS: Record<string, string> = {
-  puzzles: "games/puzzles.html",
-  nback: "games/nback.html",
+  blitz: "games/blitz.html",
+  memory: "games/memory.html",
   stroop: "games/stroop.html",
   math: "games/math.html",
 };
+
+function formatScore(game: string, score: number): string {
+  if (game === "blitz") {
+    if (score === 1) return "Won";
+    if (score === 0.5) return "Draw";
+    return "Lost";
+  }
+  return `Score: ${String(score)}`;
+}
 
 function render(): void {
   const hub = document.getElementById("hub");
@@ -37,13 +47,16 @@ function render(): void {
   for (const game of GAMES) {
     const score = getDailyScore(game, today);
     const done = score !== null;
+    const skipped = isSkipped(game, today);
     const current = game === next;
     const cls = done ? "done" : current ? "current" : "";
 
     html += `<div class="game-card ${cls}">`;
     html += `<span class="game-name">${GAME_LABELS[game]}</span>`;
-    if (done) {
-      html += `<span class="game-score">Score: ${String(score)} <span class="game-check">✓</span></span>`;
+    if (skipped) {
+      html += `<span class="game-score">Skipped</span>`;
+    } else if (done && score !== null) {
+      html += `<span class="game-score">${formatScore(game, score)} <span class="game-check">✓</span></span>`;
     }
     html += `</div>`;
   }
