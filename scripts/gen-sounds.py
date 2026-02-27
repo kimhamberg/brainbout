@@ -227,17 +227,28 @@ def master(samples: np.ndarray) -> np.ndarray:
 
 
 def write(name: str, samples: np.ndarray) -> None:
-    # fade-out → low-pass → normalize → master → peak-limit → fade-out
+    # fade-out → low-pass → pad for reverb tail → normalize → master →
+    # trim silence → peak-limit → fade-out
     samples = fadeout(samples)
     samples = lpf(samples)
+    # Pad with 200 ms silence so reverb tail can decay naturally
+    pad = np.zeros(int(SR * 0.2))
+    samples = np.concatenate([samples, pad])
     peak = np.max(np.abs(samples))
     if peak > 0:
         samples = samples / peak * 0.75
     samples = master(samples)
+    # Trim trailing silence (below -60 dB ≈ 0.001) to keep files small
+    threshold = 0.001
+    last_loud = len(samples) - 1
+    while last_loud > 0 and abs(samples[last_loud]) < threshold:
+        last_loud -= 1
+    # Keep a small margin after the last audible sample
+    samples = samples[: min(last_loud + int(SR * 0.01), len(samples))]
     peak = np.max(np.abs(samples))
     if peak > 1.0:
         samples /= peak
-    # final fade-out after reverb tail to prevent any residual pop
+    # Final fade-out after reverb tail to prevent any residual pop
     samples = fadeout(samples)
     data = (samples * 32767).astype(np.int16)
     path = OUT / f"{name}.wav"

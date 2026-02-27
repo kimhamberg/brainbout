@@ -1,19 +1,59 @@
 const BASE = `${import.meta.env.BASE_URL}sounds/`;
 
-const cache = new Map<string, HTMLAudioElement>();
+let ctx: AudioContext | null = null;
+const buffers = new Map<string, AudioBuffer>();
+const loading = new Map<string, Promise<AudioBuffer>>();
 
-function load(name: string): HTMLAudioElement {
-  const cached = cache.get(name);
-  if (cached) return cached;
-  const audio = new Audio(`${BASE}${name}.wav`);
-  cache.set(name, audio);
-  return audio;
+function getCtx(): AudioContext {
+  ctx ??= new AudioContext();
+  return ctx;
+}
+
+async function fetchBuffer(name: string): Promise<AudioBuffer> {
+  const inflight = loading.get(name);
+  if (inflight) return inflight;
+  const promise = fetch(`${BASE}${name}.wav`)
+    .then(async (r) => r.arrayBuffer())
+    .then(async (data) => getCtx().decodeAudioData(data))
+    .then((buf) => {
+      buffers.set(name, buf);
+      return buf;
+    });
+  loading.set(name, promise);
+  return promise;
+}
+
+const ALL = [
+  "correct",
+  "wrong",
+  "move",
+  "capture",
+  "check",
+  "victory",
+  "defeat",
+  "draw",
+  "notify",
+];
+
+let preloaded = false;
+function preloadAll(): void {
+  if (preloaded) return;
+  preloaded = true;
+  for (const n of ALL) void fetchBuffer(n);
 }
 
 function play(name: string): void {
-  const audio = load(name);
-  audio.currentTime = 0;
-  void audio.play();
+  const actx = getCtx();
+  preloadAll();
+  const buf = buffers.get(name);
+  if (!buf) {
+    void fetchBuffer(name);
+    return;
+  }
+  const src = actx.createBufferSource();
+  src.buffer = buf;
+  src.connect(actx.destination);
+  src.start();
 }
 
 // Brain-training games
