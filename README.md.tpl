@@ -32,7 +32,7 @@ make dev
 ## Build
 
 | Target  | Command              | Output                       |
-| ------- | -------------------- | ---------------------------- |
+| :------ | :------------------- | :--------------------------- |
 | Dev     | `make dev`           | `localhost:5173`             |
 | Desktop | `make build-server`  | `chess960`                   |
 | Linux   | `make build-linux`   | `chess960-linux-amd64`       |
