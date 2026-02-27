@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate synthesised UI sound palette for Brainbout  (v2).
+"""Generate synthesised UI sound palette for Brainbout  (v3).
 
 Run:  .venv/bin/python scripts/gen-sounds.py
 
@@ -15,6 +15,10 @@ Design principles (informed by Duolingo / Apple / cross-modal research):
   • Low-pass @ 4 kHz — rolls off harsh highs to match Catppuccin's
     soft, warm visual palette.
   • Pedalboard master chain — subtle room reverb + gentle compression.
+  • Fade-out on every sound — 8ms raised-cosine eliminates pop/click
+    when playback is interrupted or the file ends.
+  • Chess pieces use bandpass-filtered noise + resonant body for a
+    closer-to-wood character.
 
 Outputs WAV files to public/sounds/.
 """
@@ -42,10 +46,10 @@ MASTER = Pedalboard(
 )
 
 # Key of G  ────────────────────────────────────────────────────────────
-# G3  = 196.00   G4 = 392.00   G5 = 783.99   G6 = 1567.98
-# A4  = 440.00   B4 = 493.88   B5 = 987.77
-# D4  = 293.66   D5 = 587.33   D6 = 1174.66
-# Eb4 = 311.13   F4 = 349.23   F#5 = 739.99
+# G2  = 98.00    G3 = 196.00   G4 = 392.00   G5 = 783.99
+# B2  = 123.47   B3 = 246.94   B4 = 493.88   B5 = 987.77
+# D3  = 146.83   D4 = 293.66   D5 = 587.33   D6 = 1174.66
+# Eb3 = 155.56   Eb4 = 311.13  F3 = 174.61   F4 = 349.23
 
 
 # ── primitives ───────────────────────────────────────────────────────
@@ -74,7 +78,6 @@ def env(dur: float, attack: float = 0.008, decay: float = 12) -> np.ndarray:
     e = np.exp(-t * decay)
     a = min(int(SR * attack), len(e))
     if a > 0:
-        # raised-cosine attack avoids the click of a linear ramp
         e[:a] *= 0.5 * (1 - np.cos(np.pi * np.arange(a) / a))
     return e
 
@@ -83,10 +86,25 @@ def silence(dur: float) -> np.ndarray:
     return np.zeros(int(SR * dur))
 
 
+def bpf(samples: np.ndarray, lo: float, hi: float, order: int = 4) -> np.ndarray:
+    """Bandpass filter."""
+    sos = butter(order, [lo, hi], btype="band", fs=SR, output="sos")
+    return sosfilt(sos, samples).astype(np.float64)
+
+
 def lpf(samples: np.ndarray, cutoff: float = 4000) -> np.ndarray:
     """4th-order Butterworth low-pass for Catppuccin softness."""
     sos = butter(4, cutoff, btype="low", fs=SR, output="sos")
     return sosfilt(sos, samples).astype(np.float64)
+
+
+def fadeout(samples: np.ndarray, dur: float = 0.008) -> np.ndarray:
+    """Raised-cosine fade-out to eliminate end-of-file pops."""
+    n = min(int(SR * dur), len(samples))
+    if n > 0:
+        samples = samples.copy()
+        samples[-n:] *= 0.5 * (1 + np.cos(np.pi * np.arange(n) / n))
+    return samples
 
 
 # ── composite voices ─────────────────────────────────────────────────
@@ -128,6 +146,40 @@ def fm_bell(
     return carrier * env(dur, decay=decay)
 
 
+def wood_hit(
+    body_freq: float,
+    dur: float,
+    noise_level: float = 0.5,
+    body_decay: float = 35,
+    noise_decay: float = 55,
+    brightness: float = 1200,
+) -> np.ndarray:
+    """Simulated wood-on-wood impact for chess pieces.
+
+    Layers:
+      1. Resonant body — sine at the board's natural frequency, fast decay
+      2. Board overtone — 2nd partial for warmth
+      3. Bandpass noise — the 'woody' texture of felt-on-board (200–brightness Hz)
+      4. Impact transient — very short high-frequency noise burst
+    """
+    # resonant body
+    body = sine(body_freq, dur) * env(dur, decay=body_decay)
+    overtone = sine(body_freq * 2.3, dur) * env(dur, decay=body_decay * 1.4) * 0.2
+
+    # woody texture — bandpass filtered noise
+    raw = noise(dur) * env(dur, decay=noise_decay)
+    woody = bpf(raw, 200, brightness) * noise_level
+
+    # sharp impact transient in first ~3ms
+    imp_dur = 0.003
+    imp = noise(imp_dur) * env(imp_dur, attack=0.0005, decay=200) * 0.6
+    imp = bpf(imp, 800, 3500)
+
+    out = body + overtone + woody
+    out[: len(imp)] += imp
+    return out
+
+
 # ── output ───────────────────────────────────────────────────────────
 
 
@@ -137,7 +189,8 @@ def master(samples: np.ndarray) -> np.ndarray:
 
 
 def write(name: str, samples: np.ndarray) -> None:
-    # low-pass → normalize → master → peak-limit
+    # fade-out → low-pass → normalize → master → peak-limit → fade-out
+    samples = fadeout(samples)
     samples = lpf(samples)
     peak = np.max(np.abs(samples))
     if peak > 0:
@@ -146,6 +199,8 @@ def write(name: str, samples: np.ndarray) -> None:
     peak = np.max(np.abs(samples))
     if peak > 1.0:
         samples /= peak
+    # final fade-out after reverb tail to prevent any residual pop
+    samples = fadeout(samples)
     data = (samples * 32767).astype(np.int16)
     path = OUT / f"{name}.wav"
     wavfile.write(str(path), SR, data)
@@ -157,65 +212,86 @@ def write(name: str, samples: np.ndarray) -> None:
 
 
 def correct() -> np.ndarray:
-    """Ascending major third  G4 → B4.  Warm, rewarding.
+    """Ascending major third  G3 → B3.  Warm, rewarding.
 
-    Same interval Duolingo uses for its success chime — a major third
-    is the 'happy part of a major chord'.
+    Same interval Duolingo uses — a major third is the 'happy part
+    of a major chord'.  Pitched in octave 3 for cozy depth.
     """
-    d = 0.08
-    a = warm(392.00, d, decay=22)  # G4
-    b = warm(493.88, d, decay=22)  # B4
+    d = 0.09
+    a = warm(196.00, d, decay=18)  # G3
+    b = warm(246.94, d, decay=18)  # B3
     return np.concatenate([a, silence(0.02), b])
 
 
 def wrong() -> np.ndarray:
-    """Descending tritone  B4 → F4.  Instinctively 'off', but gentle.
+    """Descending tritone  B3 → F3.  Instinctively 'off', but gentle.
 
-    The tritone (diabolus in musica) triggers discomfort even in babies.
-    Triangle waves + detuning keep it soft rather than harsh.
+    Triangle waves + detuning keep it soft.  Octave 3 for warmth.
     """
-    d = 0.10
-    a = warm_tri(493.88, d, decay=9)  # B4
-    b = warm_tri(349.23, d, decay=9)  # F4
+    d = 0.11
+    a = warm_tri(246.94, d, decay=8)  # B3
+    b = warm_tri(174.61, d, decay=8)  # F3
     return np.concatenate([a, silence(0.025), b])
 
 
 def move() -> np.ndarray:
-    """Soft wooden thud at G2 — chess piece placement."""
-    d = 0.07
-    thud = sine(98.00, d) * env(d, decay=45)  # G2 fundamental
-    body = sine(196.00, d) * env(d, decay=55) * 0.3  # G3 2nd partial
-    click = noise(d) * env(d, decay=85) * 0.25
-    return thud + body + click
+    """Wood-on-wood thud — chess piece placed on board.
+
+    Bandpass-filtered noise for woody texture, resonant body at G2,
+    short impact transient for the felt-and-wood contact.
+    """
+    return wood_hit(
+        body_freq=98.00,  # G2
+        dur=0.10,
+        noise_level=0.55,
+        body_decay=30,
+        noise_decay=45,
+        brightness=1000,
+    )
 
 
 def capture() -> np.ndarray:
-    """Percussive snap at D3 — chess piece capture."""
-    d = 0.09
-    thud = sine(146.83, d) * env(d, decay=38)  # D3
-    body = sine(293.66, d) * env(d, decay=50) * 0.3  # D4 overtone
-    click = noise(d) * env(d, decay=55) * 0.45
-    snap = sine(587.33, 0.025) * env(0.025, decay=90) * 0.3  # D5 transient
-    base = thud + body + click
-    base[: len(snap)] += snap
-    return base
+    """Piece-on-piece clack then placement — chess capture.
+
+    Two layered wood hits: a brighter clack (pieces colliding)
+    followed immediately by the board thud.
+    """
+    # piece clack — higher, brighter
+    clack = wood_hit(
+        body_freq=220.00,  # A3
+        dur=0.04,
+        noise_level=0.7,
+        body_decay=60,
+        noise_decay=80,
+        brightness=2000,
+    )
+    # board thud — deeper, follows the clack
+    thud = wood_hit(
+        body_freq=110.00,  # A2
+        dur=0.08,
+        noise_level=0.45,
+        body_decay=35,
+        noise_decay=50,
+        brightness=900,
+    )
+    return np.concatenate([clack, thud])
 
 
 def check() -> np.ndarray:
-    """FM bell double-pip at D5 — chess check alert."""
-    d = 0.07
-    pip = fm_bell(587.33, d, mod_ratio=1.41, mod_peak=3.5, decay=20)  # D5
+    """FM bell double-pip at D4 — chess check alert."""
+    d = 0.08
+    pip = fm_bell(293.66, d, mod_ratio=1.41, mod_peak=3.5, decay=18)  # D4
     return np.concatenate([pip, silence(0.04), pip])
 
 
 def victory() -> np.ndarray:
     """G major arpeggio → blooming chord.  Triumphant.
 
-    G4 → B4 → D5 → G5, then a sustained G5+B5+D6 chord with
+    G3 → B3 → D4 → G4, then a sustained G4+B4+D5 chord with
     detuned voices that 'bloom' open.
     """
     d, gap = 0.10, 0.035
-    arp_notes = [392.00, 493.88, 587.33, 783.99]  # G4 B4 D5 G5
+    arp_notes = [196.00, 246.94, 293.66, 392.00]  # G3 B3 D4 G4
     parts: list[np.ndarray] = []
     for i, f in enumerate(arp_notes):
         n = warm(f, d, decay=6 + i * 2)
@@ -223,20 +299,20 @@ def victory() -> np.ndarray:
         parts.append(silence(gap))
 
     # blooming final chord — three detuned voices
-    cd = 0.40
+    cd = 0.45
     chord = (
-        warm(783.99, cd, decay=3)       # G5
-        + 0.7 * warm(987.77, cd, decay=3)   # B5
-        + 0.5 * warm(1174.66, cd, decay=3)  # D6
+        warm(392.00, cd, decay=3)  # G4
+        + 0.7 * warm(493.88, cd, decay=3)  # B4
+        + 0.5 * warm(587.33, cd, decay=3)  # D5
     )
     parts.append(chord)
     return np.concatenate(parts)
 
 
 def defeat() -> np.ndarray:
-    """Descending  G4 → Eb4 → D4.  Gentle minor disappointment."""
-    d, gap = 0.13, 0.035
-    freqs = [392.00, 311.13, 293.66]  # G4 Eb4 D4
+    """Descending  G3 → Eb3 → D3.  Gentle minor disappointment."""
+    d, gap = 0.14, 0.035
+    freqs = [196.00, 155.56, 146.83]  # G3 Eb3 D3
     parts: list[np.ndarray] = []
     for i, f in enumerate(freqs):
         n = warm_tri(f, d, decay=5)
@@ -247,16 +323,16 @@ def defeat() -> np.ndarray:
 
 
 def draw() -> np.ndarray:
-    """Perfect fifth  G4 → D5.  Neutral, resolved."""
-    d = 0.14
-    a = warm(392.00, d, decay=6)  # G4
-    b = warm(587.33, d, decay=6)  # D5
+    """Perfect fifth  G3 → D4.  Neutral, resolved."""
+    d = 0.15
+    a = warm(196.00, d, decay=6)  # G3
+    b = warm(293.66, d, decay=6)  # D4
     return np.concatenate([a, silence(0.04), b])
 
 
 def notify() -> np.ndarray:
-    """FM bell chime at G5 — session start / attention."""
-    return fm_bell(783.99, 0.30, mod_ratio=1.41, mod_peak=5.0, decay=5)
+    """FM bell chime at G4 — session start / attention."""
+    return fm_bell(392.00, 0.30, mod_ratio=1.41, mod_peak=5.0, decay=5)
 
 
 # ── main ─────────────────────────────────────────────────────────────
