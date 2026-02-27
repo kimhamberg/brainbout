@@ -4,14 +4,15 @@
 
 /*
  * Board squares via conic-gradient + CSS vars (replaces hardcoded SVG).
- * Frappe: cool slate (surface1/surface0)
- * Latte: soft gray (mantle/surface1)
+ * Blue-tinted to match the chess game's --ctp-blue accent.
+ * Frappe: light squares = ctp-blue, dark squares = blue mixed into mantle
+ * Latte:  light squares = light blue tint, dark squares = stronger blue tint
  */
 
 :root,
 [data-theme="frappe"] {
-  --board-dark: var(--ctp-blue);
-  --board-light: color-mix(in srgb, var(--ctp-blue) 25%, var(--ctp-surface0));
+  --board-light: var(--ctp-blue);
+  --board-dark: color-mix(in srgb, var(--ctp-blue) 50%, var(--ctp-mantle));
   --board-last-move: rgb(140 170 238 / 0.35);
   --board-selected: rgb(140 170 238 / 0.4);
   --board-move-dest: 166 209 137;
@@ -23,8 +24,8 @@
 }
 
 [data-theme="latte"] {
-  --board-dark: var(--ctp-blue);
-  --board-light: color-mix(in srgb, var(--ctp-blue) 15%, var(--ctp-surface0));
+  --board-dark: color-mix(in srgb, var(--ctp-blue) 45%, var(--ctp-surface0));
+  --board-light: color-mix(in srgb, var(--ctp-blue) 12%, var(--ctp-surface0));
   --board-last-move: rgb(30 102 245 / 0.25);
   --board-selected: rgb(30 102 245 / 0.3);
   --board-move-dest: 64 160 43;
