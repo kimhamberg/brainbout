@@ -98,6 +98,17 @@
       opacity: 0;
     }
   }
+
+  .game-card {
+    & .game-play {
+      display: none;
+    }
+
+    & .game-icon,
+    & .game-name {
+      transition: color 0.25s ease;
+    }
+  }
 }
 
 .game-list {
@@ -114,6 +125,9 @@
     transparent
   );
 
+  position: relative;
+
+  overflow: hidden;
   display: flex;
   gap: 0.75rem;
   align-items: center;
@@ -139,6 +153,51 @@
   animation: card-enter 0.4s ease both;
   animation-delay: calc(var(--i, 0) * 60ms);
 
+  & .game-play {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0.75rem;
+    transform: translateX(-1rem);
+
+    display: flex;
+    align-items: center;
+
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--accent, var(--ctp-subtext0));
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+
+    opacity: 0;
+
+    transition:
+      transform 0.25s ease,
+      opacity 0.25s ease;
+  }
+
+  & .game-icon {
+    display: flex;
+    flex-shrink: 0;
+    color: var(--accent, var(--ctp-subtext0));
+    transition:
+      color 0.25s ease,
+      transform 0.25s ease;
+  }
+
+  & .game-name {
+    flex: 1;
+    font-size: 1rem;
+    transition:
+      color 0.25s ease,
+      transform 0.25s ease;
+  }
+
+  & .game-check {
+    color: var(--ctp-green);
+    transition: color 0.25s ease;
+  }
+
   &.done {
     opacity: 0.6;
   }
@@ -149,30 +208,22 @@
       100% 100%,
       auto;
     box-shadow: var(--ctp-shadow-lg);
+
+    & .game-play {
+      transform: translateX(0);
+      opacity: 1;
+    }
+
+    & .game-icon,
+    & .game-name {
+      transform: translateX(3rem);
+    }
   }
 
   &:active:not(.done) {
     transform: translateY(0);
     box-shadow: none;
   }
-}
-
-.game-icon {
-  display: flex;
-  flex-shrink: 0;
-  color: var(--accent, var(--ctp-subtext0));
-  transition: color 0.25s ease;
-}
-
-.game-name {
-  flex: 1;
-  font-size: 1rem;
-  transition: color 0.25s ease;
-}
-
-.game-check {
-  color: var(--ctp-green);
-  transition: color 0.25s ease;
 }
 
 .new-session-btn {
