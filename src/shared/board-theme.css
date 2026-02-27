@@ -17,6 +17,7 @@
   --board-premove: 239, 159, 118;
   --board-coord-dark: rgba(198, 208, 245, 0.8);
   --board-coord-light: rgba(65, 69, 89, 0.8);
+  --board-crust: 35, 38, 52;
 }
 
 [data-theme="latte"] {
@@ -29,6 +30,7 @@
   --board-premove: 254, 100, 11;
   --board-coord-dark: rgba(76, 79, 105, 0.8);
   --board-coord-light: rgba(188, 192, 204, 0.8);
+  --board-crust: 220, 224, 232;
 }
 
 /* Board squares */
@@ -48,8 +50,8 @@ cg-board square.move-dest {
   background: radial-gradient(
     rgba(var(--board-move-dest), 0.5) 22%,
     rgb(var(--board-move-dest)) 0,
-    rgba(0, 0, 0, 0.3) 0,
-    rgba(0, 0, 0, 0) 0
+    rgba(var(--board-crust), 0.3) 0,
+    rgba(var(--board-crust), 0) 0
   );
 }
 
@@ -69,8 +71,8 @@ cg-board square.premove-dest {
   background: radial-gradient(
     rgba(var(--board-premove), 0.5) 22%,
     rgb(var(--board-premove)) 0,
-    rgba(0, 0, 0, 0.3) 0,
-    rgba(0, 0, 0, 0) 0
+    rgba(var(--board-crust), 0.3) 0,
+    rgba(var(--board-crust), 0) 0
   );
 }
 
