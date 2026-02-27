@@ -10,8 +10,8 @@
 
 :root,
 [data-theme="frappe"] {
-  --board-light: #51576d;
-  --board-dark: #414559;
+  --board-light: #4e5878;
+  --board-dark: #3e4668;
   --board-last-move: rgb(140 170 238 / 0.35);
   --board-selected: rgb(140 170 238 / 0.4);
   --board-move-dest: 166 209 137;
@@ -23,8 +23,8 @@
 }
 
 [data-theme="latte"] {
-  --board-light: #e6e9ef;
-  --board-dark: #bcc0cc;
+  --board-light: #dde3f5;
+  --board-dark: #b4bfde;
   --board-last-move: rgb(30 102 245 / 0.25);
   --board-selected: rgb(30 102 245 / 0.3);
   --board-move-dest: 64 160 43;
