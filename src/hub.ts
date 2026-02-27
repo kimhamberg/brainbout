@@ -25,6 +25,20 @@ const GAME_URLS: Record<string, string> = {
   math: "games/math.html",
 };
 
+const GAME_ICONS: Record<string, string> = {
+  rapid: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"/><path d="M5 21h14"/></svg>`,
+  reaction: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>`,
+  vocab: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>`,
+  math: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>`,
+};
+
+const GAME_ACCENTS: Record<string, string> = {
+  rapid: "var(--ctp-blue)",
+  reaction: "var(--ctp-peach)",
+  vocab: "var(--ctp-green)",
+  math: "var(--ctp-yellow)",
+};
+
 function formatScore(game: string, score: number): string {
   if (game === "rapid") {
     if (score === 1) return "Won";
@@ -101,17 +115,21 @@ function render(): void {
 
   // Game list
   html += `<div class="game-list">`;
-  for (const game of GAMES) {
+  for (let i = 0; i < GAMES.length; i++) {
+    const game = GAMES[i];
     const done = session.has(game);
     const cls = done ? "done" : "";
+    const style = `--i:${String(i)};--accent:${GAME_ACCENTS[game]}`;
 
     if (done) {
-      html += `<div class="game-card ${cls}">`;
+      html += `<div class="game-card ${cls}" style="${style}">`;
+      html += `<span class="game-icon">${GAME_ICONS[game]}</span>`;
       html += `<span class="game-name">${GAME_LABELS[game]}</span>`;
       html += `<span class="game-check">\u2713</span>`;
       html += `</div>`;
     } else {
-      html += `<a href="${GAME_URLS[game]}" class="game-card ${cls}">`;
+      html += `<a href="${GAME_URLS[game]}" class="game-card ${cls}" style="${style}">`;
+      html += `<span class="game-icon">${GAME_ICONS[game]}</span>`;
       html += `<span class="game-name">${GAME_LABELS[game]}</span>`;
       html += `</a>`;
     }
