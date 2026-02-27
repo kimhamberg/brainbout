@@ -1,5 +1,7 @@
-export const GAMES = ["puzzles", "nback", "stroop", "math"] as const;
+export const GAMES = ["blitz", "memory", "stroop", "math"] as const;
 export type GameId = (typeof GAMES)[number];
+
+export const SKIP_SCORE = -1;
 
 const PREFIX = "brainbout";
 
@@ -22,15 +24,21 @@ export function getBest(game: GameId): number | null {
 export function recordScore(game: GameId, score: number, date: string): void {
   localStorage.setItem(key("daily", date, game), String(score));
 
-  const prev = getBest(game);
-  if (prev === null || score > prev) {
-    localStorage.setItem(key("best", game), String(score));
+  if (score !== SKIP_SCORE) {
+    const prev = getBest(game);
+    if (prev === null || score > prev) {
+      localStorage.setItem(key("best", game), String(score));
+    }
   }
 }
 
 export function getDailyScore(game: GameId, date: string): number | null {
   const val = localStorage.getItem(key("daily", date, game));
   return val === null ? null : Number(val);
+}
+
+export function isSkipped(game: GameId, date: string): boolean {
+  return getDailyScore(game, date) === SKIP_SCORE;
 }
 
 export function isDayComplete(date: string): boolean {
