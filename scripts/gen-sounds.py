@@ -20,19 +20,23 @@ Design principles (informed by Duolingo / Apple / cross-modal research):
   • Chess pieces use modal synthesis — multiple resonant modes with
     frequency-dependent damping, bandpass-filtered noise residual,
     and impact transient.  Based on research into wood acoustics:
-    wood modal frequencies cluster 100–500 Hz (free-free beam ratios),
-    wood has high damping (modes decay fast → thud not ring),
+    wood modal frequencies cluster 100-500 Hz (free-free beam ratios),
+    wood has high damping (modes decay fast, thud not ring),
     and higher modes decay faster than lower ones.
 
 Outputs WAV files to public/sounds/.
 """
 
+import logging
 from pathlib import Path
+from typing import NamedTuple
 
 import numpy as np
 from pedalboard import Compressor, Gain, Pedalboard, Reverb
 from scipy.io import wavfile
 from scipy.signal import butter, sosfilt
+
+log = logging.getLogger(__name__)
 
 SR = 44100
 OUT = Path(__file__).resolve().parent.parent / "public" / "sounds"
@@ -46,7 +50,7 @@ MASTER = Pedalboard(
         Reverb(room_size=0.18, wet_level=0.22, dry_level=0.82, width=0.7),
         Compressor(threshold_db=-14, ratio=3.5, attack_ms=2, release_ms=60),
         Gain(gain_db=2.0),
-    ]
+    ],
 )
 
 # Key of G  ────────────────────────────────────────────────────────────
@@ -64,15 +68,18 @@ def _t(dur: float) -> np.ndarray:
 
 
 def sine(freq: float, dur: float) -> np.ndarray:
+    """Pure sine wave at the given frequency."""
     return np.sin(2 * np.pi * freq * _t(dur))
 
 
 def triangle(freq: float, dur: float) -> np.ndarray:
+    """Triangle wave at the given frequency."""
     t = _t(dur)
     return 2 * np.abs(2 * (t * freq - np.floor(t * freq + 0.5))) - 1
 
 
 def noise(dur: float) -> np.ndarray:
+    """White noise with a fixed seed for reproducible builds."""
     return np.random.default_rng(42).standard_normal(int(SR * dur))
 
 
@@ -87,6 +94,7 @@ def env(dur: float, attack: float = 0.008, decay: float = 12) -> np.ndarray:
 
 
 def silence(dur: float) -> np.ndarray:
+    """Array of zeros (silence) for the given duration."""
     return np.zeros(int(SR * dur))
 
 
@@ -150,67 +158,74 @@ def fm_bell(
     return carrier * env(dur, decay=decay)
 
 
-def wood_hit(
-    body_freq: float,
-    dur: float,
-    noise_level: float = 0.5,
-    body_decay: float = 35,
-    brightness: float = 500,
-    hardness: float = 0.5,
-) -> np.ndarray:
+class WoodParams(NamedTuple):
+    """Parameters for modal wood-impact synthesis.
+
+    Attributes:
+        body_freq: Fundamental mode frequency (Hz), typically 80-200.
+        dur: Total sound duration (seconds).
+        noise_level: Mix level of the noise residual (0-1).
+        body_decay: Base decay rate for the fundamental mode.
+        brightness: Upper cutoff of the noise residual bandpass (Hz).
+        hardness: Impact transient loudness (0-1); higher = harder surface.
+
+    """
+
+    body_freq: float
+    dur: float
+    noise_level: float = 0.5
+    body_decay: float = 35
+    brightness: float = 500
+    hardness: float = 0.5
+
+
+def wood_hit(p: WoodParams) -> np.ndarray:
     """Modal synthesis of wood-on-wood impact for chess pieces.
 
     Based on acoustic research:
-      • Wood modal frequencies follow free-free beam ratios relative
+      - Wood modal frequencies follow free-free beam ratios relative
         to the fundamental: 1.0, 2.76, 5.40, 8.93 (non-harmonic).
-      • Wood has high damping — modes decay fast (thud, not ring).
-      • Higher modes decay faster: loss ∝ b₁ + b₃·f² (frequency-
-        dependent damping from Nathan Ho / modal synthesis lit).
-      • Audible wood resonance sits 100–500 Hz (Tsugi procedural
-        foley research), NOT the 30–170 kHz ultrasonic range.
+      - Wood has high damping: modes decay fast (thud, not ring).
+      - Higher modes decay faster: loss proportional to b1 + b3*f^2
+        (frequency-dependent damping from Nathan Ho / modal synthesis lit).
+      - Audible wood resonance sits 100-500 Hz (Tsugi procedural
+        foley research), NOT the 30-170 kHz ultrasonic range.
 
     Layers:
-      1. Modal bank — 4 resonant modes at beam ratios, each with
+      1. Modal bank: 4 resonant modes at beam ratios, each with
          frequency-dependent exponential decay
-      2. Residual noise — bandpass-filtered (200–brightness Hz) for
+      2. Residual noise: bandpass-filtered (200-brightness Hz) for
          the 'woody' texture of contact
-      3. Impact transient — very short broadband noise burst (~3 ms)
-         filtered to 400–2000 Hz for the initial 'click'
+      3. Impact transient: very short broadband noise burst (~3 ms)
+         filtered to 400-2000 Hz for the initial 'click'
 
-    Args:
-        body_freq: Fundamental mode frequency (Hz), typically 80–200.
-        dur: Total sound duration (seconds).
-        noise_level: Mix level of the noise residual (0–1).
-        body_decay: Base decay rate for the fundamental mode.
-        brightness: Upper cutoff of the noise residual bandpass (Hz).
-        hardness: Impact transient loudness (0–1); higher = harder surface.
     """
-    t = _t(dur)
+    t = _t(p.dur)
 
     # Free-free beam modal ratios (first 4 modes)
     # From beam vibration theory: f_n / f_1 for free-free boundary
     mode_ratios = [1.0, 2.76, 5.40, 8.93]
     mode_amps = [1.0, 0.35, 0.15, 0.06]
 
-    # Modal bank — each mode is a decaying sine with freq-dependent damping
+    # Modal bank - each mode is a decaying sine with freq-dependent damping
     # Higher modes decay faster: decay_k = body_decay * (f_k / f_1)^0.7
     modal = np.zeros_like(t)
-    for ratio, amp in zip(mode_ratios, mode_amps):
-        freq_k = body_freq * ratio
+    for ratio, amp in zip(mode_ratios, mode_amps, strict=True):
+        freq_k = p.body_freq * ratio
         if freq_k > SR / 2:
             continue  # skip modes above Nyquist
-        decay_k = body_decay * (ratio**0.7)
-        modal += amp * sine(freq_k, dur) * env(dur, decay=decay_k)
+        decay_k = p.body_decay * (ratio**0.7)
+        modal += amp * sine(freq_k, p.dur) * env(p.dur, decay=decay_k)
 
-    # Residual noise — bandpass-filtered for woody texture (200–brightness Hz)
-    noise_decay_rate = body_decay * 1.5  # noise dies faster than body
-    raw = noise(dur) * env(dur, decay=noise_decay_rate)
-    woody = bpf(raw, 200, min(brightness, SR / 2 - 1)) * noise_level
+    # Residual noise - bandpass-filtered for woody texture (200-brightness Hz)
+    noise_decay_rate = p.body_decay * 1.5  # noise dies faster than body
+    raw = noise(p.dur) * env(p.dur, decay=noise_decay_rate)
+    woody = bpf(raw, 200, min(p.brightness, SR / 2 - 1)) * p.noise_level
 
-    # Impact transient — short broadband click (~3 ms)
+    # Impact transient - short broadband click (~3 ms)
     imp_dur = 0.003
     imp_samples = int(SR * imp_dur)
-    imp = noise(imp_dur) * env(imp_dur, attack=0.0003, decay=300) * hardness
+    imp = noise(imp_dur) * env(imp_dur, attack=0.0003, decay=300) * p.hardness
     imp = bpf(imp, 400, 2000)
 
     out = modal + woody
@@ -222,13 +237,15 @@ def wood_hit(
 
 
 def master(samples: np.ndarray) -> np.ndarray:
+    """Run samples through the pedalboard master effects chain."""
     buf = samples.astype(np.float32).reshape(1, -1)
     return MASTER(buf, SR).flatten()
 
 
 def write(name: str, samples: np.ndarray) -> None:
-    # fade-out → low-pass → pad for reverb tail → normalize → master →
-    # trim silence → peak-limit → fade-out
+    """Process and write a sound to a WAV file."""
+    # fade-out -> low-pass -> pad for reverb tail -> normalize -> master ->
+    # trim silence -> peak-limit -> fade-out
     samples = fadeout(samples)
     samples = lpf(samples)
     # Pad with 200 ms silence so reverb tail can decay naturally
@@ -254,7 +271,7 @@ def write(name: str, samples: np.ndarray) -> None:
     path = OUT / f"{name}.wav"
     wavfile.write(str(path), SR, data)
     kb = path.stat().st_size / 1024
-    print(f"  {name}.wav  ({len(data) / SR:.2f}s, {kb:.0f} KB)")
+    log.info("%s.wav  (%.2fs, %.0f KB)", name, len(data) / SR, kb)
 
 
 # ── sound definitions (key of G) ─────────────────────────────────────
@@ -291,12 +308,14 @@ def move() -> np.ndarray:
     Moderate hardness — felt-bottom piece on wooden board.
     """
     return wood_hit(
-        body_freq=98.00,  # G2 — board fundamental
-        dur=0.12,
-        noise_level=0.55,
-        body_decay=40,
-        brightness=500,  # wood resonance caps ~500 Hz
-        hardness=0.45,
+        WoodParams(
+            body_freq=98.00,  # G2 - board fundamental
+            dur=0.12,
+            noise_level=0.55,
+            body_decay=40,
+            brightness=500,  # wood resonance caps ~500 Hz
+            hardness=0.45,
+        ),
     )
 
 
@@ -311,21 +330,25 @@ def capture() -> np.ndarray:
     """
     # piece clack — higher, harder, brighter
     clack = wood_hit(
-        body_freq=196.00,  # G3 — small piece resonance
-        dur=0.05,
-        noise_level=0.6,
-        body_decay=55,
-        brightness=500,
-        hardness=0.7,
+        WoodParams(
+            body_freq=196.00,  # G3 - small piece resonance
+            dur=0.05,
+            noise_level=0.6,
+            body_decay=55,
+            brightness=500,
+            hardness=0.7,
+        ),
     )
     # board thud — deeper, softer, follows the clack
     thud = wood_hit(
-        body_freq=110.00,  # A2 — board resonance
-        dur=0.10,
-        noise_level=0.45,
-        body_decay=38,
-        brightness=450,
-        hardness=0.35,
+        WoodParams(
+            body_freq=110.00,  # A2 - board resonance
+            dur=0.10,
+            noise_level=0.45,
+            body_decay=38,
+            brightness=450,
+            hardness=0.35,
+        ),
     )
     return np.concatenate([clack, thud])
 
@@ -403,11 +426,12 @@ SOUNDS = {
 }
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="  %(message)s")
     OUT.mkdir(parents=True, exist_ok=True)
-    print(f"Writing to {OUT}/\n")
+    log.info("Writing to %s/\n", OUT)
     for name, fn in SOUNDS.items():
         write(name, fn())
 
     total = sum((OUT / f"{n}.wav").stat().st_size for n in SOUNDS) / 1024
-    print(f"\n  Total: {total:.0f} KB")
-    print("Done!")
+    log.info("\n  Total: %.0f KB", total)
+    log.info("Done!")

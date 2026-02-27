@@ -4,7 +4,7 @@
 
 A daily brain workout. Train your brain, not your scroll thumb.
 
-4 timed cognitive games in ~8 minutes. No accounts, no ads, no internet required. Progress tracked locally.
+{{GAME_COUNT}} timed cognitive games in ~8 minutes. No accounts, no ads, no internet required. Progress tracked locally.
 
 - **Chess960 Rapid** — 15+10 vs Stockfish
 - **Reaction Grid** — fast-attention target clicking (60s)
@@ -56,11 +56,11 @@ Runs ESLint (TypeScript), Stylelint (CSS), Ruff (Python), staticcheck + go vet (
 npm test
 ```
 
-57 tests across 9 files covering position generation, chess clock, cognitive games, engine parsing, timer, and progress tracking.
+{{TEST_COUNT}} tests across {{TEST_FILES}} files covering position generation, chess clock, cognitive games, engine parsing, timer, and progress tracking.
 
 ## Sound
 
-9 synthesised sounds generated with NumPy + SciPy + Pedalboard — modal wood synthesis for chess pieces, FM bells, additive warm tones.
+{{SOUND_COUNT}} synthesised sounds generated with NumPy + SciPy + Pedalboard — modal wood synthesis for chess pieces, FM bells, additive warm tones.
 
 ```
 .venv/bin/python scripts/gen-sounds.py

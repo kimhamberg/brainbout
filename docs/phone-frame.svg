@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 556 756" width="556" height="756">
+  <defs>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="4" stdDeviation="12" flood-opacity="0.3"/>
+    </filter>
+    <mask id="screen-cutout">
+      <rect width="556" height="756" fill="white"/>
+      <rect x="38" y="58" width="480" height="640" rx="8" fill="black"/>
+    </mask>
+  </defs>
+
+  <!-- Phone body with screen cutout -->
+  <rect x="0" y="0" width="556" height="756" rx="40" fill="#1a1a1a" stroke="#333" stroke-width="1" filter="url(#shadow)" mask="url(#screen-cutout)"/>
+
+  <!-- Punch-hole camera -->
+  <circle cx="278" cy="30" r="6" fill="#111"/>
+
+  <!-- Power button -->
+  <rect x="554" y="200" width="2" height="60" rx="1" fill="#2a2a2a"/>
+
+  <!-- Volume up button -->
+  <rect x="554" y="310" width="2" height="40" rx="1" fill="#2a2a2a"/>
+
+  <!-- Volume down button -->
+  <rect x="554" y="365" width="2" height="40" rx="1" fill="#2a2a2a"/>
+</svg>

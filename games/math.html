@@ -17,6 +17,12 @@
       })();
     </script>
     <title>Brainbout — Quick Math</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <style>
+      :root {
+        --game-accent: var(--ctp-yellow);
+      }
+    </style>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -27,6 +33,7 @@
     <link rel="stylesheet" href="/src/games/math.css" />
   </head>
   <body>
+    <div class="page-enter-overlay" aria-hidden="true"></div>
     <div id="app" class="app">
       <header>
         <h1>

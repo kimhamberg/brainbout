@@ -62,6 +62,6 @@
         "units": ["rem"]
       }
     ],
-    "scales/z-indices": [0, 10, 20, 30, 40, 50]
+    "scales/z-indices": [0, 10, 20, 30, 40, 50, 9999]
   }
 }

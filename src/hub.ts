@@ -193,5 +193,33 @@ function render(): void {
 
 render();
 
+// --- Page transition ---
+document.getElementById("hub")?.addEventListener("click", (e) => {
+  const card = (e.target as HTMLElement).closest<HTMLAnchorElement>(
+    "a.game-card",
+  );
+  if (!card) return;
+
+  e.preventDefault();
+  const href = card.getAttribute("href");
+  if (href === null || href === "") return;
+
+  const rect = card.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+
+  const overlay = document.createElement("div");
+  overlay.className = "page-transition";
+  const accent = card.style.getPropertyValue("--accent");
+  overlay.style.setProperty("--transition-color", accent);
+  overlay.style.setProperty("--tx", `${String(cx)}px`);
+  overlay.style.setProperty("--ty", `${String(cy)}px`);
+  document.body.appendChild(overlay);
+
+  overlay.addEventListener("animationend", () => {
+    window.location.href = href;
+  });
+});
+
 initTheme();
 wireToggle();
