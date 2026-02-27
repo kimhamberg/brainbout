@@ -27,8 +27,7 @@ export function generateRound(): StroopRound {
 }
 
 const DURATION = 60;
-const game = document.getElementById("game");
-if (!game) throw new Error("missing #game");
+const game = document.getElementById("game")!;
 
 let score = 0;
 let round: StroopRound;
