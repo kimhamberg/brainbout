@@ -2,3 +2,4 @@ dist
 server/web
 android
 node_modules
+public/stockfish

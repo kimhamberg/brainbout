@@ -6,8 +6,8 @@ A daily brain workout. Train your brain, not your scroll thumb.
 
 Four timed cognitive games in ~8 minutes. No accounts, no ads, no internet required. Progress tracked locally.
 
-- **Chess960 Puzzles** — spatial reasoning (120s)
-- **Dual N-back** — working memory (120s)
+- **Chess960 Blitz** — 3+2 blitz vs Stockfish
+- **Memory Match** — card concentration (120s)
 - **Stroop** — inhibitory control (60s)
 - **Quick Math** — processing speed (60s)
 
@@ -55,12 +55,13 @@ Runs ESLint (TypeScript), Stylelint (CSS), staticcheck + go vet (Go), ktlint (Ko
 npm test
 ```
 
-36 tests across 7 files covering position generation, puzzle logic, cognitive games, timer, and progress tracking.
+46 tests across 8 files covering position generation, chess clock, cognitive games, engine parsing, timer, and progress tracking.
 
 ## Stack
 
-- [Chessground](https://github.com/lichess-org/chessground) — board UI (puzzles)
-- [chessops](https://github.com/niklasf/chessops) — Chess960 move validation (puzzles)
+- [Chessground](https://github.com/lichess-org/chessground) — board UI (blitz)
+- [chessops](https://github.com/niklasf/chessops) — Chess960 move validation (blitz)
+- [Stockfish WASM](https://github.com/nicfab/stockfish.wasm) — chess engine (blitz)
 - [Vite](https://vite.dev) — multi-page build tooling
 - [Catppuccin Frappe](https://github.com/catppuccin/catppuccin) — color theme
 - [Go](https://go.dev) — desktop server (single binary with embedded assets)
