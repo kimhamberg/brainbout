@@ -1,4 +1,4 @@
-export const GAMES = ["blitz", "memory", "stroop", "math"] as const;
+export const GAMES = ["rapid", "reaction", "vocab", "math"] as const;
 export type GameId = (typeof GAMES)[number];
 
 export const SKIP_SCORE = -1;
