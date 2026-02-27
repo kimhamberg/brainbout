@@ -6,6 +6,16 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
+    <script>
+      (function () {
+        var t = localStorage.getItem("theme");
+        if (!t)
+          t = matchMedia("(prefers-color-scheme:light)").matches
+            ? "latte"
+            : "frappe";
+        document.documentElement.dataset.theme = t;
+      })();
+    </script>
     <title>Brainbout — Quick Math</title>
     <link rel="stylesheet" href="/src/style.css" />
     <link rel="stylesheet" href="/src/games/math.css" />
@@ -14,7 +24,10 @@
     <div id="app">
       <header>
         <h1>Quick Math</h1>
-        <button class="skip-btn" id="skip-btn">Skip</button>
+        <div>
+          <button class="theme-toggle" id="theme-btn" aria-label="Toggle theme"></button>
+          <button class="skip-btn" id="skip-btn">Skip</button>
+        </div>
       </header>
       <main id="game"></main>
     </div>
