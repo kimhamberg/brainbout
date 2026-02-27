@@ -381,11 +381,13 @@ Note: COOP/COEP headers added back for Stockfish WASM SharedArrayBuffer support 
 **Step 4: Create placeholder entry points**
 
 `src/games/blitz.ts`:
+
 ```typescript
 console.log("blitz loaded");
 ```
 
 `src/games/memory.ts`:
+
 ```typescript
 console.log("memory loaded");
 ```
@@ -557,35 +559,39 @@ header {
 In each game HTML page (`games/stroop.html`, `games/math.html`, `games/blitz.html`, `games/memory.html`), replace the `<header>` block with:
 
 For `games/stroop.html`:
+
 ```html
-      <header>
-        <h1>Stroop</h1>
-        <button class="skip-btn" id="skip-btn">Skip</button>
-      </header>
+<header>
+  <h1>Stroop</h1>
+  <button class="skip-btn" id="skip-btn">Skip</button>
+</header>
 ```
 
 For `games/math.html`:
+
 ```html
-      <header>
-        <h1>Quick Math</h1>
-        <button class="skip-btn" id="skip-btn">Skip</button>
-      </header>
+<header>
+  <h1>Quick Math</h1>
+  <button class="skip-btn" id="skip-btn">Skip</button>
+</header>
 ```
 
 For `games/blitz.html`:
+
 ```html
-      <header>
-        <h1>Chess960 Blitz</h1>
-        <button class="skip-btn" id="skip-btn">Skip</button>
-      </header>
+<header>
+  <h1>Chess960 Blitz</h1>
+  <button class="skip-btn" id="skip-btn">Skip</button>
+</header>
 ```
 
 For `games/memory.html`:
+
 ```html
-      <header>
-        <h1>Memory Match</h1>
-        <button class="skip-btn" id="skip-btn">Skip</button>
-      </header>
+<header>
+  <h1>Memory Match</h1>
+  <button class="skip-btn" id="skip-btn">Skip</button>
+</header>
 ```
 
 **Step 3: Add skip handler to stroop.ts**
@@ -782,8 +788,9 @@ Expected: FAIL
 **Step 4: Update `games/memory.html`**
 
 Add CSS link in `<head>`:
+
 ```html
-    <link rel="stylesheet" href="/src/games/memory.css" />
+<link rel="stylesheet" href="/src/games/memory.css" />
 ```
 
 **Step 5: Implement `src/games/memory.ts`**
@@ -1043,9 +1050,7 @@ describe("parseBestMove", () => {
 
 describe("parseInfoLine", () => {
   it("parses an info line with centipawn score", () => {
-    const info = parseInfoLine(
-      "info depth 12 score cp 35 pv e2e4 e7e5 g1f3",
-    );
+    const info = parseInfoLine("info depth 12 score cp 35 pv e2e4 e7e5 g1f3");
     expect(info).toEqual({
       depth: 12,
       score: { type: "cp", value: 35 },
@@ -1119,9 +1124,7 @@ export class StockfishEngine {
   public async init(): Promise<void> {
     const base = import.meta.env.BASE_URL as string;
     return new Promise((resolve) => {
-      this.worker = new Worker(
-        `${base}stockfish/stockfish-18-lite-single.js`,
-      );
+      this.worker = new Worker(`${base}stockfish/stockfish-18-lite-single.js`);
       this.worker.addEventListener(
         "message",
         (e: MessageEvent<string>): void => {
@@ -1146,7 +1149,11 @@ export class StockfishEngine {
     });
   }
 
-  public go(startFen: string, moves: string[], callback: BestMoveCallback): void {
+  public go(
+    startFen: string,
+    moves: string[],
+    callback: BestMoveCallback,
+  ): void {
     this.onBestMove = callback;
     const movesStr = moves.length > 0 ? ` moves ${moves.join(" ")}` : "";
     this.send(`position fen ${startFen}${movesStr}`);
@@ -1492,7 +1499,9 @@ function updateBoard(): void {
     turnColor: pos.turn,
     movable: {
       color: gameOver ? undefined : playerColor,
-      dests: (gameOver ? new Map() : chessgroundDests(pos, { chess960: true })) as Dests,
+      dests: (gameOver
+        ? new Map()
+        : chessgroundDests(pos, { chess960: true })) as Dests,
     },
     check: pos.isCheck(),
   });
@@ -1504,7 +1513,10 @@ function checkGameEnd(): boolean {
     clock.stop();
     gameOver = true;
     const result = winner === playerColor ? 1 : 0;
-    finishGame(result, winner === playerColor ? "Checkmate — you win!" : "Checkmate — you lose");
+    finishGame(
+      result,
+      winner === playerColor ? "Checkmate — you win!" : "Checkmate — you lose",
+    );
     return true;
   }
   if (pos.isStalemate()) {
@@ -1707,6 +1719,7 @@ Add `public/stockfish` line back since the Stockfish files are unformatted vendo
 **Step 2: Update `README.md`**
 
 Update the game descriptions to list:
+
 - Chess960 Blitz (3+2 vs Stockfish)
 - Memory Match (card concentration)
 - Stroop (color word inhibition)

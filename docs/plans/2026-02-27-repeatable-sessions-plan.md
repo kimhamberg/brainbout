@@ -13,6 +13,7 @@
 ### Task 1: Rewrite progress module
 
 **Files:**
+
 - Modify: `src/shared/progress.ts`
 - Modify: `test/progress.test.ts`
 
@@ -223,6 +224,7 @@ git commit -m "refactor: progress module for repeatable sessions"
 ### Task 2: Remove skip button from all pages
 
 **Files:**
+
 - Modify: `src/style.css` (remove `.skip-btn` styles)
 - Modify: `games/rapid.html` (remove skip button + unwrap div if only theme-btn remains)
 - Modify: `games/reaction.html` (same)
@@ -246,6 +248,7 @@ In `games/vocab.html`: remove only the skip button line, keep the `<div>` wrappe
 **Step 3: Remove skip handler from each TS file**
 
 In each game TS file, remove:
+
 - The import of `SKIP_SCORE` from progress
 - The import of `recordScore` and `todayString` (replace with `recordSessionScore` — done in Task 3)
 - The `document.getElementById("skip-btn")?.addEventListener(...)` block
@@ -269,6 +272,7 @@ git commit -m "refactor: remove skip button from all pages"
 ### Task 3: Update game pages to use new progress API
 
 **Files:**
+
 - Modify: `src/games/rapid.ts`
 - Modify: `src/games/reaction.ts`
 - Modify: `src/games/vocab.ts`
@@ -277,6 +281,7 @@ git commit -m "refactor: remove skip button from all pages"
 **Step 1: Update imports and score recording in each file**
 
 In all 4 game TS files:
+
 - Replace `import { recordScore, todayString, SKIP_SCORE } from "../shared/progress"` with `import { recordSessionScore } from "../shared/progress"`
 - Replace all calls to `recordScore("game", score, todayString())` with `recordSessionScore("game", score)`
 
@@ -314,6 +319,7 @@ git commit -m "refactor: game pages use new session score API"
 ### Task 4: Rewrite hub with session flow and inline stats
 
 **Files:**
+
 - Modify: `src/hub.ts`
 - Modify: `src/hub.css`
 
@@ -365,7 +371,10 @@ const session = new Set<GameId>();
 // Read completed game from URL params
 const params = new URLSearchParams(window.location.search);
 const completedParam = params.get("completed");
-if (completedParam !== null && (GAMES as readonly string[]).includes(completedParam)) {
+if (
+  completedParam !== null &&
+  (GAMES as readonly string[]).includes(completedParam)
+) {
   session.add(completedParam as GameId);
   // Restore previously completed games from sessionStorage
   const stored = sessionStorage.getItem("brainbout:current-session");
@@ -375,7 +384,10 @@ if (completedParam !== null && (GAMES as readonly string[]).includes(completedPa
     }
   }
   // Persist current session to sessionStorage (survives game-page navigations)
-  sessionStorage.setItem("brainbout:current-session", JSON.stringify([...session]));
+  sessionStorage.setItem(
+    "brainbout:current-session",
+    JSON.stringify([...session]),
+  );
   // Clean URL
   window.history.replaceState({}, "", window.location.pathname);
 } else {
@@ -423,8 +435,10 @@ function render(): void {
 
   // Header stats
   html += `<div class="hub-stats-bar">`;
-  if (streak > 0) html += `<span class="streak-badge">${String(streak)}-day streak</span>`;
-  if (sessionsToday > 0) html += `<span class="sessions-badge">${String(sessionsToday)} session${sessionsToday === 1 ? "" : "s"} today</span>`;
+  if (streak > 0)
+    html += `<span class="streak-badge">${String(streak)}-day streak</span>`;
+  if (sessionsToday > 0)
+    html += `<span class="sessions-badge">${String(sessionsToday)} session${sessionsToday === 1 ? "" : "s"} today</span>`;
   html += `</div>`;
 
   // Game list
@@ -682,6 +696,7 @@ git commit -m "feat: hub with repeatable sessions and inline stats"
 ### Task 5: Update tests for removed exports and final verification
 
 **Files:**
+
 - Modify: `test/progress.test.ts` (already done in Task 1, but verify no other test imports old APIs)
 - Run: full test suite, lint, build
 

@@ -66,6 +66,7 @@ Cue-recall vocabulary game with Leitner spaced repetition. Timed 120-second sess
 ### Core loop
 
 Each round:
+
 1. Show a cue (definition, cloze sentence, or synonym)
 2. Player types the word
 3. Feedback: correct (green), close (yellow, retype), wrong (red, show answer)
@@ -74,7 +75,7 @@ Each round:
 ### Cue types (randomly rotated)
 
 1. **Definition → word** — "Feeling of unease or worry" → `angst`
-2. **Cloze sentence → word** — "Hun var ___ til å godta." → `villig`
+2. **Cloze sentence → word** — "Hun var \_\_\_ til å godta." → `villig`
 3. **Synonym → word** — "Synonym: modig" → `tapper`
 
 ### Scoring
@@ -91,6 +92,7 @@ Each round:
 State stored in localStorage per word: `brainbout:vocab:{lang}:{word}` → `{ box, nextDue }`
 
 Boxes and intervals:
+
 - Box 0: new/reset (due immediately)
 - Box 1: 1 day
 - Box 2: 3 days
@@ -110,10 +112,12 @@ Wrong answer → reset to box 0
 ### Word data
 
 Two curated JSON files:
+
 - `public/words-no.json` — ~300 advanced Norwegian words
 - `public/words-en.json` — ~300 advanced English words
 
 Format:
+
 ```json
 [
   {
@@ -149,24 +153,28 @@ Format:
 ## Hub updates
 
 ### Game order
+
 1. Chess960 Rapid (`rapid`)
 2. Reaction Grid (`reaction`)
 3. Word Recall (`vocab`)
 4. Quick Math (`math`)
 
 ### Labels
+
 - rapid: "Chess960 Rapid"
 - reaction: "Reaction Grid"
 - vocab: "Word Recall"
 - math: "Quick Math"
 
 ### Score display
+
 - rapid: "Won" / "Lost" / "Draw" / "Skipped"
 - reaction/vocab/math: numeric score or "Skipped"
 
 ## Files
 
 ### New
+
 - `src/games/reaction.ts` — Reaction Grid game
 - `src/games/reaction.css` — reaction styles
 - `games/reaction.html` — reaction page
@@ -179,16 +187,19 @@ Format:
 - `public/words-en.json` — English word list
 
 ### Rename
+
 - `src/games/blitz.ts` → `src/games/rapid.ts`
 - `src/games/blitz.css` → `src/games/rapid.css`
 - `games/blitz.html` → `games/rapid.html`
 - `test/blitz.test.ts` → `test/rapid.test.ts`
 
 ### Delete
+
 - `src/games/memory.ts`, `src/games/memory.css`, `games/memory.html`, `test/memory.test.ts`
 - `src/games/stroop.ts`, `src/games/stroop.css`, `games/stroop.html`, `test/stroop.test.ts`
 
 ### Modify
+
 - `src/shared/progress.ts` — GAMES = `["rapid", "reaction", "vocab", "math"]`
 - `src/hub.ts` — new labels, URLs, rapid score format
 - `vite.config.ts` — swap entries for new pages

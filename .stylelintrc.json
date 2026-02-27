@@ -1,3 +1,22 @@
 {
-  "extends": "stylelint-config-standard"
+  "extends": "stylelint-config-standard",
+  "rules": {
+    "color-no-invalid-hex": true,
+    "color-hex-alpha": "never",
+    "declaration-no-important": true,
+    "function-linear-gradient-no-nonstandard-direction": true,
+    "function-no-unknown": true,
+    "function-url-no-scheme-relative": true,
+    "unit-no-unknown": true,
+    "no-unknown-custom-properties": null,
+    "no-unknown-custom-media": true,
+    "no-unknown-animations": true,
+    "selector-no-qualifying-type": true,
+    "selector-type-no-unknown": [
+      true,
+      {
+        "ignoreTypes": ["cg-board", "square", "coords"]
+      }
+    ]
+  }
 }

@@ -1,11 +1,35 @@
 {
   "planPath": "docs/plans/2026-02-27-repeatable-sessions-plan.md",
   "tasks": [
-    {"id": 11, "subject": "Task 1: Rewrite progress module", "status": "pending"},
-    {"id": 12, "subject": "Task 2: Remove skip button from all pages", "status": "pending", "blockedBy": [11]},
-    {"id": 13, "subject": "Task 3: Update game pages to new progress API", "status": "pending", "blockedBy": [11, 12]},
-    {"id": 14, "subject": "Task 4: Rewrite hub with session flow and stats", "status": "pending", "blockedBy": [11, 12, 13]},
-    {"id": 15, "subject": "Task 5: Final verification", "status": "pending", "blockedBy": [11, 12, 13, 14]}
+    {
+      "id": 11,
+      "subject": "Task 1: Rewrite progress module",
+      "status": "pending"
+    },
+    {
+      "id": 12,
+      "subject": "Task 2: Remove skip button from all pages",
+      "status": "pending",
+      "blockedBy": [11]
+    },
+    {
+      "id": 13,
+      "subject": "Task 3: Update game pages to new progress API",
+      "status": "pending",
+      "blockedBy": [11, 12]
+    },
+    {
+      "id": 14,
+      "subject": "Task 4: Rewrite hub with session flow and stats",
+      "status": "pending",
+      "blockedBy": [11, 12, 13]
+    },
+    {
+      "id": 15,
+      "subject": "Task 5: Final verification",
+      "status": "pending",
+      "blockedBy": [11, 12, 13, 14]
+    }
   ],
   "lastUpdated": "2026-02-27T00:00:00Z"
 }

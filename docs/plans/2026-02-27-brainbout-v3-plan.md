@@ -238,6 +238,7 @@ git mv test/blitz.test.ts test/rapid.test.ts
 Make these changes:
 
 1. Change time constants (line 80-81):
+
 ```typescript
 const INITIAL_MS = 15 * 60 * 1000;
 const INCREMENT_MS = 10 * 1000;
@@ -384,11 +385,13 @@ input: {
 **Step 4: Create placeholder entry points**
 
 `src/games/reaction.ts`:
+
 ```typescript
 console.log("reaction loaded");
 ```
 
 `src/games/vocab.ts`:
+
 ```typescript
 console.log("vocab loaded");
 ```
@@ -645,8 +648,9 @@ Expected: FAIL
 **Step 4: Add CSS link to `games/reaction.html`**
 
 In the `<head>` section, add after the existing stylesheet link:
+
 ```html
-    <link rel="stylesheet" href="/src/games/reaction.css" />
+<link rel="stylesheet" href="/src/games/reaction.css" />
 ```
 
 **Step 5: Implement `src/games/reaction.ts`**
@@ -691,8 +695,10 @@ function renderGrid(): void {
   game.innerHTML = `
     <div class="timer">${String(currentRemaining)}s</div>
     <div class="reaction-grid">
-      ${Array.from({ length: GRID_SIZE }, (_, i) =>
-        `<div class="reaction-cell${i === activeCell ? " active" : ""}" data-cell="${String(i)}"></div>`,
+      ${Array.from(
+        { length: GRID_SIZE },
+        (_, i) =>
+          `<div class="reaction-cell${i === activeCell ? " active" : ""}" data-cell="${String(i)}"></div>`,
       ).join("")}
     </div>
     <div class="score-display">Score: ${String(score)}</div>
@@ -857,6 +863,7 @@ Same format but with ~50 advanced English vocabulary words (GRE/SAT level). Exam
 **Step 3: Add to `.prettierignore`**
 
 Add these lines to `.prettierignore`:
+
 ```
 public/words-no.json
 public/words-en.json
@@ -956,7 +963,12 @@ describe("recordAnswer", () => {
   it("caps at max box", () => {
     const maxBox = BOX_INTERVALS.length - 1;
     for (let i = 0; i <= maxBox + 2; i++) {
-      recordAnswer("no", "tapper", true, `2026-03-${String(i + 1).padStart(2, "0")}`);
+      recordAnswer(
+        "no",
+        "tapper",
+        true,
+        `2026-03-${String(i + 1).padStart(2, "0")}`,
+      );
     }
     const state = getWordState("no", "tapper");
     expect(state.box).toBeLessThanOrEqual(maxBox);
@@ -1233,19 +1245,21 @@ Full Word Recall game implementation with cue display, text input, scoring, and 
 **Step 2: Add CSS link to `games/vocab.html`**
 
 In the `<head>` section, add after the existing stylesheet link:
+
 ```html
-    <link rel="stylesheet" href="/src/games/vocab.css" />
+<link rel="stylesheet" href="/src/games/vocab.css" />
 ```
 
 Also add a language toggle button in the header, next to the skip button. Replace the `<header>` block:
+
 ```html
-      <header>
-        <h1>Word Recall</h1>
-        <div>
-          <button class="lang-toggle" id="lang-btn">NO</button>
-          <button class="skip-btn" id="skip-btn">Skip</button>
-        </div>
-      </header>
+<header>
+  <h1>Word Recall</h1>
+  <div>
+    <button class="lang-toggle" id="lang-btn">NO</button>
+    <button class="skip-btn" id="skip-btn">Skip</button>
+  </div>
+</header>
 ```
 
 **Step 3: Implement `src/games/vocab.ts`**
@@ -1253,11 +1267,7 @@ Also add a language toggle button in the header, next to the skip button. Replac
 ```typescript
 import { createTimer } from "../shared/timer";
 import { recordScore, todayString, SKIP_SCORE } from "../shared/progress";
-import {
-  getDueWords,
-  recordAnswer,
-  levenshtein,
-} from "./vocab-srs";
+import { getDueWords, recordAnswer, levenshtein } from "./vocab-srs";
 import * as sound from "../shared/sounds";
 
 interface WordEntry {
@@ -1526,6 +1536,7 @@ git commit -m "feat: Word Recall game with spaced repetition and language toggle
 **Step 1: Update game descriptions**
 
 Replace the game list with:
+
 ```
 - **Chess960 Rapid** — 15+10 vs Stockfish
 - **Reaction Grid** — fast-attention target clicking (60s)

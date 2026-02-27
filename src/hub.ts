@@ -51,9 +51,15 @@ if (stored !== null) {
 }
 
 // Add newly completed game
-if (completedParam !== null && (GAMES as readonly string[]).includes(completedParam)) {
+if (
+  completedParam !== null &&
+  (GAMES as readonly string[]).includes(completedParam)
+) {
   session.add(completedParam as GameId);
-  sessionStorage.setItem("brainbout:current-session", JSON.stringify([...session]));
+  sessionStorage.setItem(
+    "brainbout:current-session",
+    JSON.stringify([...session]),
+  );
   // Clean URL
   window.history.replaceState({}, "", window.location.pathname);
 }
@@ -96,8 +102,10 @@ function render(): void {
 
   // Header stats badges
   html += `<div class="hub-stats-bar">`;
-  if (streak > 0) html += `<span class="streak-badge">${String(streak)}-day streak</span>`;
-  if (sessionsToday > 0) html += `<span class="sessions-badge">${String(sessionsToday)} session${sessionsToday === 1 ? "" : "s"} today</span>`;
+  if (streak > 0)
+    html += `<span class="streak-badge">${String(streak)}-day streak</span>`;
+  if (sessionsToday > 0)
+    html += `<span class="sessions-badge">${String(sessionsToday)} session${sessionsToday === 1 ? "" : "s"} today</span>`;
   html += `</div>`;
 
   // Game list

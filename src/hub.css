@@ -116,11 +116,6 @@
   gap: 0.25rem;
 }
 
-.session-scores .stat-row {
-  font-size: 0.85rem;
-  padding: 0.3rem 0;
-}
-
 /* --- Stats panel --- */
 
 .stats-panel {
@@ -148,8 +143,8 @@
   display: inline-block;
   width: 0.45em;
   height: 0.45em;
-  border-right: 2px solid currentColor;
-  border-bottom: 2px solid currentColor;
+  border-right: 2px solid currentcolor;
+  border-bottom: 2px solid currentcolor;
   transform: rotate(-45deg);
   transition: transform 0.2s ease;
   flex-shrink: 0;
@@ -191,6 +186,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-size: 0.85rem;
+  padding: 0.3rem 0;
+}
+
+.session-scores .stat-row {
   font-size: 0.85rem;
   padding: 0.3rem 0;
 }

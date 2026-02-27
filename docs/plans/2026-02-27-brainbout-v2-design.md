@@ -61,24 +61,28 @@ Use simple distinct emoji: 🐶 🐱 🐸 🦊 🐻 🐼 🐵 🦁 🐔 🐧 �
 ## Hub updates
 
 ### Game order
+
 1. Chess960 Blitz (`blitz`)
 2. Memory Match (`memory`)
 3. Stroop (`stroop`)
 4. Quick Math (`math`)
 
 ### Labels
+
 - blitz: "Chess960 Blitz"
 - memory: "Memory Match"
 - stroop: "Stroop"
 - math: "Quick Math"
 
 ### Score display
+
 - blitz: "Won" / "Lost" / "Draw" / "Skipped"
 - memory/stroop/math: numeric score or "Skipped"
 
 ## Files
 
 ### New
+
 - `src/games/blitz.ts` — Chess960 blitz game
 - `src/games/blitz.css` — blitz styles
 - `games/blitz.html` — blitz page
@@ -89,12 +93,14 @@ Use simple distinct emoji: 🐶 🐱 🐸 🦊 🐻 🐼 🐵 🦁 🐔 🐧 �
 - `test/memory.test.ts` — memory logic tests
 
 ### Delete
+
 - `src/games/puzzles.ts`, `src/games/puzzles.css`, `games/puzzles.html`, `test/puzzles.test.ts`
 - `src/games/nback.ts`, `src/games/nback.css`, `games/nback.html`, `test/nback.test.ts`
 - `public/puzzles.json`
 - `scripts/extract-puzzles.ts`
 
 ### Modify
+
 - `src/shared/progress.ts` — GAMES = `["blitz", "memory", "stroop", "math"]`
 - `src/hub.ts` — new labels, URLs, score display logic for blitz/skipped
 - `vite.config.ts` — swap puzzles/nback entries for blitz/memory

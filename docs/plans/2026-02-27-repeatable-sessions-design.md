@@ -20,11 +20,13 @@ Change the app from "one session per day" to freely repeatable sessions, with an
 **Keep:** `brainbout:best:<game>` (all-time best per game).
 
 **Add:**
+
 - `brainbout:today-best:<date>:<game>` — best score for each game today (updates if beaten)
 - `brainbout:sessions:<date>` — completed session count for a day
 - `brainbout:total-sessions` — all-time session count
 
 **New exports:**
+
 - `recordSessionScore(game, score)` — saves to today-best (if higher) + all-time best (if higher)
 - `completeSession()` — increments session counts
 - `getTodayBest(game)` → number | null
@@ -37,11 +39,13 @@ Change the app from "one session per day" to freely repeatable sessions, with an
 ### Hub (hub.ts + hub.css)
 
 **Session state (in-memory, not persisted):**
+
 - `currentSession: Set<GameId>` tracks which games are complete this session
 - The hub reads URL search params: when a game page navigates back with `?completed=rapid`, the hub adds it to the set
 - When `currentSession.size === 4`: call `completeSession()`, show summary, offer "New Session"
 
 **Layout:**
+
 - Header: streak + sessions-today count
 - Game list: shows current session progress (check mark for done, arrow for next, dim for upcoming)
 - Button: "Start" / "Next" / "New Session" depending on state
@@ -56,18 +60,18 @@ Change the app from "one session per day" to freely repeatable sessions, with an
 
 ### Files Changed
 
-| File | Change |
-|------|--------|
+| File                     | Change                                         |
+| ------------------------ | ---------------------------------------------- |
 | `src/shared/progress.ts` | New data model, new exports, remove daily/skip |
-| `test/progress.test.ts` | Rewrite for new model |
-| `src/hub.ts` | Session state, stats section, new flow |
-| `src/hub.css` | Stats styles, updated card states |
-| `src/style.css` | Remove `.skip-btn` |
-| `games/rapid.html` | Remove skip button |
-| `games/reaction.html` | Remove skip button |
-| `games/vocab.html` | Remove skip button |
-| `games/math.html` | Remove skip button |
-| `src/games/rapid.ts` | Remove skip handler, use recordSessionScore |
-| `src/games/reaction.ts` | Remove skip handler, use recordSessionScore |
-| `src/games/vocab.ts` | Remove skip handler, use recordSessionScore |
-| `src/games/math.ts` | Remove skip handler, use recordSessionScore |
+| `test/progress.test.ts`  | Rewrite for new model                          |
+| `src/hub.ts`             | Session state, stats section, new flow         |
+| `src/hub.css`            | Stats styles, updated card states              |
+| `src/style.css`          | Remove `.skip-btn`                             |
+| `games/rapid.html`       | Remove skip button                             |
+| `games/reaction.html`    | Remove skip button                             |
+| `games/vocab.html`       | Remove skip button                             |
+| `games/math.html`        | Remove skip button                             |
+| `src/games/rapid.ts`     | Remove skip handler, use recordSessionScore    |
+| `src/games/reaction.ts`  | Remove skip handler, use recordSessionScore    |
+| `src/games/vocab.ts`     | Remove skip handler, use recordSessionScore    |
+| `src/games/math.ts`      | Remove skip handler, use recordSessionScore    |

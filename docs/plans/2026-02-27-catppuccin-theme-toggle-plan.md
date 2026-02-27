@@ -13,6 +13,7 @@
 ### Task 1: Create theme module with test
 
 **Files:**
+
 - Create: `src/shared/theme.ts`
 - Create: `test/theme.test.ts`
 
@@ -185,6 +186,7 @@ git commit -m "feat: theme module with OS detection and toggle"
 ### Task 2: Update style.css with dual palettes and toggle button styles
 
 **Files:**
+
 - Modify: `src/style.css`
 
 **Step 1: Replace `:root` with dual palette definitions**
@@ -262,6 +264,7 @@ git commit -m "feat: dual Catppuccin palettes and toggle button styles"
 ### Task 3: Create board-theme.css with Catppuccin board overrides
 
 **Files:**
+
 - Create: `src/shared/board-theme.css`
 
 **Step 1: Create the board theme file**
@@ -409,6 +412,7 @@ git commit -m "feat: Catppuccin chess board theme with CSS custom properties"
 ### Task 4: Add FOUC prevention script to all HTML pages
 
 **Files:**
+
 - Modify: `index.html`
 - Modify: `games/rapid.html`
 - Modify: `games/reaction.html`
@@ -420,49 +424,64 @@ git commit -m "feat: Catppuccin chess board theme with CSS custom properties"
 In every HTML file, add this immediately after `<meta name="viewport" .../>` and before the first `<link>`:
 
 ```html
-    <script>
-      (function () {
-        var t = localStorage.getItem("theme");
-        if (!t)
-          t = matchMedia("(prefers-color-scheme:light)").matches
-            ? "latte"
-            : "frappe";
-        document.documentElement.dataset.theme = t;
-      })();
-    </script>
+<script>
+  (function () {
+    var t = localStorage.getItem("theme");
+    if (!t)
+      t = matchMedia("(prefers-color-scheme:light)").matches
+        ? "latte"
+        : "frappe";
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
 ```
 
 **Step 2: Add theme toggle button to each header**
 
 In `index.html` (hub), change the header to:
+
 ```html
-      <header>
-        <h1>Brainbout</h1>
-        <button class="theme-toggle" id="theme-btn" aria-label="Toggle theme"></button>
-      </header>
+<header>
+  <h1>Brainbout</h1>
+  <button
+    class="theme-toggle"
+    id="theme-btn"
+    aria-label="Toggle theme"
+  ></button>
+</header>
 ```
 
 In `games/rapid.html`, `games/reaction.html`, `games/math.html`, wrap the buttons:
+
 ```html
-      <header>
-        <h1>Chess960 Rapid</h1>
-        <div>
-          <button class="theme-toggle" id="theme-btn" aria-label="Toggle theme"></button>
-          <button class="skip-btn" id="skip-btn">Skip</button>
-        </div>
-      </header>
+<header>
+  <h1>Chess960 Rapid</h1>
+  <div>
+    <button
+      class="theme-toggle"
+      id="theme-btn"
+      aria-label="Toggle theme"
+    ></button>
+    <button class="skip-btn" id="skip-btn">Skip</button>
+  </div>
+</header>
 ```
 
 In `games/vocab.html` (already has a wrapper div), add before lang-btn:
+
 ```html
-      <header>
-        <h1>Word Recall</h1>
-        <div>
-          <button class="theme-toggle" id="theme-btn" aria-label="Toggle theme"></button>
-          <button class="lang-toggle" id="lang-btn">NO</button>
-          <button class="skip-btn" id="skip-btn">Skip</button>
-        </div>
-      </header>
+<header>
+  <h1>Word Recall</h1>
+  <div>
+    <button
+      class="theme-toggle"
+      id="theme-btn"
+      aria-label="Toggle theme"
+    ></button>
+    <button class="lang-toggle" id="lang-btn">NO</button>
+    <button class="skip-btn" id="skip-btn">Skip</button>
+  </div>
+</header>
 ```
 
 **Step 3: Commit**
@@ -477,6 +496,7 @@ git commit -m "feat: FOUC prevention script and theme toggle button in all pages
 ### Task 5: Wire theme module in all TypeScript entry points
 
 **Files:**
+
 - Modify: `src/hub.ts` (add import at top)
 - Modify: `src/games/rapid.ts` (add imports at top)
 - Modify: `src/games/reaction.ts` (add import at top)
@@ -486,11 +506,13 @@ git commit -m "feat: FOUC prevention script and theme toggle button in all pages
 **Step 1: Add theme imports to each file**
 
 At the top of `src/hub.ts`, add:
+
 ```typescript
 import { initTheme, renderToggle } from "./shared/theme";
 ```
 
 At the bottom of `src/hub.ts`, after `render();`, add:
+
 ```typescript
 initTheme();
 const themeBtn = document.getElementById("theme-btn");
@@ -502,17 +524,20 @@ Wait — since we already put a `#theme-btn` placeholder in HTML, we just need `
 **Revised approach:** Change `renderToggle` to `wireToggle` — it finds the existing `#theme-btn` and wires click + sets icon. This avoids duplicating the button.
 
 In each TS entry file, add at the top:
+
 ```typescript
 import { initTheme, wireToggle } from "./shared/theme";
 ```
 
 And at the bottom (or after DOM-dependent init), add:
+
 ```typescript
 initTheme();
 wireToggle();
 ```
 
 For `src/games/rapid.ts` only, also add after the chessground CSS imports:
+
 ```typescript
 import "../shared/board-theme.css";
 ```
@@ -546,6 +571,7 @@ Expected: successful build
 **Step 4: Manual verification**
 
 Run: `npx vite dev` and check:
+
 - [ ] Hub page: toggle button visible, click switches light/dark
 - [ ] Rapid page: board colors change with theme
 - [ ] Reaction/Vocab/Math pages: all switch correctly

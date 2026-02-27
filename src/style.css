@@ -13,9 +13,9 @@
   --ctp-red: #e78284;
   --ctp-yellow: #e5c890;
   --ctp-peach: #ef9f76;
-  --ctp-shadow: 0 1px 3px rgba(35, 38, 52, 0.4);
-  --ctp-shadow-lg: 0 4px 12px rgba(35, 38, 52, 0.3);
-  --ctp-focus-ring: 0 0 0 2px rgba(140, 170, 238, 0.5);
+  --ctp-shadow: 0 1px 3px rgb(35 38 52 / 40%);
+  --ctp-shadow-lg: 0 4px 12px rgb(35 38 52 / 30%);
+  --ctp-focus-ring: 0 0 0 2px rgb(140 170 238 / 50%);
 }
 
 /* Catppuccin Latte (light) */
@@ -32,9 +32,9 @@
   --ctp-red: #d20f39;
   --ctp-yellow: #df8e1d;
   --ctp-peach: #fe640b;
-  --ctp-shadow: 0 1px 3px rgba(172, 176, 190, 0.5);
-  --ctp-shadow-lg: 0 4px 12px rgba(172, 176, 190, 0.35);
-  --ctp-focus-ring: 0 0 0 2px rgba(30, 102, 245, 0.4);
+  --ctp-shadow: 0 1px 3px rgb(172 176 190 / 50%);
+  --ctp-shadow-lg: 0 4px 12px rgb(172 176 190 / 35%);
+  --ctp-focus-ring: 0 0 0 2px rgb(30 102 245 / 40%);
 }
 
 * {

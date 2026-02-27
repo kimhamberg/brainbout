@@ -1,12 +1,41 @@
 {
   "planPath": "docs/plans/2026-02-27-catppuccin-theme-toggle-plan.md",
   "tasks": [
-    {"id": 3, "subject": "Task 1: Create theme module with test", "status": "pending"},
-    {"id": 4, "subject": "Task 2: Update style.css with dual palettes", "status": "pending", "blockedBy": [3]},
-    {"id": 5, "subject": "Task 3: Create board-theme.css", "status": "pending", "blockedBy": [3]},
-    {"id": 6, "subject": "Task 4: Add FOUC script and toggle to HTML pages", "status": "pending", "blockedBy": [3, 4, 5]},
-    {"id": 7, "subject": "Task 5: Wire theme in all TS entry points", "status": "pending", "blockedBy": [3, 4, 5, 6]},
-    {"id": 8, "subject": "Task 6: Lint, test, and verify", "status": "pending", "blockedBy": [3, 4, 5, 6, 7]}
+    {
+      "id": 3,
+      "subject": "Task 1: Create theme module with test",
+      "status": "pending"
+    },
+    {
+      "id": 4,
+      "subject": "Task 2: Update style.css with dual palettes",
+      "status": "pending",
+      "blockedBy": [3]
+    },
+    {
+      "id": 5,
+      "subject": "Task 3: Create board-theme.css",
+      "status": "pending",
+      "blockedBy": [3]
+    },
+    {
+      "id": 6,
+      "subject": "Task 4: Add FOUC script and toggle to HTML pages",
+      "status": "pending",
+      "blockedBy": [3, 4, 5]
+    },
+    {
+      "id": 7,
+      "subject": "Task 5: Wire theme in all TS entry points",
+      "status": "pending",
+      "blockedBy": [3, 4, 5, 6]
+    },
+    {
+      "id": 8,
+      "subject": "Task 6: Lint, test, and verify",
+      "status": "pending",
+      "blockedBy": [3, 4, 5, 6, 7]
+    }
   ],
   "lastUpdated": "2026-02-27T00:00:00Z"
 }
