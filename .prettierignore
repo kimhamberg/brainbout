@@ -3,3 +3,5 @@ server/web
 android
 node_modules
 public/stockfish
+public/words-no.json
+public/words-en.json

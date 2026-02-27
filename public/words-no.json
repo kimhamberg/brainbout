@@ -1,0 +1,302 @@
+[
+  {
+    "word": "tapper",
+    "definition": "Som viser mot og standhaftighet i farlige situasjoner",
+    "cloze": "Soldaten var svært ___ i kamp.",
+    "synonyms": ["modig", "djerv"]
+  },
+  {
+    "word": "vedvarende",
+    "definition": "Som fortsetter over lang tid uten avbrudd",
+    "cloze": "Regnet var ___ gjennom hele natten.",
+    "synonyms": ["langvarig", "kontinuerlig"]
+  },
+  {
+    "word": "omhyggelig",
+    "definition": "Som utfører noe med stor nøyaktighet og oppmerksomhet",
+    "cloze": "Hun var ___ med å kontrollere alle detaljene.",
+    "synonyms": ["nøyaktig", "grundig"]
+  },
+  {
+    "word": "utilbørlig",
+    "definition": "Som er upassende eller uakseptabel i en gitt sammenheng",
+    "cloze": "Dommeren mente at presset var ___.",
+    "synonyms": ["upassende", "urimelig"]
+  },
+  {
+    "word": "formildende",
+    "definition": "Som gjør noe mindre alvorlig eller strengt",
+    "cloze": "Retten tok hensyn til ___ omstendigheter.",
+    "synonyms": ["lindrende", "dempende"]
+  },
+  {
+    "word": "prekær",
+    "definition": "Som er vanskelig og usikker, ofte med risiko for forverring",
+    "cloze": "Den økonomiske situasjonen var svært ___.",
+    "synonyms": ["vanskelig", "kritisk"]
+  },
+  {
+    "word": "redelig",
+    "definition": "Som er ærlig og oppriktig i sin oppførsel",
+    "cloze": "Han var kjent som en ___ forretningsmann.",
+    "synonyms": ["ærlig", "hederlig"]
+  },
+  {
+    "word": "ubestridelig",
+    "definition": "Som ikke kan motsis eller benektes",
+    "cloze": "Bevisene var ___.",
+    "synonyms": ["udiskutabel", "uomtvistelig"]
+  },
+  {
+    "word": "gjenstridig",
+    "definition": "Som er vanskelig å håndtere eller kontrollere",
+    "cloze": "Barnet var ___ og nektet å lystre.",
+    "synonyms": ["sta", "obsternasig"]
+  },
+  {
+    "word": "vedholdende",
+    "definition": "Som holder fast ved noe med utholdenhet",
+    "cloze": "Hennes ___ innsats førte til slutt til suksess.",
+    "synonyms": ["utholdende", "standhaftig"]
+  },
+  {
+    "word": "overflod",
+    "definition": "Stor mengde av noe, mer enn det som trengs",
+    "cloze": "Det var en ___ av mat på bordet.",
+    "synonyms": ["rikdom", "overskudd"]
+  },
+  {
+    "word": "misunnelig",
+    "definition": "Som føler sjalusi overfor andres hell eller eiendeler",
+    "cloze": "Hun ble ___ da naboen kjøpte ny bil.",
+    "synonyms": ["sjalu", "avundsjuk"]
+  },
+  {
+    "word": "vemodig",
+    "definition": "Som er preget av en mild, stille tristhet",
+    "cloze": "Han ble ___ når han tenkte på barndommen.",
+    "synonyms": ["melankolsk", "sorgfull"]
+  },
+  {
+    "word": "ubønnhørlig",
+    "definition": "Som ikke lar seg stoppe eller påvirke",
+    "cloze": "Utviklingen gikk sin ___ gang.",
+    "synonyms": ["ustoppelig", "nådeløs"]
+  },
+  {
+    "word": "innbitt",
+    "definition": "Som viser sterk, fastholdt vilje eller motstand",
+    "cloze": "Han kjempet ___ mot urettferdigheten.",
+    "synonyms": ["iherdig", "forbitret"]
+  },
+  {
+    "word": "ufortrøden",
+    "definition": "Som ikke lar seg avskrekke eller motløs",
+    "cloze": "Hun fortsatte ___ til tross for alle hindringer.",
+    "synonyms": ["utholdende", "uforferdet"]
+  },
+  {
+    "word": "graverende",
+    "definition": "Som er svært belastende eller alvorlig",
+    "cloze": "De fant ___ feil i regnskapet.",
+    "synonyms": ["belastende", "alvorlig"]
+  },
+  {
+    "word": "berettiget",
+    "definition": "Som har god grunn eller rett til noe",
+    "cloze": "Kritikken var fullt ut ___.",
+    "synonyms": ["rettmessig", "velbegrunnet"]
+  },
+  {
+    "word": "etterrettelig",
+    "definition": "Som er pålitelig og kan etterprøves",
+    "cloze": "Journalisten var alltid ___ i sin rapportering.",
+    "synonyms": ["pålitelig", "troverdig"]
+  },
+  {
+    "word": "gjennomgripende",
+    "definition": "Som påvirker noe fullstendig og dypt",
+    "cloze": "Reformen førte til ___ endringer i samfunnet.",
+    "synonyms": ["dyptgripende", "fundamental"]
+  },
+  {
+    "word": "tvetydig",
+    "definition": "Som kan tolkes på mer enn én måte",
+    "cloze": "Svaret hennes var ___ og vanskelig å forstå.",
+    "synonyms": ["flertydig", "uklar"]
+  },
+  {
+    "word": "uhørt",
+    "definition": "Som er opprørende eller aldri tidligere opplevd",
+    "cloze": "Det var ___ at han ble behandlet slik.",
+    "synonyms": ["skandaløs", "enestående"]
+  },
+  {
+    "word": "uforsonlig",
+    "definition": "Som ikke vil tilgi eller inngå kompromiss",
+    "cloze": "Motstanderne var ___ i sin holdning.",
+    "synonyms": ["kompromissløs", "nådeløs"]
+  },
+  {
+    "word": "forsmedelig",
+    "definition": "Som er ydmykende og skammelig",
+    "cloze": "Nederlaget var ___ for laget.",
+    "synonyms": ["ydmykende", "nedverdigende"]
+  },
+  {
+    "word": "medgjørlig",
+    "definition": "Som er villig til å tilpasse seg og samarbeide",
+    "cloze": "Han var ___ og lett å forhandle med.",
+    "synonyms": ["føyelig", "ettergivende"]
+  },
+  {
+    "word": "storsinnet",
+    "definition": "Som viser edelt sinn og generøsitet i handling",
+    "cloze": "Det var ___ av ham å tilgi fornærmelsen.",
+    "synonyms": ["generøs", "edel"]
+  },
+  {
+    "word": "beklemmende",
+    "definition": "Som skaper en følelse av angst eller ubehag",
+    "cloze": "Stemningen i rommet var ___.",
+    "synonyms": ["trykkende", "kvelende"]
+  },
+  {
+    "word": "prunkløs",
+    "definition": "Som er uten overdreven pynt eller skryt",
+    "cloze": "Hun levde et ___ og enkelt liv.",
+    "synonyms": ["beskjeden", "nøktern"]
+  },
+  {
+    "word": "uangripelig",
+    "definition": "Som ikke kan kritiseres eller angripes",
+    "cloze": "Argumentasjonen hennes var ___.",
+    "synonyms": ["uimotsigelig", "feilfri"]
+  },
+  {
+    "word": "fortrinnsvis",
+    "definition": "Helst, i første rekke",
+    "cloze": "Møtet bør ___ holdes på mandag.",
+    "synonyms": ["helst", "fortrinnsrett"]
+  },
+  {
+    "word": "ruvende",
+    "definition": "Som er stor og dominerende i fysisk eller overført betydning",
+    "cloze": "Han var en ___ skikkelse i norsk litteratur.",
+    "synonyms": ["dominerende", "imponerende"]
+  },
+  {
+    "word": "utkrystallisere",
+    "definition": "Å gjøre noe tydeligere eller mer konkret over tid",
+    "cloze": "Ideene begynte å ___ seg etter lang diskusjon.",
+    "synonyms": ["konkretisere", "tydeliggjøre"]
+  },
+  {
+    "word": "undergrave",
+    "definition": "Å svekke noe gradvis innenfra",
+    "cloze": "Korrupsjonen truet med å ___ demokratiet.",
+    "synonyms": ["svekke", "ødelegge"]
+  },
+  {
+    "word": "forbeholden",
+    "definition": "Som er reservert og tilbakeholden i sin holdning",
+    "cloze": "Hun var ___ i møte med fremmede.",
+    "synonyms": ["reservert", "tilbakeholden"]
+  },
+  {
+    "word": "skjellsettende",
+    "definition": "Som markerer et viktig vendepunkt",
+    "cloze": "Oppfinnelsen var ___ for medisinsk vitenskap.",
+    "synonyms": ["epokegjørende", "banebrytende"]
+  },
+  {
+    "word": "betenkelig",
+    "definition": "Som gir grunn til uro eller tvil",
+    "cloze": "Utviklingen var ___ og krevde nærmere gransking.",
+    "synonyms": ["urovekkende", "bekymringsfull"]
+  },
+  {
+    "word": "anstrengende",
+    "definition": "Som krever mye fysisk eller mental innsats",
+    "cloze": "Fjellturen var svært ___.",
+    "synonyms": ["slitsom", "krevende"]
+  },
+  {
+    "word": "ufravikelig",
+    "definition": "Som ikke kan fravikes eller endres",
+    "cloze": "Hans standpunkt var ___.",
+    "synonyms": ["fast", "uforanderlig"]
+  },
+  {
+    "word": "tilforlatelig",
+    "definition": "Som ser pålitelig og troverdig ut",
+    "cloze": "Historien virket ___, men var oppdiktet.",
+    "synonyms": ["troverdig", "overbevisende"]
+  },
+  {
+    "word": "påtrengende",
+    "definition": "Som trenger seg på og er vanskelig å ignorere",
+    "cloze": "Lukten var ___ og ubehagelig.",
+    "synonyms": ["innpåsliten", "pågående"]
+  },
+  {
+    "word": "forkastelig",
+    "definition": "Som er moralsk uakseptabelt og fordømmelsesverdig",
+    "cloze": "Handlingen hans var ___.",
+    "synonyms": ["avskyelig", "forkjettret"]
+  },
+  {
+    "word": "utvetydig",
+    "definition": "Som er helt klar og uten rom for tvil",
+    "cloze": "Budskapet var klart og ___.",
+    "synonyms": ["entydig", "klar"]
+  },
+  {
+    "word": "opphøyet",
+    "definition": "Som er edel og hevet over det alminnelige",
+    "cloze": "Han talte med en ___ ro.",
+    "synonyms": ["edel", "sublim"]
+  },
+  {
+    "word": "snarrådig",
+    "definition": "Som tenker og handler raskt i uventede situasjoner",
+    "cloze": "Den ___ brannmannen reddet familien.",
+    "synonyms": ["kvikk", "åndsnærværende"]
+  },
+  {
+    "word": "veltalende",
+    "definition": "Som uttrykker seg godt og overbevisende med ord",
+    "cloze": "Advokaten holdt en ___ forsvarstale.",
+    "synonyms": ["artikulert", "talegavet"]
+  },
+  {
+    "word": "uoverkommelig",
+    "definition": "Som er for vanskelig eller kostbar å gjennomføre",
+    "cloze": "Prisene i byen var ___ for studentene.",
+    "synonyms": ["uoppnåelig", "umulig"]
+  },
+  {
+    "word": "iherdig",
+    "definition": "Som arbeider med stor energi og utholdenhet",
+    "cloze": "Forskerne jobbet ___ med å finne en løsning.",
+    "synonyms": ["utrettelig", "flittig"]
+  },
+  {
+    "word": "stillferdig",
+    "definition": "Som er rolig og beskjeden i sin fremtreden",
+    "cloze": "Han var en ___ mann som sjelden hevet stemmen.",
+    "synonyms": ["stille", "beskjeden"]
+  },
+  {
+    "word": "uforvarende",
+    "definition": "Uten å være forberedt eller uten å mene det",
+    "cloze": "Hun kom ___ til å røpe hemmeligheten.",
+    "synonyms": ["utilsiktet", "ubevisst"]
+  },
+  {
+    "word": "overilt",
+    "definition": "Som er gjort for raskt og uten tilstrekkelig overveielse",
+    "cloze": "Beslutningen var ___ og førte til problemer.",
+    "synonyms": ["forhastet", "ugjennomtenkt"]
+  }
+]
