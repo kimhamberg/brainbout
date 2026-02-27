@@ -58,22 +58,22 @@
     box-shadow 0.15s ease,
     transform 0.1s ease,
     background-color 0.25s ease;
-}
 
-.choice-btn:hover {
-  transform: translateY(-1px);
-  border-color: var(--ctp-blue);
-  box-shadow: var(--ctp-shadow-lg);
-}
+  &:hover {
+    transform: translateY(-1px);
+    border-color: var(--ctp-blue);
+    box-shadow: var(--ctp-shadow-lg);
+  }
 
-.choice-btn:active {
-  transform: translateY(0);
-  box-shadow: none;
-}
+  &:active {
+    transform: translateY(0);
+    box-shadow: none;
+  }
 
-.choice-btn:focus-visible {
-  outline: none;
-  box-shadow: var(--ctp-focus-ring);
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--ctp-focus-ring);
+  }
 }
 
 .score-display {
@@ -85,46 +85,46 @@
 .result {
   padding: 2rem 0;
   text-align: center;
-}
 
-.result .final-score {
-  margin-bottom: 0.5rem;
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--ctp-green);
-}
+  & .final-score {
+    margin-bottom: 0.5rem;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--ctp-green);
+  }
 
-.result button {
-  cursor: pointer;
+  & button {
+    cursor: pointer;
 
-  margin-top: 1rem;
-  padding: 0.75rem 2rem;
-  border: none;
-  border-radius: 6px;
+    margin-top: 1rem;
+    padding: 0.75rem 2rem;
+    border: none;
+    border-radius: 6px;
 
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--ctp-mantle);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--ctp-mantle);
 
-  background: var(--ctp-blue);
-  box-shadow: var(--ctp-shadow);
+    background: var(--ctp-blue);
+    box-shadow: var(--ctp-shadow);
 
-  transition:
-    box-shadow 0.15s ease,
-    transform 0.1s ease;
-}
+    transition:
+      box-shadow 0.15s ease,
+      transform 0.1s ease;
+  }
 
-.result button:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--ctp-shadow-lg);
-}
+  & button:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--ctp-shadow-lg);
+  }
 
-.result button:active {
-  transform: translateY(0);
-  box-shadow: none;
-}
+  & button:active {
+    transform: translateY(0);
+    box-shadow: none;
+  }
 
-.result button:focus-visible {
-  outline: none;
-  box-shadow: var(--ctp-focus-ring);
+  & button:focus-visible {
+    outline: none;
+    box-shadow: var(--ctp-focus-ring);
+  }
 }

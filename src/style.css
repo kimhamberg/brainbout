@@ -1,3 +1,5 @@
+@custom-media --viewport-sm (width >= 480px);
+
 /* Catppuccin Frappé (dark) — https://catppuccin.com/palette (MIT) */
 :root,
 [data-theme="frappe"] {
@@ -71,17 +73,17 @@ header {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 1rem;
-}
 
-header div {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
+  & div {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
 
-header h1 {
-  font-size: 1.5rem;
-  font-weight: 600;
+  & h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
 }
 
 .theme-toggle {
@@ -105,19 +107,19 @@ header h1 {
     color 0.15s ease,
     background-color 0.15s ease,
     transform 0.2s ease;
-}
 
-.theme-toggle:hover {
-  border-color: var(--ctp-blue);
-  color: var(--ctp-text);
-}
+  &:hover {
+    border-color: var(--ctp-blue);
+    color: var(--ctp-text);
+  }
 
-.theme-toggle:active {
-  transform: scale(0.92);
-  background: var(--ctp-surface0);
-}
+  &:active {
+    transform: scale(0.92);
+    background: var(--ctp-surface0);
+  }
 
-.theme-toggle:focus-visible {
-  outline: none;
-  box-shadow: var(--ctp-focus-ring);
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--ctp-focus-ring);
+  }
 }
