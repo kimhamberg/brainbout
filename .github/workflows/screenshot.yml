@@ -35,8 +35,4 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add docs/screenshot.png
           git commit -m "docs: auto-update screenshot [skip ci]"
-          gh api -X DELETE repos/${{ github.repository }}/branches/master/protection/enforce_admins || true
           git push origin master
-          gh api -X POST repos/${{ github.repository }}/branches/master/protection/enforce_admins
-        env:
-          GH_TOKEN: ${{ github.token }}
