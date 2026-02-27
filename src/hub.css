@@ -1,7 +1,63 @@
+@keyframes gradient-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes icon-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+@media (--motion-reduce) {
+  @keyframes gradient-flow {
+    0%,
+    50%,
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  @keyframes icon-breathe {
+    0%,
+    50%,
+    100% {
+      transform: scale(1);
+    }
+  }
+}
+
 .hub-title {
   color: transparent;
-  background: linear-gradient(135deg, var(--ctp-blue), var(--ctp-peach));
+
+  background: linear-gradient(
+    90deg,
+    var(--ctp-blue),
+    var(--ctp-peach),
+    var(--ctp-blue)
+  );
   background-clip: text;
+  background-size: 200% 100%;
+
+  animation: gradient-flow 6s ease infinite;
+}
+
+.hub-icon {
+  animation: icon-breathe 4s ease-in-out infinite;
 }
 
 .hub-stats-bar {
