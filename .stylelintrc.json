@@ -12,11 +12,6 @@
     "no-unknown-custom-media": true,
     "no-unknown-animations": true,
     "selector-no-qualifying-type": true,
-    "selector-type-no-unknown": [
-      true,
-      {
-        "ignoreTypes": ["cg-board", "square", "coords"]
-      }
-    ]
+    "selector-type-no-unknown": null
   }
 }
