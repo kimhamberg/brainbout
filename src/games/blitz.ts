@@ -116,7 +116,7 @@ function finishGame(result: number, message: string): void {
   else sound.playDraw();
 
   document.getElementById("back-btn")?.addEventListener("click", () => {
-    window.location.href = "/";
+    window.location.href = "../";
   });
 }
 
@@ -285,7 +285,7 @@ document.getElementById("skip-btn")?.addEventListener("click", () => {
   clock.stop();
   engine.destroy();
   recordScore("blitz", SKIP_SCORE, todayString());
-  window.location.href = "/";
+  window.location.href = "../";
 });
 
 void main();

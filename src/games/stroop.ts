@@ -73,7 +73,7 @@ function showResult(): void {
   sound.playVictory();
 
   document.getElementById("back-btn")?.addEventListener("click", () => {
-    window.location.href = "/";
+    window.location.href = "../";
   });
 }
 
@@ -103,7 +103,7 @@ const timer = createTimer({
 document.getElementById("skip-btn")?.addEventListener("click", () => {
   timer.stop();
   recordScore("stroop", SKIP_SCORE, todayString());
-  window.location.href = "/";
+  window.location.href = "../";
 });
 
 renderPlaying();

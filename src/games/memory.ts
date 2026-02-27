@@ -159,7 +159,7 @@ function showResult(): void {
   sound.playVictory();
 
   document.getElementById("back-btn")?.addEventListener("click", () => {
-    window.location.href = "/";
+    window.location.href = "../";
   });
 }
 
@@ -173,7 +173,7 @@ game.addEventListener("click", (e) => {
 document.getElementById("skip-btn")?.addEventListener("click", () => {
   if (timerRef) timerRef.stop();
   recordScore("memory", SKIP_SCORE, todayString());
-  window.location.href = "/";
+  window.location.href = "../";
 });
 
 timerRef = createTimer({
