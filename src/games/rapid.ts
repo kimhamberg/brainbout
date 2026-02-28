@@ -12,6 +12,7 @@ import { parseUci, makeSquare } from "chessops/util";
 import { chessgroundDests } from "chessops/compat";
 import { randomChess960 } from "../chess960";
 import { StockfishEngine } from "../shared/engine";
+import { computeThinkTime, eloToNodes } from "../shared/think-time";
 import { recordSessionScore } from "../shared/progress";
 import { initTheme, wireToggle } from "../shared/theme";
 import * as sound from "../shared/sounds";
@@ -96,6 +97,9 @@ const playerColor: "white" | "black" = "white";
 let gameOver = false;
 let engine: StockfishEngine;
 let clock: ChessClock;
+let engineClock: ChessClock;
+let engineElo: number;
+let baseNodes: number;
 
 // --- Functions (ordered to satisfy no-use-before-define) ---
 
@@ -145,6 +149,7 @@ function checkGameEnd(): boolean {
   if (pos.isCheckmate()) {
     const winner = pos.turn === "white" ? "black" : "white";
     clock.stop();
+    engineClock.stop();
     gameOver = true;
     const result = winner === playerColor ? 1 : 0;
     finishGame(
@@ -155,18 +160,21 @@ function checkGameEnd(): boolean {
   }
   if (pos.isStalemate()) {
     clock.stop();
+    engineClock.stop();
     gameOver = true;
     finishGame(0.5, "Stalemate — draw");
     return true;
   }
   if (pos.isInsufficientMaterial()) {
     clock.stop();
+    engineClock.stop();
     gameOver = true;
     finishGame(0.5, "Insufficient material — draw");
     return true;
   }
   if (pos.halfmoves >= 100) {
     clock.stop();
+    engineClock.stop();
     gameOver = true;
     finishGame(0.5, "50-move rule — draw");
     return true;
@@ -230,11 +238,21 @@ function onFlag(): void {
   finishGame(0, "Time's up — you lose");
 }
 
+function dimClock(id: string, dim: boolean): void {
+  document.getElementById(id)?.classList.toggle("dimmed", dim);
+}
+
+function onEngineFlag(): void {
+  gameOver = true;
+  finishGame(1, "Opponent flagged — you win!");
+}
+
 function renderGame(): void {
   game.innerHTML = `
-    <div class="clock" id="player-clock">${formatClock(INITIAL_MS)}</div>
+    <div class="clock dimmed" id="engine-clock">${formatClock(INITIAL_MS)}</div>
     <div class="rapid-board"></div>
     <div class="game-status">Loading engine...</div>
+    <div class="clock" id="player-clock">${formatClock(INITIAL_MS)}</div>
   `;
 
   const boardEl = game.querySelector<HTMLElement>(".rapid-board");
@@ -263,6 +281,10 @@ async function main(): Promise<void> {
   const setup = parseFen(fen).unwrap();
   pos = Chess.fromSetup(setup).unwrap();
 
+  // Pick random Elo for this game
+  engineElo = 1200 + Math.floor(Math.random() * 601); // [1200, 1800]
+  baseNodes = eloToNodes(engineElo);
+
   clock = createClock({
     initialMs: INITIAL_MS,
     incrementMs: INCREMENT_MS,
@@ -276,14 +298,29 @@ async function main(): Promise<void> {
     onFlag,
   });
 
+  engineClock = createClock({
+    initialMs: INITIAL_MS,
+    incrementMs: INCREMENT_MS,
+    onTick: (ms) => {
+      const el = document.getElementById("engine-clock");
+      if (el) {
+        el.textContent = formatClock(ms);
+        el.classList.toggle("low", ms < 60000);
+      }
+    },
+    onFlag: onEngineFlag,
+  });
+
   renderGame();
 
   engine = new StockfishEngine();
-  await engine.init();
+  await engine.init(engineElo);
   engine.newGame();
 
   updateStatus("Your move");
   clock.start();
+  dimClock("engine-clock", true);
+  dimClock("player-clock", false);
 }
 
 void main();

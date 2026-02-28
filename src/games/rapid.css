@@ -41,6 +41,10 @@
   &.low {
     color: var(--ctp-red);
   }
+
+  &.dimmed {
+    opacity: 0.5;
+  }
 }
 
 .rapid-board {
