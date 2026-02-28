@@ -229,8 +229,40 @@ function onPlayerMove(orig: string, dest: string): void {
 
   if (checkGameEnd()) return;
 
-  updateStatus("Engine thinking...");
-  engine.go(startFen, moves, onEngineMove);
+  updateStatus("Thinking...");
+
+  // Switch clocks: player stops (already stopped above), engine starts
+  dimClock("player-clock", true);
+  dimClock("engine-clock", false);
+  engineClock.start();
+
+  // Compute node count with per-move variance (0.7x-1.3x)
+  const timeTroubleMultiplier = engineClock.remaining() < 60_000 ? 0.5 : 1.0;
+  const variance = 0.7 + Math.random() * 0.6;
+  const nodes = Math.round(baseNodes * variance * timeTroubleMultiplier);
+
+  // Track whether this was a capture (for recapture detection in think time)
+  const wasCapture = isCapture;
+
+  // Start engine search
+  engine.go(startFen, moves, (bestMove: string) => {
+    // Compute think time based on search results
+    const thinkMs = computeThinkTime({
+      remainingMs: engineClock.remaining(),
+      moveNumber: moves.length,
+      evalSwing: engine.getEvalSwing(),
+      isRecapture: wasCapture,
+    });
+
+    // Synthetic delay (engine already found the move; we wait to simulate thinking)
+    setTimeout(() => {
+      engineClock.stop();
+      engineClock.addIncrement();
+      dimClock("engine-clock", true);
+      dimClock("player-clock", false);
+      onEngineMove(bestMove);
+    }, thinkMs);
+  }, { nodes });
 }
 
 function onFlag(): void {
