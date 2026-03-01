@@ -299,11 +299,12 @@ function renderGame(): void {
       color: playerColor,
       dests: chessgroundDests(pos, { chess960: true }) as Dests,
       showDests: true,
+      rookCastle: true,
       events: { after: onPlayerMove },
     },
     draggable: { enabled: true, showGhost: true },
     animation: { enabled: true, duration: 200 },
-    premovable: { enabled: false },
+    premovable: { enabled: true },
   });
 }
 

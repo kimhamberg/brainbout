@@ -1,40 +1,39 @@
 #!/usr/bin/env python3
-"""Generate synthesised UI sound palette for Brainbout  (v4).
+"""Generate synthesised UI sound palette for Brainbout  (v6).
 
 Run:  .venv/bin/python scripts/gen-sounds.py
 
-Design principles (informed by Duolingo / Apple / cross-modal research):
-  • Key of G — every tonal sound is derived from G major so the whole
-    palette feels like one designed family.
-  • ±5-cent detuning — two oscillators per voice, slightly apart, for
-    organic warmth instead of sterile digital perfection.
-  • Additive harmonics — 2nd + 3rd partial give each tone body
-    (marimba-like vs bare tuning-fork).
-  • FM synthesis — bell / chime sounds use frequency modulation with a
-    decaying mod-index (bright attack → mellow sustain).
-  • Low-pass @ 4 kHz — rolls off harsh highs to match Catppuccin's
-    soft, warm visual palette.
-  • Pedalboard master chain — subtle room reverb + gentle compression.
-  • Fade-out on every sound — 8ms raised-cosine eliminates pop/click
-    when playback is interrupted or the file ends.
-  • Chess pieces use modal synthesis — multiple resonant modes with
-    frequency-dependent damping, bandpass-filtered noise residual,
-    and impact transient.  Based on research into wood acoustics:
-    wood modal frequencies cluster 100-500 Hz (free-free beam ratios),
-    wood has high damping (modes decay fast, thud not ring),
-    and higher modes decay faster than lower ones.
+Chess piece sounds (move/capture) are optimized via scipy differential
+evolution so that every measured output metric falls between Lichess and
+Chess.com reference values.  Metrics are 4 statistical moments × 2
+domains: frequency moments computed on log2(freq) axis (perceptually
+weighted), time moments on the energy envelope.
+
+Tonal UI sounds (correct, wrong, victory, defeat, draw, check, notify)
+are unchanged from v4 — key of G, warm detuned synthesis.
 
 Outputs WAV files to public/sounds/.
 """
 
 import logging
+import time
 from pathlib import Path
 from typing import NamedTuple
 
 import numpy as np
-from pedalboard import Compressor, Gain, Pedalboard, Reverb
+from pedalboard import (
+    Compressor,
+    Gain,
+    HighpassFilter,
+    Limiter,
+    LowpassFilter,
+    Pedalboard,
+    Reverb,
+)
 from scipy.io import wavfile
-from scipy.signal import butter, sosfilt
+from scipy.optimize import differential_evolution
+from scipy.signal import butter, sosfiltfilt, welch
+from tqdm import tqdm
 
 log = logging.getLogger(__name__)
 
@@ -44,14 +43,99 @@ OUT = Path(__file__).resolve().parent.parent / "public" / "sounds"
 # ±5 cents gives slow organic beating between the two voices
 DETUNE = 2 ** (5 / 1200)  # ≈ 1.0029
 
-# Master effects chain
+# Seeded RNG for reproducible "between Lichess & Chess.com" parameter picks
+_rng = np.random.default_rng(960)  # Chess960!
+
+
+def _between(a: float, b: float) -> float:
+    """Random value uniformly between a and b (order doesn't matter)."""
+    lo, hi = min(a, b), max(a, b)
+    return float(_rng.uniform(lo, hi))
+
+
+# ── Global processing for tonal UI sounds ─────────────────────────
+# These only affect non-chess sounds (correct, wrong, victory, etc.).
+# Chess sounds use fully optimizer-controlled chains instead.
+
+LPF_CUTOFF = _between(6000, 8000)
+
 MASTER = Pedalboard(
     [
-        Reverb(room_size=0.18, wet_level=0.22, dry_level=0.82, width=0.7),
-        Compressor(threshold_db=-14, ratio=3.5, attack_ms=2, release_ms=60),
-        Gain(gain_db=2.0),
+        Reverb(
+            room_size=_between(0.12, 0.25),
+            wet_level=_between(0.15, 0.28),
+            dry_level=_between(0.75, 0.88),
+            damping=_between(0.3, 0.55),
+            width=_between(0.5, 0.8),
+        ),
+        Compressor(
+            threshold_db=_between(-18, -10),
+            ratio=_between(2.5, 4.0),
+            attack_ms=_between(1.0, 3.5),
+            release_ms=_between(40, 80),
+        ),
+        Limiter(
+            threshold_db=_between(-3, -1),
+            release_ms=_between(60, 120),
+        ),
+        Gain(gain_db=_between(1.0, 3.0)),
     ],
 )
+
+# ── Reference metrics ─────────────────────────────────────────────
+# 8 metrics: 4 statistical moments × 2 domains.
+# Frequency moments are computed on log2(freq) axis (perceptual weighting).
+# All target ranges are [min(lichess, chesscom), max(lichess, chesscom)].
+# Tolerance factor widens each range symmetrically (0.10 = ±10%).
+REF_TOLERANCE = 0.10
+
+
+def _ref_range(a: float, b: float) -> tuple[float, float]:
+    """Build a target range from two reference values, widened by REF_TOLERANCE."""
+    lo, hi = min(a, b), max(a, b)
+    span = hi - lo
+    margin = max(span * REF_TOLERANCE, abs(lo) * REF_TOLERANCE)
+    return (lo - margin, hi + margin)
+
+
+# ── MOVE reference measurements ──
+# Freq moments on log2(freq); time moments as weighted distribution over t_ms.
+# Lichess:
+#   f_centroid=635.1  f_spread=0.6374  f_skewness=-2.87  f_kurtosis=14.46
+#   t_centroid=62.1   t_spread=2.2     t_skewness=9.75   t_kurtosis=166.04
+# Chess.com:
+#   f_centroid=744.3  f_spread=0.6454  f_skewness=-0.68  f_kurtosis=0.93
+#   t_centroid=55.2   t_spread=3.5     t_skewness=5.10   t_kurtosis=83.57
+
+MOVE_REF = {
+    "f_centroid":  _ref_range(635.1, 744.3),
+    "f_spread":    _ref_range(0.6374, 0.6454),
+    "f_skewness":  _ref_range(-2.87, -0.68),
+    "f_kurtosis":  _ref_range(0.93, 14.46),
+    "t_centroid":  _ref_range(55.2, 62.1),
+    "t_spread":    _ref_range(2.2, 3.5),
+    "t_skewness":  _ref_range(5.10, 9.75),
+    "t_kurtosis":  _ref_range(83.57, 166.04),
+}
+
+# ── CAPTURE reference measurements ──
+# Lichess:
+#   f_centroid=1231.8  f_spread=0.8339  f_skewness=-1.89  f_kurtosis=5.43
+#   t_centroid=66.3    t_spread=9.6     t_skewness=2.82   t_kurtosis=6.74
+# Chess.com:
+#   f_centroid=1136.1  f_spread=0.9915  f_skewness=-0.47  f_kurtosis=1.70
+#   t_centroid=63.0    t_spread=5.8     t_skewness=4.86   t_kurtosis=62.17
+
+CAPTURE_REF = {
+    "f_centroid":  _ref_range(1136.1, 1231.8),
+    "f_spread":    _ref_range(0.8339, 0.9915),
+    "f_skewness":  _ref_range(-1.89, -0.47),
+    "f_kurtosis":  _ref_range(1.70, 5.43),
+    "t_centroid":  _ref_range(63.0, 66.3),
+    "t_spread":    _ref_range(5.8, 9.6),
+    "t_skewness":  _ref_range(2.82, 4.86),
+    "t_kurtosis":  _ref_range(6.74, 62.17),
+}
 
 # Key of G  ────────────────────────────────────────────────────────────
 # G2  = 98.00    G3 = 196.00   G4 = 392.00   G5 = 783.99
@@ -78,9 +162,17 @@ def triangle(freq: float, dur: float) -> np.ndarray:
     return 2 * np.abs(2 * (t * freq - np.floor(t * freq + 0.5))) - 1
 
 
-def noise(dur: float) -> np.ndarray:
-    """White noise with a fixed seed for reproducible builds."""
-    return np.random.default_rng(42).standard_normal(int(SR * dur))
+def pink_noise(dur: float) -> np.ndarray:
+    """Pink noise (1/f) — more natural frequency distribution than white."""
+    n = int(SR * dur)
+    white = np.random.default_rng(42).standard_normal(n)
+    spectrum = np.fft.rfft(white)
+    freqs = np.fft.rfftfreq(n, d=1 / SR)
+    freqs[0] = 1.0
+    spectrum /= np.sqrt(freqs)
+    pink = np.fft.irfft(spectrum, n=n)
+    peak = np.max(np.abs(pink))
+    return pink / peak if peak > 0 else pink
 
 
 def env(dur: float, attack: float = 0.008, decay: float = 12) -> np.ndarray:
@@ -93,21 +185,66 @@ def env(dur: float, attack: float = 0.008, decay: float = 12) -> np.ndarray:
     return e
 
 
+_IMPACT_ATTACK = 0.0005  # 0.5 ms raised-cosine attack (physical contact time)
+
+
+def impact_env(
+    dur: float,
+    onset: float = 0.05,
+    decay_tau: float = 0.005,
+    decay_beta: float = 0.5,
+) -> np.ndarray:
+    """Weibull (stretched exponential) impact envelope.
+
+    Models a percussive strike: silence → near-instant onset → fast initial
+    decay with a faint long tail.  The Weibull survival function
+    exp(-(t/τ)^β) with β<1 produces the extreme positive skewness and
+    kurtosis seen in real chess piece impacts:
+
+        β ≈ 0.4  →  energy skewness ≈ 6,  kurtosis ≈ 80+
+        β ≈ 0.5  →  energy skewness ≈ 4,  kurtosis ≈ 40+
+
+    onset:      time of impact start (seconds) — controls t_centroid
+    decay_tau:  Weibull scale (seconds) — controls t_spread
+    decay_beta: Weibull shape (0 < β < 1) — controls skewness/kurtosis
+    """
+    t = _t(dur)
+    onset_idx = max(0, int(onset * SR))
+    t_rel = np.maximum(t - onset, 0)
+
+    # Weibull survival function: exp(-(t/τ)^β)
+    e = np.exp(-((t_rel / decay_tau) ** decay_beta))
+
+    # Zero before onset
+    e[:onset_idx] = 0.0
+
+    # Smooth 0.5 ms raised-cosine attack to avoid click artifacts
+    attack_n = max(1, int(SR * _IMPACT_ATTACK))
+    end = min(onset_idx + attack_n, len(e))
+    n = end - onset_idx
+    if n > 0:
+        e[onset_idx:end] *= 0.5 * (1 - np.cos(np.pi * np.arange(n) / n))
+
+    return e
+
+
 def silence(dur: float) -> np.ndarray:
     """Array of zeros (silence) for the given duration."""
     return np.zeros(int(SR * dur))
 
 
-def bpf(samples: np.ndarray, lo: float, hi: float, order: int = 4) -> np.ndarray:
-    """Bandpass filter."""
+def bpf(samples: np.ndarray, lo: float, hi: float, order: int = 2) -> np.ndarray:
+    """Zero-phase bandpass filter."""
     sos = butter(order, [lo, hi], btype="band", fs=SR, output="sos")
-    return sosfilt(sos, samples).astype(np.float64)
+    return sosfiltfilt(sos, samples).astype(np.float64)
 
 
-def lpf(samples: np.ndarray, cutoff: float = 4000) -> np.ndarray:
-    """4th-order Butterworth low-pass for Catppuccin softness."""
-    sos = butter(4, cutoff, btype="low", fs=SR, output="sos")
-    return sosfilt(sos, samples).astype(np.float64)
+def lpf(samples: np.ndarray, cutoff: float | None = None) -> np.ndarray:
+    """Zero-phase Butterworth low-pass."""
+    if cutoff is None:
+        cutoff = LPF_CUTOFF
+    sos = butter(2, cutoff, btype="low", fs=SR, output="sos")
+    return sosfiltfilt(sos, samples).astype(np.float64)
 
 
 def fadeout(samples: np.ndarray, dur: float = 0.008) -> np.ndarray:
@@ -126,8 +263,8 @@ def warm(freq: float, dur: float, decay: float = 15) -> np.ndarray:
     """Detuned pair + harmonics → warm, alive tone."""
     hi, lo = freq * DETUNE, freq / DETUNE
     osc = sine(hi, dur) + sine(lo, dur)
-    osc += 0.28 * sine(freq * 2, dur)  # 2nd harmonic — body
-    osc += 0.10 * sine(freq * 3, dur)  # 3rd harmonic — presence
+    osc += 0.28 * sine(freq * 2, dur)
+    osc += 0.10 * sine(freq * 3, dur)
     osc /= np.max(np.abs(osc))
     return osc * env(dur, decay=decay)
 
@@ -136,7 +273,7 @@ def warm_tri(freq: float, dur: float, decay: float = 10) -> np.ndarray:
     """Detuned triangle pair — softer timbre for 'wrong' / 'defeat'."""
     hi, lo = freq * DETUNE, freq / DETUNE
     osc = triangle(hi, dur) + triangle(lo, dur)
-    osc += 0.15 * sine(freq * 2, dur)  # subtle 2nd harmonic
+    osc += 0.15 * sine(freq * 2, dur)
     osc /= np.max(np.abs(osc))
     return osc * env(dur, decay=decay)
 
@@ -151,86 +288,149 @@ def fm_bell(
     """FM bell — bright attack that decays to pure tone."""
     t = _t(dur)
     mod_freq = freq * mod_ratio
-    # mod-index decays: bright inharmonic transient → warm fundamental
     index = mod_peak * np.exp(-t * 14)
     modulator = index * np.sin(2 * np.pi * mod_freq * t)
     carrier = np.sin(2 * np.pi * freq * t + modulator)
     return carrier * env(dur, decay=decay)
 
 
+# ── wood synthesis ───────────────────────────────────────────────────
+
+
 class WoodParams(NamedTuple):
     """Parameters for modal wood-impact synthesis.
 
-    Attributes:
-        body_freq: Fundamental mode frequency (Hz), typically 80-200.
-        dur: Total sound duration (seconds).
-        noise_level: Mix level of the noise residual (0-1).
-        body_decay: Base decay rate for the fundamental mode.
-        brightness: Upper cutoff of the noise residual bandpass (Hz).
-        hardness: Impact transient loudness (0-1); higher = harder surface.
-
+    Minimal set: 7 optimizer-controlled params + dur (fixed per sound type).
     """
 
     body_freq: float
     dur: float
     noise_level: float = 0.5
-    body_decay: float = 35
-    brightness: float = 500
-    hardness: float = 0.5
+    brightness: float = 2500
+    mode_spread: float = 0.5
+    # Weibull impact envelope — controls temporal energy distribution
+    onset: float = 0.05        # impact start time (seconds)
+    decay_tau: float = 0.005   # Weibull scale (seconds)
+    decay_beta: float = 0.5    # Weibull shape (< 1 = stretched exponential)
 
 
 def wood_hit(p: WoodParams) -> np.ndarray:
     """Modal synthesis of wood-on-wood impact for chess pieces.
 
-    Based on acoustic research:
-      - Wood modal frequencies follow free-free beam ratios relative
-        to the fundamental: 1.0, 2.76, 5.40, 8.93 (non-harmonic).
-      - Wood has high damping: modes decay fast (thud, not ring).
-      - Higher modes decay faster: loss proportional to b1 + b3*f^2
-        (frequency-dependent damping from Nathan Ho / modal synthesis lit).
-      - Audible wood resonance sits 100-500 Hz (Tsugi procedural
-        foley research), NOT the 30-170 kHz ultrasonic range.
-
-    Layers:
-      1. Modal bank: 4 resonant modes at beam ratios, each with
-         frequency-dependent exponential decay
-      2. Residual noise: bandpass-filtered (200-brightness Hz) for
-         the 'woody' texture of contact
-      3. Impact transient: very short broadband noise burst (~3 ms)
-         filtered to 400-2000 Hz for the initial 'click'
-
+    Minimal chain: modal sines × lognormal envelope + filtered pink noise.
+    No separate mode_decay, impact chirp, or noise_decay — the single
+    lognormal envelope controls all temporal shaping.
     """
-    t = _t(p.dur)
-
-    # Free-free beam modal ratios (first 4 modes)
-    # From beam vibration theory: f_n / f_1 for free-free boundary
+    # Eigenfrequency ratios of a free-free Euler-Bernoulli beam.
+    # f_n ∝ λ_n², where λ_n are roots of cos(λ)cosh(λ) = 1:
+    # λ₁=4.730, λ₂=7.853, λ₃=10.996, λ₄=14.137
+    # → (λ_n/λ₁)² = 1.000, 2.757, 5.404, 8.933
     mode_ratios = [1.0, 2.76, 5.40, 8.93]
-    mode_amps = [1.0, 0.35, 0.15, 0.06]
+    # Amplitude per mode: base + mode_spread * range.
+    # mode_spread is optimizer-controlled; base and range define how
+    # the spectral energy distributes across overtones.
+    mode_amps = [
+        1.0,
+        0.35 + p.mode_spread * 0.35,
+        0.15 + p.mode_spread * 0.25,
+        0.06 + p.mode_spread * 0.14,
+    ]
 
-    # Modal bank - each mode is a decaying sine with freq-dependent damping
-    # Higher modes decay faster: decay_k = body_decay * (f_k / f_1)^0.7
-    modal = np.zeros_like(t)
+    # Weibull impact envelope (onset controls temporal centroid)
+    main_env = impact_env(p.dur, p.onset, p.decay_tau, p.decay_beta)
+
+    modal = np.zeros_like(main_env)
     for ratio, amp in zip(mode_ratios, mode_amps, strict=True):
         freq_k = p.body_freq * ratio
         if freq_k > SR / 2:
-            continue  # skip modes above Nyquist
-        decay_k = p.body_decay * (ratio**0.7)
-        modal += amp * sine(freq_k, p.dur) * env(p.dur, decay=decay_k)
+            continue
+        modal += amp * sine(freq_k, p.dur) * main_env
 
-    # Residual noise - bandpass-filtered for woody texture (200-brightness Hz)
-    noise_decay_rate = p.body_decay * 1.5  # noise dies faster than body
-    raw = noise(p.dur) * env(p.dur, decay=noise_decay_rate)
-    woody = bpf(raw, 200, min(p.brightness, SR / 2 - 1)) * p.noise_level
+    # Filtered pink noise — same envelope as modes (no separate decay)
+    noise_lo = max(100, p.body_freq * 0.5)
+    raw = pink_noise(p.dur) * main_env
+    woody = bpf(raw, noise_lo, min(p.brightness, SR / 2 - 1)) * p.noise_level
 
-    # Impact transient - short broadband click (~3 ms)
-    imp_dur = 0.003
-    imp_samples = int(SR * imp_dur)
-    imp = noise(imp_dur) * env(imp_dur, attack=0.0003, decay=300) * p.hardness
-    imp = bpf(imp, 400, 2000)
+    return modal + woody
 
-    out = modal + woody
-    out[:imp_samples] += imp
-    return out
+
+# ── analysis & optimization ──────────────────────────────────────────
+
+
+def _quick_analyze(samples: np.ndarray) -> dict:
+    """Compute 8 metrics: 4 statistical moments × 2 domains.
+
+    Frequency domain: moments on log2(freq) axis (perceptually weighted).
+    - f_centroid: geometric mean frequency (Hz)
+    - f_spread:   spectral width (octaves)
+    - f_skewness: asymmetry in log-freq space (dimensionless)
+    - f_kurtosis: peakedness in log-freq space (Fisher, dimensionless)
+
+    Time domain: moments on energy envelope.
+    - t_centroid: energy center of mass (ms)
+    - t_spread:   energy dispersion (ms)
+    - t_skewness: asymmetry of energy distribution (dimensionless)
+    - t_kurtosis: peakedness of energy distribution (Fisher, dimensionless)
+    """
+    eps = 1e-30
+
+    # -- Frequency domain (PSD via Welch, moments on log2 axis) --
+    nperseg = min(2048, len(samples))
+    freqs, psd = welch(samples, fs=SR, nperseg=nperseg)
+
+    # Skip DC bin (log2(0) is undefined)
+    freqs = freqs[1:]
+    psd = psd[1:]
+    total = np.sum(psd) + eps
+
+    log_freqs = np.log2(freqs)
+    f_centroid_log = np.sum(log_freqs * psd) / total
+    f_centroid = 2 ** f_centroid_log                        # geometric mean (Hz)
+    f_dev = log_freqs - f_centroid_log
+    f_spread = np.sqrt(np.sum(f_dev**2 * psd) / total)     # octaves
+    f_skewness = np.sum(f_dev**3 * psd) / (total * f_spread**3 + eps)
+    f_kurtosis = np.sum(f_dev**4 * psd) / (total * f_spread**4 + eps) - 3  # Fisher
+
+    # -- Time domain (energy envelope) --
+    energy = samples**2
+    e_total = np.sum(energy) + eps
+    t_ms = np.arange(len(samples)) / SR * 1000  # in ms
+
+    t_centroid = np.sum(t_ms * energy) / e_total
+    t_dev = t_ms - t_centroid
+    t_spread = np.sqrt(np.sum(t_dev**2 * energy) / e_total)
+    t_skewness = np.sum(t_dev**3 * energy) / (e_total * t_spread**3 + eps)
+    t_kurtosis = np.sum(t_dev**4 * energy) / (e_total * t_spread**4 + eps) - 3
+
+    return {
+        "f_centroid": f_centroid,
+        "f_spread": f_spread,
+        "f_skewness": f_skewness,
+        "f_kurtosis": f_kurtosis,
+        "t_centroid": t_centroid,
+        "t_spread": t_spread,
+        "t_skewness": t_skewness,
+        "t_kurtosis": t_kurtosis,
+    }
+
+
+def _range_cost(actual: dict, ref: dict) -> float:
+    """Zero when all metrics are within [lo, hi], positive otherwise.
+
+    Penalty is normalized by the midpoint of the range (proportional
+    deviation), so a 10% overshoot in f_centroid and a 10% overshoot
+    in t_centroid contribute equally.  This prevents metrics with
+    narrow target ranges from dominating the optimizer.
+    """
+    total = 0.0
+    for key, (lo, hi) in ref.items():
+        val = actual[key]
+        scale = abs((lo + hi) / 2) + 1e-10
+        if val < lo:
+            total += ((lo - val) / scale) ** 2
+        elif val > hi:
+            total += ((val - hi) / scale) ** 2
+    return total
 
 
 # ── output ───────────────────────────────────────────────────────────
@@ -242,31 +442,52 @@ def master(samples: np.ndarray) -> np.ndarray:
     return MASTER(buf, SR).flatten()
 
 
-def write(name: str, samples: np.ndarray) -> None:
-    """Process and write a sound to a WAV file."""
-    # fade-out -> low-pass -> pad for reverb tail -> normalize -> master ->
-    # trim silence -> peak-limit -> fade-out
+_REVERB_TAIL_PAD = 0.2           # seconds — room for reverb decay (tonal sounds only)
+_PRE_FX_HEADROOM = 0.75          # peak normalization before FX (–2.5 dBFS)
+_SILENCE_FLOOR = 0.001           # –60 dBFS — trim trailing silence below this
+_POST_TRIM_PAD = 0.01            # seconds — short guard after last audible sample
+
+
+def _process(samples: np.ndarray, chain: Pedalboard | None = None) -> np.ndarray:
+    """Full processing pipeline (same as write but returns samples)."""
     samples = fadeout(samples)
-    samples = lpf(samples)
-    # Pad with 200 ms silence so reverb tail can decay naturally
-    pad = np.zeros(int(SR * 0.2))
-    samples = np.concatenate([samples, pad])
+    if chain is None:
+        # Tonal UI sounds: global LPF + reverb tail pad (MASTER has reverb)
+        samples = lpf(samples)
+        pad = np.zeros(int(SR * _REVERB_TAIL_PAD))
+        samples = np.concatenate([samples, pad])
     peak = np.max(np.abs(samples))
     if peak > 0:
-        samples = samples / peak * 0.75
-    samples = master(samples)
-    # Trim trailing silence (below -60 dB ≈ 0.001) to keep files small
-    threshold = 0.001
+        samples = samples / peak * _PRE_FX_HEADROOM
+    fx = chain if chain is not None else MASTER
+    buf = samples.astype(np.float32).reshape(1, -1)
+    samples = fx(buf, SR).flatten().astype(np.float64)
     last_loud = len(samples) - 1
-    while last_loud > 0 and abs(samples[last_loud]) < threshold:
+    while last_loud > 0 and abs(samples[last_loud]) < _SILENCE_FLOOR:
         last_loud -= 1
-    # Keep a small margin after the last audible sample
-    samples = samples[: min(last_loud + int(SR * 0.01), len(samples))]
+    samples = samples[: min(last_loud + int(SR * _POST_TRIM_PAD), len(samples))]
     peak = np.max(np.abs(samples))
     if peak > 1.0:
         samples /= peak
-    # Final fade-out after reverb tail to prevent any residual pop
     samples = fadeout(samples)
+    return samples
+
+
+def write(name: str, samples: np.ndarray,
+          chain: Pedalboard | None = None) -> None:
+    """Process and write a sound to a WAV file.
+
+    Leading silence is stripped so game sounds play instantly.
+    (The onset delay exists only for metric matching during optimization.)
+    """
+    samples = _process(samples, chain)
+    # Strip leading silence (from impact onset delay)
+    first_loud = 0
+    while first_loud < len(samples) and abs(samples[first_loud]) < _SILENCE_FLOOR:
+        first_loud += 1
+    if first_loud > 0:
+        guard = int(SR * _POST_TRIM_PAD)
+        samples = samples[max(0, first_loud - guard):]
     data = (samples * 32767).astype(np.int16)
     path = OUT / f"{name}.wav"
     wavfile.write(str(path), SR, data)
@@ -274,112 +495,279 @@ def write(name: str, samples: np.ndarray) -> None:
     log.info("%s.wav  (%.2fs, %.0f KB)", name, len(data) / SR, kb)
 
 
+# ── parameter optimization ───────────────────────────────────────────
+
+
+
+# Cached optimized chains for chess sounds
+_MOVE_CHAIN: Pedalboard | None = None
+_CAPTURE_CHAIN: Pedalboard | None = None
+
+
+def _make_chain(hpf: float, lpf_cut: float, gn: float) -> Pedalboard:
+    """Build a per-sound processing chain (3 optimizer-controlled params).
+
+    Minimal: HPF (rumble removal) → LPF (brightness cap) → Gain.
+    Reverb, compressor, and limiter removed — they added dimensions
+    without meaningfully improving metric convergence.
+    """
+    return Pedalboard([
+        HighpassFilter(cutoff_frequency_hz=hpf),
+        LowpassFilter(cutoff_frequency_hz=lpf_cut),
+        Gain(gain_db=gn),
+    ])
+
+
+def _make_wood(x: np.ndarray, dur: float) -> WoodParams:
+    """Unpack optimizer vector into WoodParams (7 synth params)."""
+    bf, nl, br, ms, onset, tau, beta = x[:7]
+    return WoodParams(
+        body_freq=bf, dur=dur, noise_level=nl,
+        brightness=br, mode_spread=ms,
+        onset=onset, decay_tau=tau, decay_beta=beta,
+    )
+
+
+# Shared synth bounds (7 dims) — used by both move and capture optimizers
+_SYNTH_BOUNDS = [
+    (200, 1500),     # body_freq (Hz)
+    (0.1, 0.95),     # noise_level
+    (800, 10000),    # brightness (noise filter cutoff, Hz)
+    (0.05, 0.99),    # mode_spread
+    (0.01, 0.10),    # onset (impact start, 10-100ms)
+    (0.0005, 0.02),  # decay_tau (Weibull scale, 0.5-20ms)
+    (0.2, 0.8),      # decay_beta (Weibull shape, <1 = stretched exp)
+]
+
+# Chain bounds (3 dims)
+_CHAIN_BOUNDS = [
+    (40, 200),        # hpf_cutoff (Hz)
+    (4000, 16000),    # lpf_cutoff (Hz)
+    (0.5, 8.0),       # gain_db
+]
+
+
+# ── Analytical initial guesses ───────────────────────────────────────
+# Derived from reference metrics to seed the optimizer near the solution.
+
+# Neutral chain starting point (3 dims)
+_CHAIN_X0 = [
+    80,     # hpf_cutoff (Hz): rumble removal
+    8000,   # lpf_cutoff (Hz): preserve detail
+    2.0,    # gain_db
+]
+
+# Move: single wood_hit, dur=0.25s
+_MOVE_X0 = np.array([
+    # -- Synth params (7 dims) --
+    690,    # body_freq: midpoint of ref f_centroid (635.1, 744.3) Hz
+    0.2,    # noise_level: low noise → narrow f_spread
+    1500,   # brightness: low → energy below centroid → negative f_skewness
+    0.2,    # mode_spread: narrow → tight f_spread (~0.64 octaves)
+    0.055,  # onset: ~55ms leading silence (matches ref t_centroid)
+    0.002,  # decay_tau: 2ms Weibull scale → tight t_spread (~3ms)
+    0.4,    # decay_beta: stretched exp → high skewness (~6) & kurtosis (~80)
+    # -- Chain params (3 dims) --
+    *_CHAIN_X0,
+])
+
+# Capture: clack (0.08s) + thud (0.20s) = 0.28s total
+# Ref t_centroid 63–66ms → most energy in clack (0–80ms) + early thud
+# Ref f_centroid 1136–1232 Hz → brighter than move
+_CAPTURE_X0 = np.array([
+    # -- Clack synth (7 dims) — bright, short impact --
+    1400,   # body_freq: bright clack near ref f_centroid
+    0.4,    # noise_level
+    4000,   # brightness: bright noise
+    0.4,    # mode_spread
+    0.03,   # onset: 30ms into the 80ms clack
+    0.003,  # decay_tau: slightly wider than move
+    0.45,   # decay_beta: stretched exp
+    # -- Thud synth (7 dims) — warm body resonance --
+    600,    # body_freq: warm low thud
+    0.3,    # noise_level
+    1500,   # brightness
+    0.2,    # mode_spread
+    0.01,   # onset: 10ms into thud → total ~90ms from capture start
+    0.004,  # decay_tau
+    0.45,   # decay_beta
+    # -- Chain params (3 dims) --
+    *_CHAIN_X0,
+])
+
+
+def _optimize_move() -> tuple[WoodParams, Pedalboard]:
+    """Find WoodParams + chain where all output metrics fall within MOVE_REF."""
+    log.info("  optimizing move...")
+    t0 = time.monotonic()
+
+    def objective(x: np.ndarray) -> float:
+        params = _make_wood(x, dur=0.25)
+        chain = _make_chain(*x[7:10])
+        raw = wood_hit(params)
+        metrics = _quick_analyze(_process(raw, chain))
+        return _range_cost(metrics, MOVE_REF)
+
+    bounds = _SYNTH_BOUNDS + _CHAIN_BOUNDS  # 10 dims
+
+    log.info("    x0 cost=%.6f", objective(_MOVE_X0))
+
+    pbar = tqdm(total=500, desc="    move", unit="gen", leave=True)
+    best_cost = [float("inf")]
+    plateau_check: list[float] = []
+
+    def _move_cb(xk, convergence=0.0):
+        pbar.update(1)
+        cost = objective(xk)
+        if cost < best_cost[0]:
+            best_cost[0] = cost
+        pbar.set_postfix(cost=f"{best_cost[0]:.6f}")
+        plateau_check.append(best_cost[0])
+        if best_cost[0] < 0.01 or (time.monotonic() - t0) > 120:
+            return True
+        # Stop if <1% improvement over last 20 generations
+        if len(plateau_check) >= 20:
+            old = plateau_check[-20]
+            if old > 0 and (old - best_cost[0]) / old < 0.01:
+                log.info("    plateau detected (gen %d)", len(plateau_check))
+                return True
+
+    result = differential_evolution(
+        objective, bounds, seed=960, maxiter=500, tol=1e-10, popsize=10,
+        x0=_MOVE_X0,
+        callback=_move_cb,
+    )
+    pbar.close()
+    log.info("    cost=%.6f  nfev=%d  (%.0fs)", result.fun, result.nfev,
+             time.monotonic() - t0)
+
+    params = _make_wood(result.x, dur=0.25)
+    chain = _make_chain(*result.x[7:10])
+    return params, chain
+
+
+def _optimize_capture() -> tuple[WoodParams, WoodParams, Pedalboard]:
+    """Find clack+thud WoodParams + chain where metrics fall within CAPTURE_REF."""
+    log.info("  optimizing capture...")
+    t0 = time.monotonic()
+
+    def objective(x: np.ndarray) -> float:
+        clack = wood_hit(_make_wood(x[:7], dur=0.08))
+        thud = wood_hit(_make_wood(x[7:14], dur=0.20))
+        chain = _make_chain(*x[14:17])
+        raw = np.concatenate([clack, thud])
+        metrics = _quick_analyze(_process(raw, chain))
+        return _range_cost(metrics, CAPTURE_REF)
+
+    bounds = _SYNTH_BOUNDS + _SYNTH_BOUNDS + _CHAIN_BOUNDS  # 17 dims
+
+    log.info("    x0 cost=%.6f", objective(_CAPTURE_X0))
+
+    pbar = tqdm(total=500, desc="    capture", unit="gen", leave=True)
+    best_cost = [float("inf")]
+    plateau_check: list[float] = []
+
+    def _cap_cb(xk, convergence=0.0):
+        pbar.update(1)
+        cost = objective(xk)
+        if cost < best_cost[0]:
+            best_cost[0] = cost
+        pbar.set_postfix(cost=f"{best_cost[0]:.6f}")
+        plateau_check.append(best_cost[0])
+        if best_cost[0] < 0.01 or (time.monotonic() - t0) > 120:
+            return True
+        # Stop if <1% improvement over last 20 generations
+        if len(plateau_check) >= 20:
+            old = plateau_check[-20]
+            if old > 0 and (old - best_cost[0]) / old < 0.01:
+                log.info("    plateau detected (gen %d)", len(plateau_check))
+                return True
+
+    result = differential_evolution(
+        objective, bounds, seed=960, maxiter=500, tol=1e-10, popsize=10,
+        x0=_CAPTURE_X0,
+        callback=_cap_cb,
+    )
+    pbar.close()
+    log.info("    cost=%.6f  nfev=%d  (%.0fs)", result.fun, result.nfev,
+             time.monotonic() - t0)
+
+    clack_p = _make_wood(result.x[:7], dur=0.08)
+    thud_p = _make_wood(result.x[7:14], dur=0.20)
+    chain = _make_chain(*result.x[14:17])
+    return clack_p, thud_p, chain
+
+
+# ── run optimizations ────────────────────────────────────────────────
+
+_MOVE_PARAMS: WoodParams | None = None
+_CAPTURE_CLACK: WoodParams | None = None
+_CAPTURE_THUD: WoodParams | None = None
+
+
+def _ensure_optimized() -> None:
+    global _MOVE_PARAMS, _CAPTURE_CLACK, _CAPTURE_THUD, _MOVE_CHAIN, _CAPTURE_CHAIN
+    if _MOVE_PARAMS is None:
+        _MOVE_PARAMS, _MOVE_CHAIN = _optimize_move()
+        _CAPTURE_CLACK, _CAPTURE_THUD, _CAPTURE_CHAIN = _optimize_capture()
+
+
 # ── sound definitions (key of G) ─────────────────────────────────────
 
 
 def correct() -> np.ndarray:
-    """Ascending major third  G3 → B3.  Warm, rewarding.
-
-    Same interval Duolingo uses — a major third is the 'happy part
-    of a major chord'.  Pitched in octave 3 for cozy depth.
-    """
+    """Ascending major third  G3 → B3.  Warm, rewarding."""
     d = 0.09
-    a = warm(196.00, d, decay=18)  # G3
-    b = warm(246.94, d, decay=18)  # B3
+    a = warm(196.00, d, decay=18)
+    b = warm(246.94, d, decay=18)
     return np.concatenate([a, silence(0.02), b])
 
 
 def wrong() -> np.ndarray:
-    """Descending tritone  B3 → F3.  Instinctively 'off', but gentle.
-
-    Triangle waves + detuning keep it soft.  Octave 3 for warmth.
-    """
+    """Descending tritone  B3 → F3.  Instinctively 'off', but gentle."""
     d = 0.11
-    a = warm_tri(246.94, d, decay=8)  # B3
-    b = warm_tri(174.61, d, decay=8)  # F3
+    a = warm_tri(246.94, d, decay=8)
+    b = warm_tri(174.61, d, decay=8)
     return np.concatenate([a, silence(0.025), b])
 
 
 def move() -> np.ndarray:
-    """Wood-on-wood thud — chess piece placed on board.
-
-    Modal synthesis at G2 (98 Hz) — 4 beam modes with fast decay.
-    Noise residual capped at 500 Hz for the woody texture.
-    Moderate hardness — felt-bottom piece on wooden board.
-    """
-    return wood_hit(
-        WoodParams(
-            body_freq=98.00,  # G2 - board fundamental
-            dur=0.12,
-            noise_level=0.55,
-            body_decay=40,
-            brightness=500,  # wood resonance caps ~500 Hz
-            hardness=0.45,
-        ),
-    )
+    """Wood-on-wood thud — parameters found by optimization."""
+    _ensure_optimized()
+    assert _MOVE_PARAMS is not None
+    return wood_hit(_MOVE_PARAMS)
 
 
 def capture() -> np.ndarray:
-    """Piece-on-piece clack then board placement — chess capture.
-
-    Two layered modal wood hits:
-      1. Piece clack — higher fundamental (~196 Hz), brighter noise,
-         harder transient (wood-on-wood collision)
-      2. Board thud — lower fundamental (~110 Hz), softer noise,
-         gentler transient (piece settling on board)
-    """
-    # piece clack — higher, harder, brighter
-    clack = wood_hit(
-        WoodParams(
-            body_freq=196.00,  # G3 - small piece resonance
-            dur=0.05,
-            noise_level=0.6,
-            body_decay=55,
-            brightness=500,
-            hardness=0.7,
-        ),
-    )
-    # board thud — deeper, softer, follows the clack
-    thud = wood_hit(
-        WoodParams(
-            body_freq=110.00,  # A2 - board resonance
-            dur=0.10,
-            noise_level=0.45,
-            body_decay=38,
-            brightness=450,
-            hardness=0.35,
-        ),
-    )
+    """Piece-on-piece clack + board thud — parameters found by optimization."""
+    _ensure_optimized()
+    assert _CAPTURE_CLACK is not None and _CAPTURE_THUD is not None
+    clack = wood_hit(_CAPTURE_CLACK)
+    thud = wood_hit(_CAPTURE_THUD)
     return np.concatenate([clack, thud])
 
 
 def check() -> np.ndarray:
     """FM bell double-pip at D4 — chess check alert."""
     d = 0.08
-    pip = fm_bell(293.66, d, mod_ratio=1.41, mod_peak=3.5, decay=18)  # D4
+    pip = fm_bell(293.66, d, mod_ratio=1.41, mod_peak=3.5, decay=18)
     return np.concatenate([pip, silence(0.04), pip])
 
 
 def victory() -> np.ndarray:
-    """G major arpeggio → blooming chord.  Triumphant.
-
-    G3 → B3 → D4 → G4, then a sustained G4+B4+D5 chord with
-    detuned voices that 'bloom' open.
-    """
+    """G major arpeggio → blooming chord.  Triumphant."""
     d, gap = 0.10, 0.035
-    arp_notes = [196.00, 246.94, 293.66, 392.00]  # G3 B3 D4 G4
+    arp_notes = [196.00, 246.94, 293.66, 392.00]
     parts: list[np.ndarray] = []
     for i, f in enumerate(arp_notes):
         n = warm(f, d, decay=6 + i * 2)
         parts.append(n)
         parts.append(silence(gap))
-
-    # blooming final chord — three detuned voices
     cd = 0.45
     chord = (
-        warm(392.00, cd, decay=3)  # G4
-        + 0.7 * warm(493.88, cd, decay=3)  # B4
-        + 0.5 * warm(587.33, cd, decay=3)  # D5
+        warm(392.00, cd, decay=3)
+        + 0.7 * warm(493.88, cd, decay=3)
+        + 0.5 * warm(587.33, cd, decay=3)
     )
     parts.append(chord)
     return np.concatenate(parts)
@@ -388,7 +776,7 @@ def victory() -> np.ndarray:
 def defeat() -> np.ndarray:
     """Descending  G3 → Eb3 → D3.  Gentle minor disappointment."""
     d, gap = 0.14, 0.035
-    freqs = [196.00, 155.56, 146.83]  # G3 Eb3 D3
+    freqs = [196.00, 155.56, 146.83]
     parts: list[np.ndarray] = []
     for i, f in enumerate(freqs):
         n = warm_tri(f, d, decay=5)
@@ -401,8 +789,8 @@ def defeat() -> np.ndarray:
 def draw() -> np.ndarray:
     """Perfect fifth  G3 → D4.  Neutral, resolved."""
     d = 0.15
-    a = warm(196.00, d, decay=6)  # G3
-    b = warm(293.66, d, decay=6)  # D4
+    a = warm(196.00, d, decay=6)
+    b = warm(293.66, d, decay=6)
     return np.concatenate([a, silence(0.04), b])
 
 
@@ -429,8 +817,33 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="  %(message)s")
     OUT.mkdir(parents=True, exist_ok=True)
     log.info("Writing to %s/\n", OUT)
+
+    # Run optimization first (populates _MOVE_PARAMS, _CAPTURE_*, chains)
+    _ensure_optimized()
+    assert _MOVE_PARAMS is not None and _MOVE_CHAIN is not None
+    assert _CAPTURE_CLACK is not None and _CAPTURE_THUD is not None
+    assert _CAPTURE_CHAIN is not None
+
+    # Verify metrics are in range
+    for label, raw, chain, ref in [
+        ("move", wood_hit(_MOVE_PARAMS), _MOVE_CHAIN, MOVE_REF),
+        ("capture", np.concatenate([
+            wood_hit(_CAPTURE_CLACK), wood_hit(_CAPTURE_THUD)]),
+         _CAPTURE_CHAIN, CAPTURE_REF),
+    ]:
+        metrics = _quick_analyze(_process(raw, chain))
+        log.info("  %s metrics:", label)
+        for key, (lo, hi) in ref.items():
+            val = metrics[key]
+            in_range = lo <= val <= hi
+            mark = "\u2713" if in_range else "\u2717"
+            log.info("    %s %s: %.1f  [%.1f \u2013 %.1f]", mark, key, val, lo, hi)
+
+    log.info("")
+    # Chess sounds use their optimized chains
+    chess_chains = {"move": _MOVE_CHAIN, "capture": _CAPTURE_CHAIN}
     for name, fn in SOUNDS.items():
-        write(name, fn())
+        write(name, fn(), chain=chess_chains.get(name))
 
     total = sum((OUT / f"{n}.wav").stat().st_size for n in SOUNDS) / 1024
     log.info("\n  Total: %.0f KB", total)
