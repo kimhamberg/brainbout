@@ -10,33 +10,41 @@ import {
   getTodayBest,
   completeSession,
 } from "./shared/progress";
+import {
+  getStage,
+  readiness,
+  advance,
+  retreat,
+} from "./shared/stages";
 
 const GAME_LABELS: Record<string, string> = {
   rapid: "Crown",
-  reaction: "Spark",
+  flux: "Flux",
   vocab: "Cipher",
-  math: "Tally",
 };
 
 const GAME_URLS: Record<string, string> = {
   rapid: "games/rapid.html",
-  reaction: "games/reaction.html",
+  flux: "games/flux.html",
   vocab: "games/vocab.html",
-  math: "games/math.html",
 };
 
 const GAME_ICONS: Record<string, string> = {
   rapid: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"/><path d="M5 21h14"/></svg>`,
-  reaction: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>`,
+  flux: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3.7 7.8 12 12l8.3-4.2M3.7 16.2 12 12l8.3 4.2"/></svg>`,
   vocab: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 18v3c0 .6.4 1 1 1h4v-3h3v-3h2l1.4-1.4a6.5 6.5 0 1 0-4-4Z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/></svg>`,
-  math: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="9" y2="9"/><line x1="4" x2="20" y1="15" y2="15"/><line x1="10" x2="8" y1="3" y2="21"/><line x1="16" x2="14" y1="3" y2="21"/></svg>`,
 };
 
 const GAME_ACCENTS: Record<string, string> = {
   rapid: "var(--ctp-blue)",
-  reaction: "var(--ctp-peach)",
+  flux: "var(--ctp-mauve)",
   vocab: "var(--ctp-green)",
-  math: "var(--ctp-yellow)",
+};
+
+const READINESS_THRESHOLDS: Record<string, number> = {
+  rapid: 0.6,
+  flux: 0.8,
+  vocab: 0.8,
 };
 
 function formatScore(game: string, score: number): string {
@@ -114,10 +122,16 @@ function render(): void {
     const cls = done ? "done" : "";
     const style = `--i:${String(i)};--accent:${GAME_ACCENTS[game]}`;
 
+    const stage = getStage(game);
+    const threshold = READINESS_THRESHOLDS[game] ?? 0.8;
+    const ready = readiness(game, threshold);
+
     if (done) {
       html += `<div class="game-card ${cls}" style="${style}">`;
       html += `<span class="game-icon">${GAME_ICONS[game]}</span>`;
       html += `<span class="game-name">${GAME_LABELS[game]}</span>`;
+      html += `<span class="game-stage">\u00b7 Stage ${String(stage)}</span>`;
+      html += `<span class="readiness-dot readiness-${ready}"></span>`;
       html += `<span class="game-check">\u2713</span>`;
       html += `</div>`;
     } else {
@@ -125,6 +139,10 @@ function render(): void {
       html += `<span class="game-play">Play</span>`;
       html += `<span class="game-icon">${GAME_ICONS[game]}</span>`;
       html += `<span class="game-name">${GAME_LABELS[game]}</span>`;
+      html += `<span class="game-stage">\u00b7 Stage ${String(stage)}</span>`;
+      html += `<span class="readiness-dot readiness-${ready}"></span>`;
+      if (ready === "green") html += `<button class="advance-btn" data-game="${game}">Advance \u25b8</button>`;
+      if (stage > 1) html += `<button class="retreat-btn" data-game="${game}">\u25be</button>`;
       html += `</a>`;
     }
   }
@@ -193,6 +211,30 @@ document.getElementById("hub")?.addEventListener("click", (e) => {
 
   if (target.closest(".new-session-btn") !== null) {
     startNewSession();
+    return;
+  }
+
+  const advBtn = target.closest<HTMLButtonElement>(".advance-btn");
+  if (advBtn !== null) {
+    e.preventDefault();
+    e.stopPropagation();
+    const game = advBtn.dataset.game;
+    if (game) {
+      advance(game);
+      render();
+    }
+    return;
+  }
+
+  const retBtn = target.closest<HTMLButtonElement>(".retreat-btn");
+  if (retBtn !== null) {
+    e.preventDefault();
+    e.stopPropagation();
+    const game = retBtn.dataset.game;
+    if (game) {
+      retreat(game);
+      render();
+    }
     return;
   }
 

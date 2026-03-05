@@ -94,7 +94,7 @@ function handleCellClick(cellIndex: number): void {
 }
 
 function showResult(): void {
-  recordSessionScore("reaction", score);
+  recordSessionScore("rapid", score); // TODO: remove this file (Task 8)
 
   game.innerHTML = `
     <div class="result">

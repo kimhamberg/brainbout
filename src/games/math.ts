@@ -120,7 +120,7 @@ function handleAnswer(chosen: number): void {
 let timer: ReturnType<typeof createTimer> | null = null;
 
 function showResult(): void {
-  recordSessionScore("math", score);
+  recordSessionScore("vocab", score); // TODO: remove this file (Task 8)
 
   game.innerHTML = `
     <div class="result">

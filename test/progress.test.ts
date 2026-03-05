@@ -18,22 +18,22 @@ beforeEach(() => {
 
 describe("recordSessionScore", () => {
   it("updates all-time best when higher", () => {
-    recordSessionScore("math", 5);
-    recordSessionScore("math", 8);
-    recordSessionScore("math", 3);
-    expect(getBest("math")).toBe(8);
+    recordSessionScore("vocab", 5);
+    recordSessionScore("vocab", 8);
+    recordSessionScore("vocab", 3);
+    expect(getBest("vocab")).toBe(8);
   });
 
   it("updates today-best when higher", () => {
-    recordSessionScore("math", 5);
-    recordSessionScore("math", 8);
-    recordSessionScore("math", 3);
-    expect(getTodayBest("math")).toBe(8);
+    recordSessionScore("vocab", 5);
+    recordSessionScore("vocab", 8);
+    recordSessionScore("vocab", 3);
+    expect(getTodayBest("vocab")).toBe(8);
   });
 
   it("returns null for unplayed games", () => {
-    expect(getBest("math")).toBeNull();
-    expect(getTodayBest("math")).toBeNull();
+    expect(getBest("vocab")).toBeNull();
+    expect(getTodayBest("vocab")).toBeNull();
   });
 });
 
@@ -85,7 +85,7 @@ describe("todayString", () => {
 });
 
 describe("GAMES", () => {
-  it("has five games", () => {
-    expect(GAMES).toEqual(["rapid", "flux", "reaction", "vocab", "math"]);
+  it("has three games", () => {
+    expect(GAMES).toEqual(["rapid", "flux", "vocab"]);
   });
 });

@@ -398,3 +398,121 @@
     color var(--dur-250) ease,
     border-color var(--dur-250) ease;
 }
+
+/* --- Stage & readiness --- */
+
+.game-stage {
+  font-size: 0.75rem;
+  color: var(--ctp-subtext0);
+}
+
+.readiness-dot {
+  display: inline-block;
+
+  width: 8px;
+  height: 8px;
+  margin-left: 0.5rem;
+  border-radius: 50%;
+
+  vertical-align: middle;
+
+  background: var(--ctp-overlay0);
+
+  transition: background-color var(--dur-250) ease;
+}
+
+.readiness-grey {
+  background: var(--ctp-overlay0);
+}
+
+@keyframes readiness-pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+.readiness-amber {
+  background: var(--ctp-peach);
+  animation: readiness-pulse 2s ease-in-out infinite;
+}
+
+@keyframes readiness-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 4px var(--ctp-green);
+  }
+
+  50% {
+    box-shadow: 0 0 8px var(--ctp-green);
+  }
+}
+
+.readiness-green {
+  background: var(--ctp-green);
+  animation: readiness-glow 2s ease-in-out infinite;
+}
+
+@media (--motion-reduce) {
+  @keyframes readiness-pulse {
+    0%,
+    50%,
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes readiness-glow {
+    0%,
+    50%,
+    100% {
+      box-shadow: 0 0 4px var(--ctp-green);
+    }
+  }
+}
+
+.advance-btn {
+  cursor: pointer;
+
+  margin-left: auto;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--ctp-green);
+  border-radius: 4px;
+
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ctp-green);
+
+  background: transparent;
+
+  transition:
+    background-color var(--dur-150) ease,
+    color var(--dur-150) ease;
+
+  &:hover {
+    color: var(--ctp-mantle);
+    background: var(--ctp-green);
+  }
+}
+
+.retreat-btn {
+  cursor: pointer;
+
+  padding: 0.25rem 0.5rem;
+  border: none;
+
+  font-size: 0.75rem;
+  color: var(--ctp-subtext0);
+
+  background: transparent;
+
+  transition: color var(--dur-150) ease;
+
+  &:hover {
+    color: var(--ctp-text);
+  }
+}
