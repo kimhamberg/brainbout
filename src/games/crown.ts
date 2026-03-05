@@ -8,7 +8,7 @@ import type { Api } from "@lichess-org/chessground/api";
 import type { Key, Dests } from "@lichess-org/chessground/types";
 import { Chess } from "chessops/chess";
 import { parseFen, makeFen } from "chessops/fen";
-import { parseUci, makeSquare } from "chessops/util";
+import { parseUci, makeSquare, parseSquare } from "chessops/util";
 import { chessgroundDests } from "chessops/compat";
 import { randomChess960 } from "../chess960";
 import { StockfishEngine } from "../shared/engine";
@@ -101,13 +101,92 @@ let clock: ChessClock;
 let engineClock: ChessClock;
 let engineElo: number;
 let baseNodes: number;
+const positionHistory: string[] = [];
+
+// --- Repetition tracking ---
+
+function positionKey(): string {
+  // FEN without halfmove and fullmove counters
+  return makeFen(pos.toSetup()).split(" ").slice(0, 4).join(" ");
+}
+
+function isThreefoldRepetition(): boolean {
+  const key = positionKey();
+  let count = 0;
+  for (const k of positionHistory) {
+    if (k === key && ++count >= 3) return true;
+  }
+  return false;
+}
+
+// --- Promotion picker ---
+
+const PROMO_ROLES = ["queen", "rook", "bishop", "knight"] as const;
+const PROMO_CHARS: Record<string, string> = {
+  queen: "q",
+  rook: "r",
+  bishop: "b",
+  knight: "n",
+};
+
+function showPromotionPicker(
+  orig: string,
+  dest: string,
+  callback: (role: string) => void,
+): void {
+  const wrap = game.querySelector<HTMLElement>(".cg-wrap");
+  if (!wrap) return;
+
+  const file = dest.charCodeAt(0) - 97; // 0-7
+  const rank = Number(dest[1]); // 1-8
+  const isWhite = playerColor === "white";
+  const squareSize = wrap.offsetWidth / 8;
+
+  // Position: file determines x, rank determines y (top or bottom)
+  const left = (isWhite ? file : 7 - file) * squareSize;
+  const top = isWhite ? (8 - rank) * squareSize : (rank - 1) * squareSize;
+
+  const overlay = document.createElement("div");
+  overlay.className = "promo-overlay";
+
+  const picker = document.createElement("div");
+  picker.className = "promo-picker";
+  picker.style.left = `${String(left)}px`;
+  picker.style.top = `${String(top)}px`;
+  picker.style.width = `${String(squareSize)}px`;
+
+  for (const role of PROMO_ROLES) {
+    const btn = document.createElement("button");
+    btn.className = "promo-piece";
+    btn.style.width = `${String(squareSize)}px`;
+    btn.style.height = `${String(squareSize)}px`;
+
+    // Use a piece element so it inherits cburnett piece images
+    const piece = document.createElement("piece");
+    piece.classList.add(role, playerColor);
+    btn.appendChild(piece);
+
+    btn.addEventListener("click", () => {
+      overlay.remove();
+      callback(role);
+    });
+    picker.appendChild(btn);
+  }
+
+  // Click outside to cancel
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) {
+      overlay.remove();
+      // Reset the board to undo the visual move chessground already made
+      updateBoard();
+    }
+  });
+
+  overlay.appendChild(picker);
+  wrap.appendChild(overlay);
+}
 
 // --- Functions (ordered to satisfy no-use-before-define) ---
-
-function updateStatus(text: string): void {
-  const el = game.querySelector(".game-status");
-  if (el) el.textContent = text;
-}
 
 function finishGame(result: number, message: string): void {
   recordSessionScore("crown", result);
@@ -181,6 +260,13 @@ function checkGameEnd(): boolean {
     finishGame(0.5, "50-move rule — draw");
     return true;
   }
+  if (isThreefoldRepetition()) {
+    clock.stop();
+    engineClock.stop();
+    gameOver = true;
+    finishGame(0.5, "Threefold repetition — draw");
+    return true;
+  }
   return false;
 }
 
@@ -200,6 +286,7 @@ function onEngineMove(uci: string): void {
 
   pos.play(move);
   moves.push(uci);
+  positionHistory.push(positionKey());
 
   if (api) api.move(from as Key, to as Key);
   updateBoard();
@@ -211,19 +298,20 @@ function onEngineMove(uci: string): void {
   if (checkGameEnd()) return;
 
   clock.start();
-  updateStatus("Your move");
+
+  // Execute queued premove
+  if (api?.playPremove() === true) return;
 }
 
-function onPlayerMove(orig: string, dest: string): void {
-  if (gameOver) return;
-
-  const uci = orig + dest;
+function commitPlayerMove(orig: string, dest: string, promoChar: string): void {
+  const uci = orig + dest + promoChar;
   const move = parseUci(uci);
   if (!move || !pos.isLegal(move)) return;
 
   const isCapture = pos.board.occupied.has(move.to);
   pos.play(move);
   moves.push(uci);
+  positionHistory.push(positionKey());
 
   clock.stop();
   clock.addIncrement();
@@ -234,8 +322,6 @@ function onPlayerMove(orig: string, dest: string): void {
   if (pos.isCheck()) sound.playCheck();
 
   if (checkGameEnd()) return;
-
-  updateStatus("Thinking...");
 
   // Switch clocks: player stops (already stopped above), engine starts
   dimClock("player-clock", true);
@@ -250,6 +336,13 @@ function onPlayerMove(orig: string, dest: string): void {
   // Track whether this was a capture (for recapture detection in think time)
   const wasCapture = isCapture;
 
+  // Check if engine has only one legal move (forced)
+  let legalMoveCount = 0;
+  for (const dests of pos.allDests().values()) {
+    legalMoveCount += dests.size();
+  }
+  const forced = legalMoveCount === 1;
+
   // Start engine search
   engine.go(
     startFen,
@@ -261,6 +354,7 @@ function onPlayerMove(orig: string, dest: string): void {
         moveNumber: moves.length,
         evalSwing: engine.getEvalSwing(),
         isRecapture: wasCapture,
+        isForced: forced,
       });
 
       // Synthetic delay (engine already found the move; we wait to simulate thinking)
@@ -274,6 +368,27 @@ function onPlayerMove(orig: string, dest: string): void {
     },
     { nodes },
   );
+}
+
+function onPlayerMove(orig: string, dest: string): void {
+  if (gameOver) return;
+
+  // Detect promotion: pawn reaching the back rank
+  const from = parseSquare(orig);
+  const to = parseSquare(dest);
+  if (from === undefined || to === undefined) return;
+  const isPawn = pos.board.pawn.has(from);
+  const backRank = pos.turn === "white" ? 7 : 0;
+
+  if (isPawn && to >> 3 === backRank) {
+    // Show promotion picker — clock keeps running for tension
+    showPromotionPicker(orig, dest, (role) => {
+      commitPlayerMove(orig, dest, PROMO_CHARS[role]);
+    });
+    return;
+  }
+
+  commitPlayerMove(orig, dest, "");
 }
 
 function onFlag(): void {
@@ -290,7 +405,6 @@ function renderGame(): void {
   game.innerHTML = `
     <div class="clock dimmed" id="engine-clock">${formatClock(INITIAL_MS)}</div>
     <div class="crown-board"></div>
-    <div class="game-status">Loading engine...</div>
     <div class="clock" id="player-clock">${formatClock(INITIAL_MS)}</div>
   `;
 
@@ -301,6 +415,7 @@ function renderGame(): void {
     fen: makeFen(pos.toSetup()),
     orientation: playerColor,
     turnColor: pos.turn,
+    coordinatesOnSquares: true,
     movable: {
       free: false,
       color: playerColor,
@@ -318,11 +433,13 @@ function renderGame(): void {
 async function main(): Promise<void> {
   gameOver = false;
   moves.length = 0;
+  positionHistory.length = 0;
 
   const { fen } = randomChess960();
   startFen = fen;
   const setup = parseFen(fen).unwrap();
   pos = Chess.fromSetup(setup).unwrap();
+  positionHistory.push(positionKey());
 
   // Stage-based Elo tiers
   const stage = getStage("crown");
@@ -362,7 +479,6 @@ async function main(): Promise<void> {
   await engine.init(engineElo);
   engine.newGame();
 
-  updateStatus("Your move");
   clock.start();
   dimClock("engine-clock", true);
   dimClock("player-clock", false);
@@ -373,7 +489,7 @@ game.addEventListener("click", (e) => {
   if (btn?.id === "again-btn") {
     void main();
   } else if (btn?.id === "back-btn") {
-    window.location.href = "../?completed=crown";
+    window.location.href = "/index.html?completed=crown";
   }
 });
 

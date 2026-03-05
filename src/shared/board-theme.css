@@ -1,5 +1,3 @@
-/* stylelint-disable selector-no-qualifying-type -- chessground custom elements require type-qualified selectors */
-
 /* Catppuccin-complementary chess board — overrides chessground.brown.css */
 
 /*
@@ -48,7 +46,7 @@ cg-board {
   background-size: 25% 25%;
 
   /* Interactive states */
-  & square.move-dest {
+  & .move-dest {
     background: radial-gradient(
       rgb(var(--board-move-dest) / 0.5) 22%,
       rgb(var(--board-move-dest)) 0,
@@ -61,7 +59,7 @@ cg-board {
     }
   }
 
-  & square.oc.move-dest {
+  & .oc.move-dest {
     background: radial-gradient(
       transparent 0%,
       transparent 80%,
@@ -69,7 +67,7 @@ cg-board {
     );
   }
 
-  & square.premove-dest {
+  & .premove-dest {
     background: radial-gradient(
       rgb(var(--board-premove) / 0.5) 22%,
       rgb(var(--board-premove)) 0,
@@ -82,7 +80,7 @@ cg-board {
     }
   }
 
-  & square.oc.premove-dest {
+  & .oc.premove-dest {
     background: radial-gradient(
       transparent 0%,
       transparent 80%,
@@ -90,15 +88,15 @@ cg-board {
     );
   }
 
-  & square.last-move {
+  & .last-move {
     background-color: var(--board-last-move);
   }
 
-  & square.selected {
+  & .selected {
     background-color: var(--board-selected);
   }
 
-  & square.check {
+  & .check {
     background: radial-gradient(
       ellipse at center,
       rgb(var(--board-check)) 0%,
@@ -108,28 +106,50 @@ cg-board {
     );
   }
 
-  & square.current-premove {
+  & .current-premove {
     background-color: rgb(var(--board-premove) / 0.5);
   }
 }
 
-/* Coordinate label colors — cross-parent selectors, nesting would duplicate declarations */
-/* stylelint-disable csstools/use-nesting */
-.orientation-white .ranks :nth-child(odd),
-.orientation-white .files :nth-child(even),
-.orientation-black .ranks :nth-child(even),
-.orientation-black .files :nth-child(odd),
-coords.squares:nth-of-type(odd) :nth-child(even),
-coords.squares:nth-of-type(even) :nth-child(odd) {
-  color: var(--board-coord-dark);
+/* On-square coordinate sizing */
+.cg-wrap .squares {
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
-.orientation-white .ranks :nth-child(even),
-.orientation-white .files :nth-child(odd),
-.orientation-black .ranks :nth-child(odd),
-.orientation-black .files :nth-child(even),
-coords.squares:nth-of-type(odd) :nth-child(odd),
-coords.squares:nth-of-type(even) :nth-child(even) {
-  color: var(--board-coord-light);
+/* Coordinate label colors */
+.orientation-white {
+  & .ranks :nth-child(odd),
+  & .files :nth-child(even) {
+    color: var(--board-coord-dark);
+  }
+
+  & .ranks :nth-child(even),
+  & .files :nth-child(odd) {
+    color: var(--board-coord-light);
+  }
 }
-/* stylelint-enable csstools/use-nesting */
+
+.orientation-black {
+  & .ranks :nth-child(even),
+  & .files :nth-child(odd) {
+    color: var(--board-coord-dark);
+  }
+
+  & .ranks :nth-child(odd),
+  & .files :nth-child(even) {
+    color: var(--board-coord-light);
+  }
+}
+
+.cg-wrap {
+  & .squares:nth-of-type(odd) :nth-child(even),
+  & .squares:nth-of-type(even) :nth-child(odd) {
+    color: var(--board-coord-dark);
+  }
+
+  & .squares:nth-of-type(odd) :nth-child(odd),
+  & .squares:nth-of-type(even) :nth-child(even) {
+    color: var(--board-coord-light);
+  }
+}

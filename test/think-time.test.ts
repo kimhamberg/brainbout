@@ -23,26 +23,33 @@ describe("eloToNodes", () => {
 });
 
 describe("computeThinkTime", () => {
+  const defaults = { isRecapture: false, isForced: false };
+
   it("returns time in ms between 1000 and 30000", () => {
     const t = computeThinkTime({
       remainingMs: 600_000,
       moveNumber: 15,
       evalSwing: 50,
-      isRecapture: false,
+      ...defaults,
     });
     expect(t).toBeGreaterThanOrEqual(1000);
     expect(t).toBeLessThanOrEqual(30000);
   });
 
   it("thinks faster on recaptures", () => {
-    const base = { remainingMs: 600_000, moveNumber: 15, evalSwing: 50 };
+    const base = {
+      remainingMs: 600_000,
+      moveNumber: 15,
+      evalSwing: 50,
+      isForced: false,
+    };
     const normal = computeThinkTime({ ...base, isRecapture: false });
     const recap = computeThinkTime({ ...base, isRecapture: true });
     expect(recap).toBeLessThan(normal);
   });
 
   it("thinks faster in time trouble", () => {
-    const base = { moveNumber: 20, evalSwing: 30, isRecapture: false };
+    const base = { moveNumber: 20, evalSwing: 30, ...defaults };
     const relaxed = computeThinkTime({ ...base, remainingMs: 300_000 });
     const trouble = computeThinkTime({ ...base, remainingMs: 30_000 });
     expect(trouble).toBeLessThan(relaxed);
@@ -53,15 +60,27 @@ describe("computeThinkTime", () => {
       remainingMs: 8000,
       moveNumber: 35,
       evalSwing: 200,
-      isRecapture: false,
+      ...defaults,
     });
     expect(t).toBeLessThanOrEqual(3000);
   });
 
   it("thinks longer in complex positions", () => {
-    const base = { remainingMs: 600_000, moveNumber: 15, isRecapture: false };
+    const base = { remainingMs: 600_000, moveNumber: 15, ...defaults };
     const simple = computeThinkTime({ ...base, evalSwing: 5 });
     const complex = computeThinkTime({ ...base, evalSwing: 200 });
     expect(complex).toBeGreaterThan(simple);
+  });
+
+  it("plays forced moves quickly (under 1s)", () => {
+    const t = computeThinkTime({
+      remainingMs: 600_000,
+      moveNumber: 15,
+      evalSwing: 50,
+      isRecapture: false,
+      isForced: true,
+    });
+    expect(t).toBeLessThan(1000);
+    expect(t).toBeGreaterThan(0);
   });
 });

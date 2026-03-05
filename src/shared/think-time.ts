@@ -9,6 +9,8 @@ export interface ThinkTimeInput {
   /** Absolute centipawn eval swing between successive depths. */
   evalSwing: number;
   isRecapture: boolean;
+  /** Only one legal move — no real decision to make. */
+  isForced: boolean;
 }
 
 /**
@@ -19,7 +21,13 @@ export interface ThinkTimeInput {
  * time-trouble panic, and jitter.
  */
 export function computeThinkTime(input: ThinkTimeInput): number {
-  const { remainingMs, moveNumber, evalSwing, isRecapture } = input;
+  const { remainingMs, moveNumber, evalSwing, isRecapture, isForced } = input;
+
+  // Forced move: short delay with jitter (0.4-0.8s)
+  if (isForced) {
+    const jitter = 0.8 + Math.random() * 0.4;
+    return Math.min(Math.round(500 * jitter), remainingMs - 1000);
+  }
 
   // Budget: divide remaining time among expected remaining moves
   const movesLeft = Math.max(10, 40 - moveNumber);
