@@ -12,10 +12,10 @@ import {
 } from "./shared/progress";
 
 const GAME_LABELS: Record<string, string> = {
-  rapid: "Chess960 Rapid",
-  reaction: "Reaction Grid",
-  vocab: "Word Recall",
-  math: "Quick Math",
+  rapid: "Crown",
+  reaction: "Spark",
+  vocab: "Cipher",
+  math: "Tally",
 };
 
 const GAME_URLS: Record<string, string> = {
