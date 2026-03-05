@@ -64,7 +64,7 @@ Runs ESLint (TypeScript), Stylelint (CSS), Ruff (Python), staticcheck + go vet (
 npm test
 ```
 
-118 tests across 11 files covering position generation, chess clock, cognitive games, engine parsing, timer, and progress tracking.
+119 tests across 11 files covering position generation, chess clock, cognitive games, engine parsing, timer, and progress tracking.
 
 ## Sound
 
