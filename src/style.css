@@ -132,28 +132,41 @@ header {
 
 /* ── page transitions ──────────────────────────────────────────────── */
 
-@keyframes page-exit {
-  from {
-    clip-path: circle(0% at var(--tx, 50%) var(--ty, 50%));
-  }
-
+@keyframes content-exit {
   to {
-    clip-path: circle(150% at var(--tx, 50%) var(--ty, 50%));
+    transform: translateY(6px) scale(0.99);
+    opacity: 0;
   }
 }
 
-@keyframes page-enter {
+@keyframes overlay-fade-in {
   from {
-    clip-path: circle(150% at 50% 50%);
+    opacity: 0;
   }
 
   to {
-    clip-path: circle(0% at 50% 50%);
+    opacity: 1;
+  }
+}
+
+@keyframes overlay-fade-out {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
   }
 }
 
 @media (--motion-reduce) {
-  @keyframes page-exit {
+  @keyframes content-exit {
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes overlay-fade-in {
     from {
       opacity: 1;
     }
@@ -163,15 +176,19 @@ header {
     }
   }
 
-  @keyframes page-enter {
+  @keyframes overlay-fade-out {
     from {
-      opacity: 1;
+      opacity: 0;
     }
 
     to {
       opacity: 0;
     }
   }
+}
+
+.app.exiting {
+  animation: content-exit 220ms ease-out forwards;
 }
 
 .page-transition {
@@ -183,7 +200,7 @@ header {
 
   background: var(--transition-color, var(--ctp-blue));
 
-  animation: page-exit 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: overlay-fade-in 280ms ease-out 40ms both;
 }
 
 .page-enter-overlay {
@@ -195,5 +212,5 @@ header {
 
   background: var(--game-accent, var(--ctp-blue));
 
-  animation: page-enter 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.05s both;
+  animation: overlay-fade-out 320ms ease-in-out 60ms both;
 }
