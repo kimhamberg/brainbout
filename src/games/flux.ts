@@ -225,7 +225,7 @@ game.addEventListener("click", (e) => {
   } else if (target.id === "again-btn") {
     startGame();
   } else if (target.id === "back-btn") {
-    window.location.href = "../?completed=flux";
+    window.location.href = "/index.html?completed=flux";
   }
 });
 

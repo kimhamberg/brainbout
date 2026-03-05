@@ -544,7 +544,7 @@ game.addEventListener("click", (e) => {
   } else if (target.id === "again-btn") {
     void startGame();
   } else if (target.id === "back-btn") {
-    window.location.href = "../?completed=cipher";
+    window.location.href = "/index.html?completed=cipher";
   }
 });
 
