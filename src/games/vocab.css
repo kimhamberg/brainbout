@@ -231,3 +231,69 @@
     box-shadow: none;
   }
 }
+
+.cloze-input-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+}
+
+.cloze-input {
+  width: 100%;
+  padding: 0.5rem 0;
+  border: none;
+  border-bottom: 2px solid var(--ctp-surface1);
+  font-family: inherit;
+  font-size: 1.25rem;
+  color: var(--ctp-text);
+  background: transparent;
+  transition: border-color var(--dur-150) ease;
+
+  &:focus {
+    border-color: var(--game-accent, var(--ctp-green));
+    outline: none;
+  }
+
+  &.cloze-correct {
+    border-color: var(--ctp-green);
+  }
+
+  &.cloze-wrong {
+    border-color: var(--ctp-red);
+  }
+}
+
+.cloze-hint {
+  font-size: 0.875rem;
+  color: var(--ctp-subtext0);
+}
+
+.autocomplete-dropdown {
+  position: absolute;
+  z-index: 10;
+  right: 0;
+  left: 0;
+  overflow: hidden;
+  margin-top: 0.25rem;
+  border-radius: 6px;
+  background: var(--ctp-surface1);
+  box-shadow: var(--ctp-shadow-lg);
+}
+
+.autocomplete-item {
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  color: var(--ctp-text);
+  transition: background-color var(--dur-100) ease;
+
+  &:hover,
+  &.active {
+    background: var(--ctp-surface2);
+  }
+}
+
+.autocomplete-item .match-prefix {
+  color: var(--ctp-blue);
+  font-weight: 600;
+}

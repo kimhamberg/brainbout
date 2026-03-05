@@ -1,7 +1,8 @@
 import { initTheme, wireToggle } from "../shared/theme";
 import { createTimer } from "../shared/timer";
 import { recordSessionScore, todayString } from "../shared/progress";
-import { getDueWords, recordAnswer } from "./vocab-srs";
+import { getDueWords, recordAnswer, getMastery, levenshtein } from "./vocab-srs";
+import { getStage, recordResult } from "../shared/stages";
 import * as sound from "../shared/sounds";
 
 interface DictEntry {
@@ -16,6 +17,12 @@ const WRONG_PAUSE_MS = 1500;
 const NUM_CHOICES = 4;
 const NEW_WORD_RATIO = 0.3;
 const SESSION_SIZE = 30;
+
+function maxMasteryForStage(stage: number): number {
+  if (stage >= 3) return 2; // naked cloze
+  if (stage >= 2) return 1; // hinted cloze
+  return 0; // MCQ only
+}
 
 function getEl(id: string): HTMLElement {
   const el = document.getElementById(id);
@@ -38,6 +45,9 @@ let timerRef: ReturnType<typeof createTimer> | null = null;
 let roundStart = 0;
 let inputLocked = false;
 let gameOver = false;
+let totalCorrect = 0;
+let totalAttempts = 0;
+let activeDropdownIndex = -1;
 
 function shuffleArray<T>(arr: T[]): T[] {
   for (let i = arr.length - 1; i > 0; i--) {
@@ -168,30 +178,210 @@ function buildSessionQueue(): void {
   }
 }
 
+function fuzzyMatch(input: string, words: string[]): string[] {
+  const lower = input.toLowerCase();
+  const prefixMatches = words.filter((w) =>
+    w.toLowerCase().startsWith(lower),
+  );
+  const fuzzyMatches = words.filter(
+    (w) =>
+      !w.toLowerCase().startsWith(lower) &&
+      levenshtein(lower, w.toLowerCase().slice(0, lower.length + 2)) <= 2,
+  );
+  return [...prefixMatches, ...fuzzyMatches].slice(0, 5);
+}
+
+function renderAutocomplete(inputEl: HTMLInputElement, matches: string[]): void {
+  const wrap = inputEl.closest(".cloze-input-wrap");
+  if (!wrap) return;
+  const existing = wrap.querySelector(".autocomplete-dropdown");
+  if (existing) existing.remove();
+
+  if (matches.length === 0) {
+    activeDropdownIndex = -1;
+    return;
+  }
+
+  const inputLower = inputEl.value.toLowerCase();
+  const dropdown = document.createElement("div");
+  dropdown.className = "autocomplete-dropdown";
+
+  for (let i = 0; i < matches.length; i++) {
+    const word = matches[i];
+    const wordLower = word.toLowerCase();
+    const item = document.createElement("div");
+    item.className = "autocomplete-item";
+    if (i === activeDropdownIndex) item.classList.add("active");
+    item.dataset.word = word;
+
+    // Highlight matching prefix
+    const prefixLen = wordLower.startsWith(inputLower) ? inputLower.length : 0;
+    if (prefixLen > 0) {
+      item.innerHTML = `<span class="match-prefix">${word.slice(0, prefixLen)}</span>${word.slice(prefixLen)}`;
+    } else {
+      item.textContent = word;
+    }
+
+    dropdown.appendChild(item);
+  }
+
+  wrap.appendChild(dropdown);
+}
+
+function handleClozeSubmit(input: string): void {
+  if (gameOver || inputLocked || !currentEntry) return;
+  inputLocked = true;
+  totalAttempts++;
+
+  const correct = levenshtein(input.toLowerCase(), currentEntry.word.toLowerCase()) <= 1;
+  const elapsed = Date.now() - roundStart;
+  const today = todayString();
+
+  const feedback = document.getElementById("feedback");
+  const inputEl = document.getElementById("cloze-input") as HTMLInputElement | null;
+  if (inputEl) inputEl.disabled = true;
+
+  // Remove dropdown
+  const dropdown = game.querySelector(".autocomplete-dropdown");
+  if (dropdown) dropdown.remove();
+
+  if (correct) {
+    totalCorrect++;
+    const bonus = speedBonus(elapsed);
+    const mult = streakMultiplier();
+    const points = (10 + bonus) * mult;
+    score += points;
+    streak++;
+    recordAnswer(lang, currentEntry.word, true, today);
+    sound.playCorrect();
+    if (inputEl) inputEl.classList.add("cloze-correct");
+    if (feedback) {
+      feedback.classList.add("correct");
+      feedback.textContent = `+${String(Math.floor(points))}`;
+    }
+    setTimeout(nextRound, 600);
+  } else {
+    streak = 0;
+    recordAnswer(lang, currentEntry.word, false, today);
+    sound.playWrong();
+    if (inputEl) inputEl.classList.add("cloze-wrong");
+    if (feedback) {
+      feedback.classList.add("wrong");
+      feedback.textContent = `Answer: ${currentEntry.word}`;
+    }
+    const reinsert = Math.min(
+      3 + Math.floor(Math.random() * 5),
+      sessionQueue.length,
+    );
+    sessionQueue.splice(reinsert, 0, currentEntry);
+    setTimeout(nextRound, WRONG_PAUSE_MS);
+  }
+}
+
+function wireClozeEvents(): void {
+  const inputEl = document.getElementById("cloze-input") as HTMLInputElement | null;
+  if (!inputEl) return;
+
+  inputEl.focus();
+  // Move cursor to end (for hinted cloze with pre-filled value)
+  const len = inputEl.value.length;
+  inputEl.setSelectionRange(len, len);
+
+  let currentMatches: string[] = [];
+
+  inputEl.addEventListener("input", () => {
+    const val = inputEl.value.trim();
+    activeDropdownIndex = -1;
+    if (val.length >= 2) {
+      currentMatches = fuzzyMatch(val, allWords);
+      renderAutocomplete(inputEl, currentMatches);
+    } else {
+      currentMatches = [];
+      renderAutocomplete(inputEl, []);
+    }
+  });
+
+  inputEl.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (currentMatches.length > 0) {
+        activeDropdownIndex = Math.min(activeDropdownIndex + 1, currentMatches.length - 1);
+        renderAutocomplete(inputEl, currentMatches);
+      }
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (currentMatches.length > 0) {
+        activeDropdownIndex = Math.max(activeDropdownIndex - 1, -1);
+        renderAutocomplete(inputEl, currentMatches);
+      }
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (activeDropdownIndex >= 0 && activeDropdownIndex < currentMatches.length) {
+        handleClozeSubmit(currentMatches[activeDropdownIndex]);
+      } else {
+        handleClozeSubmit(inputEl.value.trim());
+      }
+    }
+  });
+}
+
 function renderRound(): void {
   if (!currentEntry) return;
+
+  const stage = getStage("vocab");
+  const wordMastery = getMastery(lang, currentEntry.word);
+  const effectiveMastery = Math.min(wordMastery, maxMasteryForStage(stage));
 
   const exHtml = currentEntry.example
     ? `<div class="cue-example">&ldquo;${currentEntry.example}&rdquo;</div>`
     : "";
 
-  const buttonsHtml = choices
-    .map(
-      (word) =>
-        `<button class="choice-btn" data-word="${word}">${word}</button>`,
-    )
-    .join("");
+  const streakHtml = streak >= 3 ? `Streak: ${String(streak)} (\u00d7${String(streakMultiplier())})` : "";
 
-  game.innerHTML = `
-    <div class="timer">${String(currentRemaining)}s</div>
-    <div class="cue-type">Definition</div>
-    <div class="cue-text">${currentEntry.definition}</div>
-    ${exHtml}
-    <div class="choices">${buttonsHtml}</div>
-    <div class="feedback" id="feedback"></div>
-    <div class="score-display">Score: ${String(Math.floor(score))}</div>
-    <div class="streak-display">${streak >= 3 ? `Streak: ${String(streak)} (\u00d7${String(streakMultiplier())})` : ""}</div>
-  `;
+  if (effectiveMastery === 0) {
+    // MCQ mode (existing behavior)
+    const buttonsHtml = choices
+      .map(
+        (word) =>
+          `<button class="choice-btn" data-word="${word}">${word}</button>`,
+      )
+      .join("");
+
+    game.innerHTML = `
+      <div class="timer">${String(currentRemaining)}s</div>
+      <div class="cue-type">Definition</div>
+      <div class="cue-text">${currentEntry.definition}</div>
+      ${exHtml}
+      <div class="choices">${buttonsHtml}</div>
+      <div class="feedback" id="feedback"></div>
+      <div class="score-display">Score: ${String(Math.floor(score))}</div>
+      <div class="streak-display">${streakHtml}</div>
+    `;
+  } else {
+    // Cloze mode (hinted or naked)
+    const hint = effectiveMastery === 1 ? currentEntry.word.slice(0, 2) : "";
+    const hintHtml = effectiveMastery === 1
+      ? `<div class="cloze-hint">Starts with: ${hint}...</div>`
+      : "";
+
+    game.innerHTML = `
+      <div class="timer">${String(currentRemaining)}s</div>
+      <div class="cue-type">Definition</div>
+      <div class="cue-text">${currentEntry.definition}</div>
+      ${exHtml}
+      ${hintHtml}
+      <div class="cloze-input-wrap">
+        <input class="cloze-input" type="text" autocomplete="off"
+          value="${hint}" placeholder="Type the word..." id="cloze-input" />
+      </div>
+      <div class="feedback" id="feedback"></div>
+      <div class="score-display">Score: ${String(Math.floor(score))}</div>
+      <div class="streak-display">${streakHtml}</div>
+    `;
+
+    activeDropdownIndex = -1;
+    wireClozeEvents();
+  }
 }
 
 function nextRound(): void {
@@ -210,6 +400,7 @@ function nextRound(): void {
 function handleChoice(chosen: string): void {
   if (gameOver || inputLocked || !currentEntry) return;
   inputLocked = true;
+  totalAttempts++;
 
   const correct = chosen === currentEntry.word;
   const elapsed = Date.now() - roundStart;
@@ -228,6 +419,7 @@ function handleChoice(chosen: string): void {
   const feedback = document.getElementById("feedback");
 
   if (correct) {
+    totalCorrect++;
     const bonus = speedBonus(elapsed);
     const mult = streakMultiplier();
     const points = (10 + bonus) * mult;
@@ -262,6 +454,8 @@ function showResult(): void {
   gameOver = true;
   const finalScore = Math.floor(score);
   recordSessionScore("vocab", finalScore);
+  const accuracy = totalAttempts > 0 ? totalCorrect / totalAttempts : 0;
+  recordResult("vocab", accuracy);
 
   game.innerHTML = `
     <div class="result">
@@ -283,6 +477,8 @@ async function startGame(): Promise<void> {
   currentRemaining = DURATION;
   inputLocked = false;
   gameOver = false;
+  totalCorrect = 0;
+  totalAttempts = 0;
 
   if (timerRef) timerRef.stop();
 
@@ -306,7 +502,16 @@ async function startGame(): Promise<void> {
 }
 
 game.addEventListener("click", (e) => {
-  const target = (e.target as HTMLElement).closest<HTMLElement>("button");
+  const el = e.target as HTMLElement;
+
+  // Handle autocomplete item clicks
+  const acItem = el.closest<HTMLElement>(".autocomplete-item");
+  if (acItem?.dataset.word) {
+    handleClozeSubmit(acItem.dataset.word);
+    return;
+  }
+
+  const target = el.closest<HTMLElement>("button");
   if (!target) return;
 
   if (target.classList.contains("choice-btn")) {
