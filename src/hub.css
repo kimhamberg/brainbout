@@ -227,7 +227,9 @@
 
   &.pressed {
     transform: scale(0.97);
-    background-size: 100% 100%, auto;
+    background-size:
+      100% 100%,
+      auto;
     box-shadow: 0 0 0 2px var(--accent, var(--ctp-surface1));
   }
 }

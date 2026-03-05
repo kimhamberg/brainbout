@@ -15,6 +15,7 @@
 Extract the existing 50 words per language into plain-text seed files.
 
 **Files:**
+
 - Create: `scripts/seeds/en.txt`
 - Create: `scripts/seeds/no.txt`
 
@@ -146,6 +147,7 @@ git commit -m "feat: add seed word lists for EN and NO"
 Build `scripts/generate-words.ts` that fetches from both APIs and writes JSON.
 
 **Files:**
+
 - Create: `scripts/generate-words.ts`
 
 **Step 1: Write the script**
@@ -290,7 +292,9 @@ async function generate(
   outPath: string,
 ): Promise<void> {
   const seeds = loadSeeds(seedPath);
-  console.log(`[${lang.toUpperCase()}] Fetching ${String(seeds.length)} words...`);
+  console.log(
+    `[${lang.toUpperCase()}] Fetching ${String(seeds.length)} words...`,
+  );
 
   const results: WordEntry[] = [];
   const missed: string[] = [];
@@ -317,9 +321,7 @@ async function generate(
   );
 
   if (missed.length > 0) {
-    console.warn(
-      `[${lang.toUpperCase()}] Missed: ${missed.join(", ")}`,
-    );
+    console.warn(`[${lang.toUpperCase()}] Missed: ${missed.join(", ")}`);
   }
 }
 
@@ -359,6 +361,7 @@ git commit -m "feat: generate word lists from dictionary APIs"
 Simplify `vocab.ts` to use `definition` | `example` cue types, dropping `cloze` and `synonym`.
 
 **Files:**
+
 - Modify: `src/games/vocab.ts:7-14` (interface + CueType)
 - Modify: `src/games/vocab.ts:47-63` (pickCue, getCueText, getCueLabel)
 
@@ -434,6 +437,7 @@ git commit -m "refactor: simplify Word Recall to definition+example cues"
 The existing `test/vocab-srs.test.ts` tests the SRS module which does NOT reference `WordEntry` fields — it only deals with word strings. Verify tests still pass, and add a basic smoke test for the new JSON shape.
 
 **Files:**
+
 - Modify: `test/vocab-srs.test.ts` (verify existing tests pass)
 - Create: `test/words-json.test.ts`
 
@@ -528,6 +532,7 @@ npm run dev
 ```
 
 Open the Word Recall game in browser. Verify:
+
 - Definitions appear as cues
 - Examples appear as cues (for words that have them)
 - Typing the correct word works

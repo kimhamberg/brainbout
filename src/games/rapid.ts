@@ -248,24 +248,29 @@ function onPlayerMove(orig: string, dest: string): void {
   const wasCapture = isCapture;
 
   // Start engine search
-  engine.go(startFen, moves, (bestMove: string) => {
-    // Compute think time based on search results
-    const thinkMs = computeThinkTime({
-      remainingMs: engineClock.remaining(),
-      moveNumber: moves.length,
-      evalSwing: engine.getEvalSwing(),
-      isRecapture: wasCapture,
-    });
+  engine.go(
+    startFen,
+    moves,
+    (bestMove: string) => {
+      // Compute think time based on search results
+      const thinkMs = computeThinkTime({
+        remainingMs: engineClock.remaining(),
+        moveNumber: moves.length,
+        evalSwing: engine.getEvalSwing(),
+        isRecapture: wasCapture,
+      });
 
-    // Synthetic delay (engine already found the move; we wait to simulate thinking)
-    setTimeout(() => {
-      engineClock.stop();
-      engineClock.addIncrement();
-      dimClock("engine-clock", true);
-      dimClock("player-clock", false);
-      onEngineMove(bestMove);
-    }, thinkMs);
-  }, { nodes });
+      // Synthetic delay (engine already found the move; we wait to simulate thinking)
+      setTimeout(() => {
+        engineClock.stop();
+        engineClock.addIncrement();
+        dimClock("engine-clock", true);
+        dimClock("player-clock", false);
+        onEngineMove(bestMove);
+      }, thinkMs);
+    },
+    { nodes },
+  );
 }
 
 function onFlag(): void {

@@ -106,7 +106,9 @@ function pickDistractors(entry: DictEntry): string[] {
     (w) => w !== entry.word && Math.abs(w.length - entry.word.length) <= 3,
   );
 
-  candidates.sort((a, b) => commonLetters(b, entry.word) - commonLetters(a, entry.word));
+  candidates.sort(
+    (a, b) => commonLetters(b, entry.word) - commonLetters(a, entry.word),
+  );
 
   const picks = candidates.slice(0, NUM_CHOICES - 1);
 
@@ -146,9 +148,7 @@ function buildSessionQueue(): void {
   const review = shuffleArray(
     dict.filter((d) => seen.has(d.word) && dueSet.has(d.word)),
   );
-  const fresh = shuffleArray(
-    dict.filter((d) => !seen.has(d.word)),
-  );
+  const fresh = shuffleArray(dict.filter((d) => !seen.has(d.word)));
 
   const reviewCount = Math.min(
     Math.round(SESSION_SIZE * (1 - NEW_WORD_RATIO)),

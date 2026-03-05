@@ -1,4 +1,10 @@
-import { createReadStream, createWriteStream, writeFileSync, existsSync, mkdirSync } from "fs";
+import {
+  createReadStream,
+  createWriteStream,
+  writeFileSync,
+  existsSync,
+  mkdirSync,
+} from "fs";
 import { createInterface } from "readline";
 import { join } from "path";
 import { pipeline } from "stream/promises";
@@ -71,8 +77,11 @@ async function download(url: string, dest: string): Promise<void> {
   }
   console.log(`  Downloading: ${url}`);
   const res = await fetch(url);
-  if (!res.ok || !res.body) throw new Error(`Download failed: ${String(res.status)}`);
-  const nodeStream = Readable.fromWeb(res.body as import("stream/web").ReadableStream);
+  if (!res.ok || !res.body)
+    throw new Error(`Download failed: ${String(res.status)}`);
+  const nodeStream = Readable.fromWeb(
+    res.body as import("stream/web").ReadableStream,
+  );
   await pipeline(nodeStream, createWriteStream(dest));
 }
 
@@ -103,7 +112,17 @@ async function processJsonl(
     }
 
     // Skip proper nouns, single-letter entries, symbols, and affixes
-    if (["name", "character", "symbol", "suffix", "prefix", "affix", "interfix"].includes(entry.pos)) {
+    if (
+      [
+        "name",
+        "character",
+        "symbol",
+        "suffix",
+        "prefix",
+        "affix",
+        "interfix",
+      ].includes(entry.pos)
+    ) {
       continue;
     }
 

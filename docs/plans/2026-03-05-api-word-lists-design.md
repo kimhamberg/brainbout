@@ -30,10 +30,10 @@ Dropped fields: `cloze`, `synonyms` (not reliably available from APIs).
 
 ### APIs
 
-| Language | API | Endpoint | Auth |
-|----------|-----|----------|------|
-| English | [Free Dictionary API](https://dictionaryapi.dev/) | `GET https://api.dictionaryapi.dev/api/v2/entries/en/{word}` | None |
-| Norwegian | [Ordbok API](https://github.com/ordbokapi/api) | GraphQL at `https://api.ordbokapi.org/graphql` | None |
+| Language  | API                                               | Endpoint                                                     | Auth |
+| --------- | ------------------------------------------------- | ------------------------------------------------------------ | ---- |
+| English   | [Free Dictionary API](https://dictionaryapi.dev/) | `GET https://api.dictionaryapi.dev/api/v2/entries/en/{word}` | None |
+| Norwegian | [Ordbok API](https://github.com/ordbokapi/api)    | GraphQL at `https://api.ordbokapi.org/graphql`               | None |
 
 ### Seed word sources
 

@@ -7,6 +7,7 @@ Word Recall currently uses 50 hand-curated words per language with no authoritat
 ## Data Source
 
 **kaikki.org** (Wiktionary data dumps, CC-BY-SA + GFDL):
+
 - English: ~145K words with real definitions, ~100K with examples (~121 MB filtered)
 - Norwegian Bokmal: ~38K words with real definitions, ~5K with examples (~7.3 MB filtered)
 - Norwegian words have English-language definitions (bilingual vocabulary exercise)
@@ -21,7 +22,7 @@ Word Recall currently uses 50 hand-curated words per language with no authoritat
    - Remove entries with empty/missing glosses
    - Keep only the first non-form-of sense per word+pos combination
 3. Extracts per entry: `{word, pos, definition, example}`
-4. Masks target word in examples (replace with "___")
+4. Masks target word in examples (replace with "\_\_\_")
 5. Logs filtering stats (total parsed, kept, filtered by reason)
 6. Validates output (no empty definitions, no unmasked words in examples)
 7. Writes `public/dict-en.json` and `public/dict-no.json`
@@ -60,6 +61,7 @@ npm script: `"download:dict": "tsx scripts/download-dictionaries.ts"`
 ## Distractor Selection
 
 For the correct word, find 3 distractors that look similar:
+
 1. Compute Levenshtein distance to all words in dictionary
 2. Pick from the closest matches (lowest edit distance, excluding exact match)
 3. Fallback: same word length, shared prefix/suffix

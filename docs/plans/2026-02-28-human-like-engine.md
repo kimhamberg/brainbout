@@ -13,6 +13,7 @@
 ### Task 0: Create think-time module with tests
 
 **Files:**
+
 - Create: `src/shared/think-time.ts`
 - Create: `test/think-time.test.ts`
 
@@ -171,6 +172,7 @@ git commit -m "feat: add think-time model for human-like engine delays"
 ### Task 1: Add info-line collection and Elo config to engine
 
 **Files:**
+
 - Modify: `src/shared/engine.ts`
 - Modify: `test/engine.test.ts`
 
@@ -222,10 +224,7 @@ Add `computeEvalSwing` export:
 
 ```typescript
 /** Compute absolute eval swing between two info lines (centipawns). */
-export function computeEvalSwing(
-  prev: EngineInfo,
-  curr: EngineInfo,
-): number {
+export function computeEvalSwing(prev: EngineInfo, curr: EngineInfo): number {
   const toCP = (s: EngineInfo["score"]): number =>
     s.type === "mate" ? (s.value > 0 ? 10000 : -10000) : s.value;
   return Math.abs(toCP(curr.score) - toCP(prev.score));
@@ -235,12 +234,14 @@ export function computeEvalSwing(
 Modify `StockfishEngine`:
 
 1. Add fields for info collection and Elo:
+
 ```typescript
 private infoLines: EngineInfo[] = [];
 private onInfo: ((info: EngineInfo) => void) | null = null;
 ```
 
 2. Change `init()` — accept `elo` parameter, remove hardcoded 1500:
+
 ```typescript
 public async init(elo: number = 1500): Promise<void> {
   // ... existing worker setup ...
@@ -252,6 +253,7 @@ public async init(elo: number = 1500): Promise<void> {
 ```
 
 3. Change `go()` — accept `nodes` instead of hardcoded depth 8, accept info callback:
+
 ```typescript
 public go(
   startFen: string,
@@ -272,6 +274,7 @@ public go(
 ```
 
 4. Update `handleLine()` to collect info lines:
+
 ```typescript
 private handleLine(line: string): void {
   const info = parseInfoLine(line);
@@ -288,6 +291,7 @@ private handleLine(line: string): void {
 ```
 
 5. Add getter for eval swing:
+
 ```typescript
 public getEvalSwing(): number {
   if (this.infoLines.length < 2) return 0;
@@ -314,6 +318,7 @@ git commit -m "feat: engine accepts Elo and node count, collects info lines"
 ### Task 2: Add engine clock to rapid game
 
 **Files:**
+
 - Modify: `src/games/rapid.ts`
 - Modify: `src/games/rapid.css`
 - Modify: `test/rapid.test.ts`
@@ -481,6 +486,7 @@ git commit -m "feat: add engine clock with dual-clock UI"
 ### Task 3: Wire think-time delay into game flow
 
 **Files:**
+
 - Modify: `src/games/rapid.ts`
 
 **Step 1: Add import**
@@ -512,29 +518,35 @@ const nodes = Math.round(baseNodes * variance * timeTroubleMultiplier);
 const wasCapture = isCapture;
 
 // Start engine search (fast, <1s in WASM)
-engine.go(startFen, moves, (bestMove: string) => {
-  // Compute think time based on search results
-  const thinkMs = computeThinkTime({
-    remainingMs: engineClock.remaining(),
-    moveNumber: moves.length,
-    evalSwing: engine.getEvalSwing(),
-    isRecapture: wasCapture,
-  });
+engine.go(
+  startFen,
+  moves,
+  (bestMove: string) => {
+    // Compute think time based on search results
+    const thinkMs = computeThinkTime({
+      remainingMs: engineClock.remaining(),
+      moveNumber: moves.length,
+      evalSwing: engine.getEvalSwing(),
+      isRecapture: wasCapture,
+    });
 
-  // Engine already searched; delay the rest synthetically
-  setTimeout(() => {
-    engineClock.stop();
-    engineClock.addIncrement();
-    dimClock("engine-clock", true);
-    dimClock("player-clock", false);
-    onEngineMove(bestMove);
-  }, thinkMs);
-}, { nodes });
+    // Engine already searched; delay the rest synthetically
+    setTimeout(() => {
+      engineClock.stop();
+      engineClock.addIncrement();
+      dimClock("engine-clock", true);
+      dimClock("player-clock", false);
+      onEngineMove(bestMove);
+    }, thinkMs);
+  },
+  { nodes },
+);
 ```
 
 **Step 3: Update `onEngineMove()` — remove clock.start() (now handled in the setTimeout)**
 
 The existing `onEngineMove()` at lines 197-200 currently does:
+
 ```typescript
 if (checkGameEnd()) return;
 clock.start();
@@ -547,6 +559,7 @@ Keep this as-is. The player's clock starts after the engine move is played, whic
 
 Run: `make dev`
 Play a move. Engine should:
+
 1. Show "Thinking..." status
 2. Engine clock ticks for 1-25s
 3. Engine plays its move
@@ -564,6 +577,7 @@ git commit -m "feat: wire think-time delay and node-limited search into game flo
 ### Task 4: Run full test suite and fix any breakage
 
 **Files:**
+
 - Possibly modify: `test/rapid.test.ts` (if Worker stub needs updating for new init signature)
 
 **Step 1: Run all tests**
@@ -593,6 +607,7 @@ Run: `make dev`
 **Step 2: Verify the full experience**
 
 Checklist:
+
 - [ ] Engine clock appears above the board
 - [ ] Player clock appears below the board
 - [ ] Active clock is full opacity, inactive is dimmed

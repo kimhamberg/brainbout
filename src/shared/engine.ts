@@ -10,10 +10,7 @@ export function parseBestMove(line: string): string | null {
 }
 
 /** Compute absolute eval swing between two info lines (centipawns). */
-export function computeEvalSwing(
-  prev: EngineInfo,
-  curr: EngineInfo,
-): number {
+export function computeEvalSwing(prev: EngineInfo, curr: EngineInfo): number {
   const toCP = (s: EngineInfo["score"]): number =>
     s.type === "mate" ? (s.value > 0 ? 10000 : -10000) : s.value;
   return Math.abs(toCP(curr.score) - toCP(prev.score));

@@ -1,13 +1,47 @@
 {
   "planPath": "docs/plans/2026-03-05-word-recall-v2-plan.md",
   "tasks": [
-    {"id": 7, "subject": "Task 1: Clean up old word list artifacts", "status": "pending"},
-    {"id": 8, "subject": "Task 2: Build dictionary download script", "status": "pending", "blockedBy": [7]},
-    {"id": 9, "subject": "Task 3: Write dictionary validation tests", "status": "pending", "blockedBy": [8]},
-    {"id": 10, "subject": "Task 4: Rewrite game code for multiple choice", "status": "pending", "blockedBy": [8]},
-    {"id": 11, "subject": "Task 5: Rewrite CSS for multiple-choice buttons", "status": "pending", "blockedBy": [10]},
-    {"id": 12, "subject": "Task 6: Update README", "status": "pending", "blockedBy": [8]},
-    {"id": 13, "subject": "Task 7: Final verification", "status": "pending", "blockedBy": [9, 10, 11, 12]}
+    {
+      "id": 7,
+      "subject": "Task 1: Clean up old word list artifacts",
+      "status": "pending"
+    },
+    {
+      "id": 8,
+      "subject": "Task 2: Build dictionary download script",
+      "status": "pending",
+      "blockedBy": [7]
+    },
+    {
+      "id": 9,
+      "subject": "Task 3: Write dictionary validation tests",
+      "status": "pending",
+      "blockedBy": [8]
+    },
+    {
+      "id": 10,
+      "subject": "Task 4: Rewrite game code for multiple choice",
+      "status": "pending",
+      "blockedBy": [8]
+    },
+    {
+      "id": 11,
+      "subject": "Task 5: Rewrite CSS for multiple-choice buttons",
+      "status": "pending",
+      "blockedBy": [10]
+    },
+    {
+      "id": 12,
+      "subject": "Task 6: Update README",
+      "status": "pending",
+      "blockedBy": [8]
+    },
+    {
+      "id": 13,
+      "subject": "Task 7: Final verification",
+      "status": "pending",
+      "blockedBy": [9, 10, 11, 12]
+    }
   ],
   "lastUpdated": "2026-03-05T14:00:00Z"
 }

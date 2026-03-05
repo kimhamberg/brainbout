@@ -15,6 +15,7 @@
 Remove files from the previous approach that are being replaced.
 
 **Files:**
+
 - Delete: `scripts/seeds/en.txt`
 - Delete: `scripts/seeds/no.txt`
 - Delete: `scripts/generate-words.ts`
@@ -34,6 +35,7 @@ rmdir scripts/seeds 2>/dev/null || true
 **Step 2: Remove the `generate:words` npm script from `package.json`**
 
 In `package.json`, delete the line:
+
 ```
 "generate:words": "tsx scripts/generate-words.ts"
 ```
@@ -52,6 +54,7 @@ git commit -m "chore: remove old hand-curated word lists and generation script"
 Create `scripts/download-dictionaries.ts` that downloads kaikki.org JSONL dumps and transforms them into filtered JSON dictionaries.
 
 **Files:**
+
 - Create: `scripts/download-dictionaries.ts`
 - Modify: `package.json` (add `"download:dict"` script)
 
@@ -168,7 +171,8 @@ async function downloadFile(url: string, dest: string): Promise<void> {
   }
   console.log(`  Downloading: ${url}`);
   const res = await fetch(url);
-  if (!res.ok || !res.body) throw new Error(`Failed to download ${url}: ${res.status}`);
+  if (!res.ok || !res.body)
+    throw new Error(`Failed to download ${url}: ${res.status}`);
 
   const fileStream = new (await import("fs")).createWriteStream(dest);
   // @ts-expect-error -- ReadableStream to Node stream
@@ -256,7 +260,11 @@ async function processJsonl(
   }
 
   writeFileSync(outputPath, JSON.stringify(results, null, 0) + "\n");
-  const sizeMB = (Buffer.byteLength(JSON.stringify(results)) / 1024 / 1024).toFixed(1);
+  const sizeMB = (
+    Buffer.byteLength(JSON.stringify(results)) /
+    1024 /
+    1024
+  ).toFixed(1);
 
   console.log(`\n  Stats for ${outputPath}:`);
   console.log(`    Total parsed:  ${total}`);
@@ -306,6 +314,7 @@ main().catch((err) => {
 **Step 2: Add npm script**
 
 In `package.json` scripts, add:
+
 ```json
 "download:dict": "tsx scripts/download-dictionaries.ts"
 ```
@@ -313,6 +322,7 @@ In `package.json` scripts, add:
 **Step 3: Add `.dict-cache/` to `.gitignore`**
 
 Append to `.gitignore`:
+
 ```
 .dict-cache/
 ```
@@ -324,6 +334,7 @@ npm run download:dict
 ```
 
 This will take a while (downloading ~3 GB). Verify:
+
 - `public/dict-en.json` exists and has >100K entries
 - `public/dict-no.json` exists and has >30K entries
 - No form-of entries leaked through (spot check)
@@ -331,6 +342,7 @@ This will take a while (downloading ~3 GB). Verify:
 **Step 5: Add dict files to `.prettierignore`**
 
 These files are too large for prettier. Add to `.prettierignore`:
+
 ```
 public/dict-en.json
 public/dict-no.json
@@ -353,6 +365,7 @@ Note: The dict JSON files are large. If git push rejects, consider adding them t
 Create tests that validate the generated dictionary JSON files have the right shape and filtering was done correctly.
 
 **Files:**
+
 - Create: `test/dict-json.test.ts`
 
 **Step 1: Write the tests**
@@ -418,7 +431,10 @@ describe.each(["en", "no"])("dict-%s.json", (lang) => {
         const lower = entry.example.toLowerCase();
         const word = entry.word.toLowerCase();
         // Allow partial matches in other words but not standalone
-        const pattern = new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
+        const pattern = new RegExp(
+          `\\b${word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`,
+          "i",
+        );
         expect(entry.example).not.toMatch(pattern);
       }
     }
@@ -448,11 +464,13 @@ git commit -m "test: add dictionary JSON validation tests"
 Replace the text-input game with a multiple-choice game using the new dictionary format.
 
 **Files:**
+
 - Rewrite: `src/games/vocab.ts`
 
 **Step 1: Write the new `vocab.ts`**
 
 Key changes from the old version:
+
 - `WordEntry` becomes `DictEntry` with `{word, pos, definition, example}`
 - Load `dict-{lang}.json` instead of `words-{lang}.json`
 - `CueType` is just `"definition"` (examples are optional bonus)
@@ -584,9 +602,7 @@ function buildSessionQueue(): void {
   const review = shuffleArray(
     dict.filter((d) => dueSet.has(d.word) && getSeenWords().has(d.word)),
   );
-  const fresh = shuffleArray(
-    dict.filter((d) => !getSeenWords().has(d.word)),
-  );
+  const fresh = shuffleArray(dict.filter((d) => !getSeenWords().has(d.word)));
 
   const reviewCount = Math.min(
     Math.round(SESSION_SIZE * (1 - NEW_WORD_RATIO)),
@@ -677,7 +693,9 @@ function renderRound(): void {
   const cueText = getCueText(currentEntry);
   const cueLines = cueText.split("\n\n");
   const defHtml = cueLines[0];
-  const exHtml = cueLines[1] ? `<div class="cue-example">${cueLines[1]}</div>` : "";
+  const exHtml = cueLines[1]
+    ? `<div class="cue-example">${cueLines[1]}</div>`
+    : "";
 
   const buttonsHtml = choices
     .map(
@@ -804,6 +822,7 @@ git commit -m "feat: rewrite Word Recall as multiple-choice with full dictionary
 Replace the text input styles with a multiple-choice button grid.
 
 **Files:**
+
 - Rewrite: `src/games/vocab.css`
 
 **Step 1: Rewrite the CSS**
@@ -1085,16 +1104,19 @@ git commit -m "feat: multiple-choice button grid CSS for Word Recall"
 Update the Word Recall description in README to reflect the new multiple-choice format and data source.
 
 **Files:**
+
 - Modify: `README.md`
 
 **Step 1: Update the Word Recall line**
 
 Change:
+
 ```markdown
 - <img src="docs/icons/book-open.svg" width="16" /> **Word Recall** — vocabulary with spaced repetition (120s)
 ```
 
 To:
+
 ```markdown
 - <img src="docs/icons/book-open.svg" width="16" /> **Word Recall** — multiple-choice vocabulary with spaced repetition (120s)
 ```
@@ -1155,6 +1177,7 @@ npm run dev
 ```
 
 Open Word Recall in browser. Verify:
+
 - Dictionary loads (may take a moment for EN)
 - Definition shows as cue
 - 4 multiple-choice buttons appear with similar-looking words
