@@ -87,13 +87,6 @@ if (session.size === GAMES.length) {
   sessionStorage.removeItem("brainbout:current-session");
 }
 
-function startNewSession(): void {
-  session.clear();
-  sessionStorage.removeItem("brainbout:current-session");
-  sessionJustCompleted = false;
-  render(); // eslint-disable-line @typescript-eslint/no-use-before-define -- called from event handler
-}
-
 // --- Render ---
 
 function render(): void {
@@ -183,21 +176,27 @@ function render(): void {
   html += `</div></details>`;
 
   hub.innerHTML = html;
+}
 
-  // Wire buttons
-  const newBtn = hub.querySelector(".new-session-btn");
-  if (newBtn) {
-    newBtn.addEventListener("click", startNewSession);
-  }
+function startNewSession(): void {
+  session.clear();
+  sessionStorage.removeItem("brainbout:current-session");
+  sessionJustCompleted = false;
+  render();
 }
 
 render();
 
-// --- Page transition ---
+// --- Page transition & event delegation ---
 document.getElementById("hub")?.addEventListener("click", (e) => {
-  const card = (e.target as HTMLElement).closest<HTMLAnchorElement>(
-    "a.game-card",
-  );
+  const target = e.target as HTMLElement;
+
+  if (target.closest(".new-session-btn") !== null) {
+    startNewSession();
+    return;
+  }
+
+  const card = target.closest<HTMLAnchorElement>("a.game-card");
   if (!card) return;
 
   e.preventDefault();

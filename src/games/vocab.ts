@@ -142,6 +142,44 @@ function buildSessionQueue(): void {
   }
 }
 
+function renderRound(): void {
+  if (!currentEntry) return;
+
+  const exHtml = currentEntry.example
+    ? `<div class="cue-example">&ldquo;${currentEntry.example}&rdquo;</div>`
+    : "";
+
+  const buttonsHtml = choices
+    .map(
+      (word) =>
+        `<button class="choice-btn" data-word="${word}">${word}</button>`,
+    )
+    .join("");
+
+  game.innerHTML = `
+    <div class="timer">${String(currentRemaining)}s</div>
+    <div class="cue-type">Definition</div>
+    <div class="cue-text">${currentEntry.definition}</div>
+    ${exHtml}
+    <div class="choices">${buttonsHtml}</div>
+    <div class="feedback" id="feedback"></div>
+    <div class="score-display">Score: ${String(Math.floor(score))}</div>
+    <div class="streak-display">${streak >= 3 ? `Streak: ${String(streak)} (\u00d7${String(streakMultiplier())})` : ""}</div>
+  `;
+}
+
+function nextRound(): void {
+  if (sessionQueue.length === 0) {
+    buildSessionQueue();
+  }
+  currentEntry = sessionQueue.shift() ?? dict[0];
+  const distractors = pickDistractors(currentEntry.word);
+  choices = shuffleArray([currentEntry.word, ...distractors]);
+  roundStart = Date.now();
+  inputLocked = false;
+  renderRound();
+}
+
 function handleChoice(chosen: string): void {
   if (inputLocked || !currentEntry) return;
   inputLocked = true;
@@ -174,7 +212,7 @@ function handleChoice(chosen: string): void {
       feedback.classList.add("correct");
       feedback.textContent = `+${String(Math.floor(points))}`;
     }
-    setTimeout(nextRound, 600); // eslint-disable-line @typescript-eslint/no-use-before-define -- mutual recursion
+    setTimeout(nextRound, 600);
   } else {
     streak = 0;
     recordAnswer(lang, currentEntry.word, false, today);
@@ -183,47 +221,8 @@ function handleChoice(chosen: string): void {
       feedback.classList.add("wrong");
       feedback.textContent = `Answer: ${currentEntry.word}`;
     }
-    setTimeout(nextRound, WRONG_PAUSE_MS); // eslint-disable-line @typescript-eslint/no-use-before-define -- mutual recursion
+    setTimeout(nextRound, WRONG_PAUSE_MS);
   }
-}
-
-function renderRound(): void {
-  if (!currentEntry) return;
-
-  const exHtml = currentEntry.example
-    ? `<div class="cue-example">&ldquo;${currentEntry.example}&rdquo;</div>`
-    : "";
-
-  const buttonsHtml = choices
-    .map(
-      (word) =>
-        `<button class="choice-btn" data-word="${word}">${word}</button>`,
-    )
-    .join("");
-
-  game.innerHTML = `
-    <div class="timer">${String(currentRemaining)}s</div>
-    <div class="cue-type">Definition</div>
-    <div class="cue-text">${currentEntry.definition}</div>
-    ${exHtml}
-    <div class="choices">${buttonsHtml}</div>
-    <div class="feedback" id="feedback"></div>
-    <div class="score-display">Score: ${String(Math.floor(score))}</div>
-    <div class="streak-display">${streak >= 3 ? `Streak: ${String(streak)} (\u00d7${String(streakMultiplier())})` : ""}</div>
-  `;
-
-}
-
-function nextRound(): void {
-  if (sessionQueue.length === 0) {
-    buildSessionQueue();
-  }
-  currentEntry = sessionQueue.shift() ?? dict[0];
-  const distractors = pickDistractors(currentEntry.word);
-  choices = shuffleArray([currentEntry.word, ...distractors]);
-  roundStart = Date.now();
-  inputLocked = false;
-  renderRound();
 }
 
 function showResult(): void {
