@@ -17,10 +17,10 @@ A daily brain workout. Train your brain, not your scroll thumb.
 
 {{GAME_COUNT}} timed cognitive games in ~8 minutes. No accounts, no ads, no internet required. Progress tracked locally.
 
-- <img src="docs/icons/crown.svg" width="16" /> **Chess960 Rapid** — 15+10 vs Stockfish
-- <img src="docs/icons/zap.svg" width="16" /> **Reaction Grid** — fast-attention target clicking (60s)
-- <img src="docs/icons/book-open.svg" width="16" /> **Word Recall** — vocabulary with spaced repetition (120s)
-- <img src="docs/icons/calculator.svg" width="16" /> **Quick Math** — adaptive arithmetic (60s)
+- <img src="docs/icons/crown.svg" width="16" /> **Crown** — Chess960 rapid, 15+10 vs Stockfish
+- <img src="docs/icons/zap.svg" width="16" /> **Spark** — fast-attention target clicking (60s)
+- <img src="docs/icons/key.svg" width="16" /> **Cipher** — multiple-choice Norwegian vocabulary with spaced repetition (120s)
+- <img src="docs/icons/hash.svg" width="16" /> **Tally** — adaptive arithmetic (60s)
 
 <p align="center"><img src="docs/screenshot.png" alt="Screenshot" width="280" /></p>
 
@@ -89,8 +89,8 @@ npm test
 ## Roadmap
 
 - [ ] Every game feels vital and polished — tight animations, satisfying sounds, zero rough edges
-- [ ] Chess960 matches feel like playing a real human — natural move timing, personality, tension
-- [ ] Word Recall actually trains vocabulary — spaced repetition that sticks, real progress over weeks
+- [ ] Crown matches feel like playing a real human — natural move timing, personality, tension
+- [ ] Cipher actually trains vocabulary — spaced repetition that sticks, real progress over weeks
 
 ## Contributing
 
