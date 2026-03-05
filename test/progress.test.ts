@@ -85,7 +85,7 @@ describe("todayString", () => {
 });
 
 describe("GAMES", () => {
-  it("has four games", () => {
-    expect(GAMES).toEqual(["rapid", "reaction", "vocab", "math"]);
+  it("has five games", () => {
+    expect(GAMES).toEqual(["rapid", "flux", "reaction", "vocab", "math"]);
   });
 });
