@@ -14,7 +14,11 @@ function key(gameId: string): string {
 function load(gameId: string): StageData {
   const raw = localStorage.getItem(key(gameId));
   if (raw === null) return { stage: 1, history: [] };
-  return JSON.parse(raw) as StageData;
+  try {
+    return JSON.parse(raw) as StageData;
+  } catch {
+    return { stage: 1, history: [] };
+  }
 }
 
 function save(gameId: string, data: StageData): void {
