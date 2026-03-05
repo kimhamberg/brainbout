@@ -116,6 +116,13 @@
     animation: fade-in-up 0.4s ease 0.1s both;
   }
 
+  & .result-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    animation: fade-in-up 0.4s ease 0.2s both;
+  }
+
   & button {
     cursor: pointer;
 
@@ -125,7 +132,7 @@
 
     margin-top: 1rem;
     padding: 0.75rem 2rem;
-    border: none;
+    border: 2px solid transparent;
     border-radius: 6px;
 
     font-size: 1rem;
@@ -138,7 +145,6 @@
     transition:
       box-shadow 0.15s ease,
       transform 0.1s ease;
-    animation: fade-in-up 0.4s ease 0.2s both;
   }
 
   & button:hover {
@@ -154,5 +160,18 @@
   & button:focus-visible {
     outline: none;
     box-shadow: var(--ctp-focus-ring);
+  }
+
+  & .secondary {
+    border-color: var(--ctp-surface1);
+    color: var(--ctp-subtext0);
+    background: none;
+    box-shadow: none;
+  }
+
+  & .secondary:hover {
+    border-color: var(--ctp-surface2);
+    color: var(--ctp-text);
+    box-shadow: none;
   }
 }

@@ -117,6 +117,8 @@ function handleAnswer(chosen: number): void {
   renderPlaying();
 }
 
+let timer: ReturnType<typeof createTimer> | null = null;
+
 function showResult(): void {
   recordSessionScore("math", score);
 
@@ -124,42 +126,55 @@ function showResult(): void {
     <div class="result">
       <div class="final-score">${String(score)}</div>
       <div class="result-label">correct in ${String(DURATION)} seconds</div>
-      <button id="back-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Back to Hub</button>
+      <div class="result-actions">
+        <button id="again-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>Play Again</button>
+        <button id="back-btn" class="secondary"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Back to Hub</button>
+      </div>
     </div>
   `;
 
   sound.playVictory();
-
-  document.getElementById("back-btn")?.addEventListener("click", () => {
-    window.location.href = "../?completed=math";
-  });
 }
 
-// Use event delegation to avoid circular reference between renderPlaying and handleAnswer
+function startGame(): void {
+  score = 0;
+  streak = 0;
+  level = 1;
+  currentRemaining = DURATION;
+
+  if (timer !== null) timer.stop();
+
+  problem = generateProblem(level);
+
+  timer = createTimer({
+    seconds: DURATION,
+    onTick: (remaining) => {
+      currentRemaining = remaining;
+      renderPlaying();
+    },
+    onDone: () => {
+      showResult();
+    },
+  });
+
+  renderPlaying();
+  timer.start();
+}
+
 game.addEventListener("click", (e) => {
-  const btn = (e.target as HTMLElement).closest<HTMLButtonElement>(
-    ".choice-btn",
-  );
-  if (btn?.dataset.val != null) {
-    handleAnswer(Number(btn.dataset.val));
+  const target = (e.target as HTMLElement).closest<HTMLElement>("button");
+  if (!target) return;
+
+  if (target.classList.contains("choice-btn") && target.dataset.val != null) {
+    handleAnswer(Number(target.dataset.val));
+  } else if (target.id === "again-btn") {
+    startGame();
+  } else if (target.id === "back-btn") {
+    window.location.href = "../?completed=math";
   }
 });
 
-problem = generateProblem(level);
-
-const timer = createTimer({
-  seconds: DURATION,
-  onTick: (remaining) => {
-    currentRemaining = remaining;
-    renderPlaying();
-  },
-  onDone: () => {
-    showResult();
-  },
-});
-
-renderPlaying();
-timer.start();
+startGame();
 
 initTheme();
 wireToggle();
