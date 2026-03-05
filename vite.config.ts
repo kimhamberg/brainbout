@@ -8,10 +8,8 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, "index.html"),
         rapid: resolve(__dirname, "games/rapid.html"),
-        reaction: resolve(__dirname, "games/reaction.html"),
-        vocab: resolve(__dirname, "games/vocab.html"),
-        math: resolve(__dirname, "games/math.html"),
         flux: resolve(__dirname, "games/flux.html"),
+        vocab: resolve(__dirname, "games/vocab.html"),
       },
     },
   },

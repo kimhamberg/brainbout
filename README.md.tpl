@@ -15,12 +15,11 @@
 
 A daily brain workout. Train your brain, not your scroll thumb.
 
-{{GAME_COUNT}} timed cognitive games in ~8 minutes. No accounts, no ads, no internet required. Progress tracked locally.
+{{GAME_COUNT}} timed cognitive games in ~18 minutes. No accounts, no ads, no internet required. Progress tracked locally.
 
 - <img src="docs/icons/crown.svg" width="16" /> **Crown** — Chess960 rapid, 15+10 vs Stockfish
-- <img src="docs/icons/zap.svg" width="16" /> **Spark** — fast-attention target clicking (60s)
-- <img src="docs/icons/key.svg" width="16" /> **Cipher** — multiple-choice Norwegian vocabulary with spaced repetition (120s)
-- <img src="docs/icons/hash.svg" width="16" /> **Tally** — adaptive arithmetic (60s)
+- <img src="docs/icons/flux.svg" width="16" /> **Flux** — adaptive rule-switching with inhibition (60s)
+- <img src="docs/icons/key.svg" width="16" /> **Cipher** — Norwegian vocabulary with per-word mastery (120s)
 
 <p align="center"><img src="docs/screenshot.png" alt="Screenshot" width="280" /></p>
 
