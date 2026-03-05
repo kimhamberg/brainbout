@@ -19,7 +19,7 @@ A daily brain workout. Train your brain, not your scroll thumb.
 
 - <img src="docs/icons/crown.svg" width="16" /> **Chess960 Rapid** — 15+10 vs Stockfish
 - <img src="docs/icons/zap.svg" width="16" /> **Reaction Grid** — fast-attention target clicking (60s)
-- <img src="docs/icons/book-open.svg" width="16" /> **Word Recall** — vocabulary with spaced repetition (120s)
+- <img src="docs/icons/book-open.svg" width="16" /> **Word Recall** — multiple-choice Norwegian vocabulary with spaced repetition (120s)
 - <img src="docs/icons/calculator.svg" width="16" /> **Quick Math** — adaptive arithmetic (60s)
 
 <p align="center"><img src="docs/screenshot.png" alt="Screenshot" width="280" /></p>
@@ -65,7 +65,7 @@ Runs ESLint (TypeScript), Stylelint (CSS), Ruff (Python), staticcheck + go vet (
 npm test
 ```
 
-68 tests across 10 files covering position generation, chess clock, cognitive games, engine parsing, timer, and progress tracking.
+72 tests across 11 files covering position generation, chess clock, cognitive games, engine parsing, timer, dictionary validation, and progress tracking.
 
 ## Sound
 
@@ -74,6 +74,10 @@ npm test
 ```
 .venv/bin/python scripts/gen-sounds.py
 ```
+
+## Data sources
+
+- **Word Recall dictionaries** — [Wiktionary](https://en.wiktionary.org/) via [kaikki.org/wiktextract](https://kaikki.org/), licensed under [CC-BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) and [GFDL](https://www.gnu.org/licenses/fdl-1.3.html)
 
 ## Stack
 
