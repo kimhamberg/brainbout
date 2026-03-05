@@ -47,7 +47,7 @@
 }
 
 .cue-text {
-  max-width: 360px;
+  max-width: 320px;
   min-height: 3rem;
 
   font-size: 1.125rem;
@@ -56,11 +56,11 @@
 }
 
 .cue-example {
-  max-width: 360px;
+  max-width: 320px;
 
-  font-size: 0.95rem;
+  font-size: 0.875rem;
   font-style: italic;
-  line-height: 1.4;
+  line-height: 1.375;
   color: var(--ctp-subtext0);
   text-align: center;
 }
@@ -71,20 +71,20 @@
   gap: 0.5rem;
 
   width: 100%;
-  max-width: 360px;
+  max-width: 320px;
 }
 
 .choice-btn {
   cursor: pointer;
 
-  padding: 0.625rem 0.75rem;
+  padding: 0.5rem 0.75rem;
   border: 2px solid var(--ctp-surface1);
   border-radius: 6px;
 
   font-size: 1rem;
   color: var(--ctp-text);
   text-align: center;
-  word-break: break-word;
+  overflow-wrap: break-word;
 
   background: var(--ctp-surface0);
   box-shadow: var(--ctp-shadow);
@@ -94,13 +94,9 @@
     background-color 0.15s ease,
     transform 0.1s ease;
 
-  &:hover:not(:disabled) {
-    border-color: var(--game-accent, var(--ctp-blue));
-    transform: translateY(-1px);
-  }
-
-  &:active:not(:disabled) {
-    transform: translateY(0);
+  &:disabled {
+    cursor: default;
+    opacity: 0.7;
   }
 
   &:focus-visible {
@@ -108,23 +104,27 @@
     box-shadow: var(--ctp-focus-ring);
   }
 
-  &:disabled {
-    cursor: default;
-    opacity: 0.7;
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    border-color: var(--game-accent, var(--ctp-blue));
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
   }
 
   &.correct {
     border-color: var(--ctp-green);
     color: var(--ctp-green);
-    background: color-mix(in srgb, var(--ctp-green) 10%, var(--ctp-surface0));
     opacity: 1;
+    background: color-mix(in srgb, var(--ctp-green) 10%, var(--ctp-surface0));
   }
 
   &.wrong {
     border-color: var(--ctp-red);
     color: var(--ctp-red);
-    background: color-mix(in srgb, var(--ctp-red) 10%, var(--ctp-surface0));
     opacity: 1;
+    background: color-mix(in srgb, var(--ctp-red) 10%, var(--ctp-surface0));
   }
 }
 
@@ -151,38 +151,6 @@
   font-size: 0.875rem;
   color: var(--ctp-subtext0);
   transition: color 0.25s ease;
-}
-
-.lang-toggle {
-  cursor: pointer;
-
-  padding: 0.25rem 0.5rem;
-  border: 1px solid var(--ctp-surface1);
-  border-radius: 6px;
-
-  font-size: 0.75rem;
-  color: var(--ctp-subtext0);
-
-  background: none;
-
-  transition:
-    border-color 0.15s ease,
-    color 0.15s ease,
-    background-color 0.15s ease;
-
-  &:hover {
-    border-color: var(--game-accent, var(--ctp-blue));
-    color: var(--ctp-text);
-  }
-
-  &:active {
-    background: var(--ctp-surface0);
-  }
-
-  &:focus-visible {
-    outline: none;
-    box-shadow: var(--ctp-focus-ring);
-  }
 }
 
 .result {

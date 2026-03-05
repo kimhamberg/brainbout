@@ -69,7 +69,7 @@ async function loadDict(): Promise<void> {
 function pickDistractors(correctWord: string): string[] {
   const correctLen = correctWord.length;
   const correctLower = correctWord.toLowerCase();
-  const scored: Array<{ word: string; dist: number }> = [];
+  const scored: { word: string; dist: number }[] = [];
 
   // Sample a random subset to avoid scanning 22K words every round
   const sampleSize = Math.min(2000, allWords.length);
@@ -104,7 +104,7 @@ function getSeenWords(): Set<string> {
   const seen = new Set<string>();
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (key?.startsWith(prefix)) {
+    if (key?.startsWith(prefix) === true) {
       seen.add(key.slice(prefix.length));
     }
   }
