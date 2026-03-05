@@ -112,7 +112,12 @@ describe("mastery tracking", () => {
 
   it("caps mastery at 2", () => {
     for (let i = 0; i < 9; i++) {
-      recordAnswer("no", "tapper", true, `2026-03-${String(i + 1).padStart(2, "0")}`);
+      recordAnswer(
+        "no",
+        "tapper",
+        true,
+        `2026-03-${String(i + 1).padStart(2, "0")}`,
+      );
     }
     expect(getMastery("no", "tapper")).toBe(2);
   });

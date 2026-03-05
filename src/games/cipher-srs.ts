@@ -26,8 +26,9 @@ function addDays(dateStr: string, days: number): string {
 
 export function getWordState(lang: string, word: string): WordState {
   const raw = localStorage.getItem(stateKey(lang, word));
-  if (raw === null) return { box: 0, nextDue: "", mastery: 0, masteryStreak: 0 };
-  const parsed = JSON.parse(raw) as WordState;
+  if (raw === null)
+    return { box: 0, nextDue: "", mastery: 0, masteryStreak: 0 };
+  const parsed = JSON.parse(raw) as Partial<WordState>;
   return {
     box: parsed.box ?? 0,
     nextDue: parsed.nextDue ?? "",
@@ -55,12 +56,22 @@ export function recordAnswer(
     }
     localStorage.setItem(
       stateKey(lang, word),
-      JSON.stringify({ box: newBox, nextDue, mastery: newMastery, masteryStreak: newStreak }),
+      JSON.stringify({
+        box: newBox,
+        nextDue,
+        mastery: newMastery,
+        masteryStreak: newStreak,
+      }),
     );
   } else {
     localStorage.setItem(
       stateKey(lang, word),
-      JSON.stringify({ box: 0, nextDue: "", mastery: state.mastery, masteryStreak: 0 }),
+      JSON.stringify({
+        box: 0,
+        nextDue: "",
+        mastery: state.mastery,
+        masteryStreak: 0,
+      }),
     );
   }
 }

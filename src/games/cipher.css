@@ -243,10 +243,13 @@
   padding: 0.5rem 0;
   border: none;
   border-bottom: 2px solid var(--ctp-surface1);
+
   font-family: inherit;
   font-size: 1.25rem;
   color: var(--ctp-text);
+
   background: transparent;
+
   transition: border-color var(--dur-150) ease;
 
   &:focus {
@@ -273,27 +276,33 @@
   z-index: 10;
   right: 0;
   left: 0;
+
   overflow: hidden;
+
   margin-top: 0.25rem;
   border-radius: 6px;
+
   background: var(--ctp-surface1);
   box-shadow: var(--ctp-shadow-lg);
 }
 
 .autocomplete-item {
   cursor: pointer;
+
   padding: 0.5rem 0.75rem;
+
   font-size: 1rem;
   color: var(--ctp-text);
+
   transition: background-color var(--dur-100) ease;
 
   &:hover,
   &.active {
     background: var(--ctp-surface2);
   }
-}
 
-.autocomplete-item .match-prefix {
-  color: var(--ctp-blue);
-  font-weight: 600;
+  & .match-prefix {
+    font-weight: 600;
+    color: var(--ctp-blue);
+  }
 }

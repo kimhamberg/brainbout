@@ -20,6 +20,11 @@ export default tseslint.config(
       "@typescript-eslint/init-declarations": "off",
       // 4-param functions (makeMove, goWithMoves) read better than options objects
       "@typescript-eslint/max-params": ["error", { max: 5 }],
+      // Hoisted function declarations are safe for mutual recursion (e.g. handleResponse/nextTrial)
+      "@typescript-eslint/no-use-before-define": [
+        "error",
+        { functions: false },
+      ],
       // Type boundaries with chessground/chessops and Vite's import.meta.env
       "@typescript-eslint/no-unsafe-type-assertion": "off",
       "@typescript-eslint/no-unsafe-member-access": "off",

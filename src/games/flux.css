@@ -9,6 +9,7 @@
   0% {
     background: color-mix(in srgb, var(--ctp-green) 30%, var(--ctp-surface0));
   }
+
   100% {
     background: var(--ctp-surface0);
   }
@@ -18,6 +19,7 @@
   0% {
     background: color-mix(in srgb, var(--ctp-red) 30%, var(--ctp-surface0));
   }
+
   100% {
     background: var(--ctp-surface0);
   }
@@ -25,12 +27,13 @@
 
 @keyframes switch-fade {
   0% {
-    opacity: 1;
     transform: scale(1);
+    opacity: 1;
   }
+
   100% {
-    opacity: 0;
     transform: scale(1.3);
+    opacity: 0;
   }
 }
 
@@ -45,6 +48,7 @@
     0% {
       background: color-mix(in srgb, var(--ctp-green) 30%, var(--ctp-surface0));
     }
+
     100% {
       background: var(--ctp-surface0);
     }
@@ -54,6 +58,7 @@
     0% {
       background: color-mix(in srgb, var(--ctp-red) 30%, var(--ctp-surface0));
     }
+
     100% {
       background: var(--ctp-surface0);
     }
@@ -63,6 +68,7 @@
     0% {
       opacity: 1;
     }
+
     100% {
       opacity: 0;
     }
@@ -106,6 +112,8 @@
 }
 
 .switch-label {
+  pointer-events: none;
+
   position: absolute;
 
   font-size: 1.5rem;
@@ -113,7 +121,6 @@
   color: var(--ctp-mauve);
 
   animation: switch-fade var(--dur-350) ease forwards;
-  pointer-events: none;
 }
 
 .stimulus {
@@ -121,8 +128,8 @@
   align-items: center;
   justify-content: center;
 
-  width: 120px;
-  height: 120px;
+  width: 32px;
+  height: 32px;
   border-radius: 12px;
 
   font-size: 3rem;
@@ -170,8 +177,8 @@
 
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 0.25rem;
+  align-items: center;
 
   padding: 0.75rem 1rem;
   border: 2px solid var(--ctp-surface1);

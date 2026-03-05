@@ -1,7 +1,12 @@
 import { initTheme, wireToggle } from "../shared/theme";
 import { createTimer } from "../shared/timer";
 import { recordSessionScore, todayString } from "../shared/progress";
-import { getDueWords, recordAnswer, getMastery, levenshtein } from "./cipher-srs";
+import {
+  getDueWords,
+  recordAnswer,
+  getMastery,
+  levenshtein,
+} from "./cipher-srs";
 import { getStage, recordResult } from "../shared/stages";
 import * as sound from "../shared/sounds";
 
@@ -180,9 +185,7 @@ function buildSessionQueue(): void {
 
 function fuzzyMatch(input: string, words: string[]): string[] {
   const lower = input.toLowerCase();
-  const prefixMatches = words.filter((w) =>
-    w.toLowerCase().startsWith(lower),
-  );
+  const prefixMatches = words.filter((w) => w.toLowerCase().startsWith(lower));
   const fuzzyMatches = words.filter(
     (w) =>
       !w.toLowerCase().startsWith(lower) &&
@@ -191,7 +194,10 @@ function fuzzyMatch(input: string, words: string[]): string[] {
   return [...prefixMatches, ...fuzzyMatches].slice(0, 5);
 }
 
-function renderAutocomplete(inputEl: HTMLInputElement, matches: string[]): void {
+function renderAutocomplete(
+  inputEl: HTMLInputElement,
+  matches: string[],
+): void {
   const wrap = inputEl.closest(".cloze-input-wrap");
   if (!wrap) return;
   const existing = wrap.querySelector(".autocomplete-dropdown");
@@ -233,12 +239,15 @@ function handleClozeSubmit(input: string): void {
   inputLocked = true;
   totalAttempts++;
 
-  const correct = levenshtein(input.toLowerCase(), currentEntry.word.toLowerCase()) <= 1;
+  const correct =
+    levenshtein(input.toLowerCase(), currentEntry.word.toLowerCase()) <= 1;
   const elapsed = Date.now() - roundStart;
   const today = todayString();
 
   const feedback = document.getElementById("feedback");
-  const inputEl = document.getElementById("cloze-input") as HTMLInputElement | null;
+  const inputEl = document.getElementById(
+    "cloze-input",
+  ) as HTMLInputElement | null;
   if (inputEl) inputEl.disabled = true;
 
   // Remove dropdown
@@ -259,7 +268,9 @@ function handleClozeSubmit(input: string): void {
       feedback.classList.add("correct");
       feedback.textContent = `+${String(Math.floor(points))}`;
     }
-    setTimeout(nextRound, 600);
+    setTimeout(() => {
+      nextRound();
+    }, 600);
   } else {
     streak = 0;
     recordAnswer(lang, currentEntry.word, false, today);
@@ -274,12 +285,16 @@ function handleClozeSubmit(input: string): void {
       sessionQueue.length,
     );
     sessionQueue.splice(reinsert, 0, currentEntry);
-    setTimeout(nextRound, WRONG_PAUSE_MS);
+    setTimeout(() => {
+      nextRound();
+    }, WRONG_PAUSE_MS);
   }
 }
 
 function wireClozeEvents(): void {
-  const inputEl = document.getElementById("cloze-input") as HTMLInputElement | null;
+  const inputEl = document.getElementById(
+    "cloze-input",
+  ) as HTMLInputElement | null;
   if (!inputEl) return;
 
   inputEl.focus();
@@ -305,7 +320,10 @@ function wireClozeEvents(): void {
     if (e.key === "ArrowDown") {
       e.preventDefault();
       if (currentMatches.length > 0) {
-        activeDropdownIndex = Math.min(activeDropdownIndex + 1, currentMatches.length - 1);
+        activeDropdownIndex = Math.min(
+          activeDropdownIndex + 1,
+          currentMatches.length - 1,
+        );
         renderAutocomplete(inputEl, currentMatches);
       }
     } else if (e.key === "ArrowUp") {
@@ -316,7 +334,10 @@ function wireClozeEvents(): void {
       }
     } else if (e.key === "Enter") {
       e.preventDefault();
-      if (activeDropdownIndex >= 0 && activeDropdownIndex < currentMatches.length) {
+      if (
+        activeDropdownIndex >= 0 &&
+        activeDropdownIndex < currentMatches.length
+      ) {
         handleClozeSubmit(currentMatches[activeDropdownIndex]);
       } else {
         handleClozeSubmit(inputEl.value.trim());
@@ -336,7 +357,10 @@ function renderRound(): void {
     ? `<div class="cue-example">&ldquo;${currentEntry.example}&rdquo;</div>`
     : "";
 
-  const streakHtml = streak >= 3 ? `Streak: ${String(streak)} (\u00d7${String(streakMultiplier())})` : "";
+  const streakHtml =
+    streak >= 3
+      ? `Streak: ${String(streak)} (\u00d7${String(streakMultiplier())})`
+      : "";
 
   if (effectiveMastery === 0) {
     // MCQ mode (existing behavior)
@@ -360,9 +384,10 @@ function renderRound(): void {
   } else {
     // Cloze mode (hinted or naked)
     const hint = effectiveMastery === 1 ? currentEntry.word.slice(0, 2) : "";
-    const hintHtml = effectiveMastery === 1
-      ? `<div class="cloze-hint">Starts with: ${hint}...</div>`
-      : "";
+    const hintHtml =
+      effectiveMastery === 1
+        ? `<div class="cloze-hint">Starts with: ${hint}...</div>`
+        : "";
 
     game.innerHTML = `
       <div class="timer">${String(currentRemaining)}s</div>
@@ -506,7 +531,7 @@ game.addEventListener("click", (e) => {
 
   // Handle autocomplete item clicks
   const acItem = el.closest<HTMLElement>(".autocomplete-item");
-  if (acItem?.dataset.word) {
+  if (acItem?.dataset.word !== undefined && acItem.dataset.word !== "") {
     handleClozeSubmit(acItem.dataset.word);
     return;
   }

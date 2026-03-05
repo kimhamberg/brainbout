@@ -61,8 +61,7 @@ export function readiness(gameId: string, threshold: number): Readiness {
   const data = load(gameId);
   if (data.stage >= MAX_STAGE) return "grey";
   if (data.history.length < HISTORY_SIZE) return "grey";
-  const avg =
-    data.history.reduce((sum, v) => sum + v, 0) / data.history.length;
+  const avg = data.history.reduce((sum, v) => sum + v, 0) / data.history.length;
   if (avg >= threshold) return "green";
   if (avg >= threshold - 0.1) return "amber";
   return "grey";

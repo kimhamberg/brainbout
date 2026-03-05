@@ -10,12 +10,7 @@ import {
   getTodayBest,
   completeSession,
 } from "./shared/progress";
-import {
-  getStage,
-  readiness,
-  advance,
-  retreat,
-} from "./shared/stages";
+import { getStage, readiness, advance, retreat } from "./shared/stages";
 
 const GAME_LABELS: Record<string, string> = {
   crown: "Crown",
@@ -141,8 +136,10 @@ function render(): void {
       html += `<span class="game-name">${GAME_LABELS[game]}</span>`;
       html += `<span class="game-stage">\u00b7 Stage ${String(stage)}</span>`;
       html += `<span class="readiness-dot readiness-${ready}"></span>`;
-      if (ready === "green") html += `<button class="advance-btn" data-game="${game}">Advance \u25b8</button>`;
-      if (stage > 1) html += `<button class="retreat-btn" data-game="${game}">\u25be</button>`;
+      if (ready === "green")
+        html += `<button class="advance-btn" data-game="${game}">Advance \u25b8</button>`;
+      if (stage > 1)
+        html += `<button class="retreat-btn" data-game="${game}">\u25be</button>`;
       html += `</a>`;
     }
   }
@@ -218,8 +215,8 @@ document.getElementById("hub")?.addEventListener("click", (e) => {
   if (advBtn !== null) {
     e.preventDefault();
     e.stopPropagation();
-    const game = advBtn.dataset.game;
-    if (game) {
+    const { game } = advBtn.dataset;
+    if (game !== undefined && game !== "") {
       advance(game);
       render();
     }
@@ -230,8 +227,8 @@ document.getElementById("hub")?.addEventListener("click", (e) => {
   if (retBtn !== null) {
     e.preventDefault();
     e.stopPropagation();
-    const game = retBtn.dataset.game;
-    if (game) {
+    const { game } = retBtn.dataset;
+    if (game !== undefined && game !== "") {
       retreat(game);
       render();
     }

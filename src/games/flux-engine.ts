@@ -41,11 +41,36 @@ export const SPEED_UP = 75;
 export const SLOW_DOWN = 150;
 export const STREAK_TO_SPEED = 5;
 
-export const STAGE_PARAMS: Record<number, StageParams> = {
-  1: { startInterval: 2000, switchMin: 6, switchMax: 6, noGoRate: 0.2, floorMs: 800 },
-  2: { startInterval: 1500, switchMin: 4, switchMax: 6, noGoRate: 0.2, floorMs: 800 },
-  3: { startInterval: 1200, switchMin: 3, switchMax: 5, noGoRate: 0.25, floorMs: 800 },
-};
+export const STAGE_PARAMS: StageParams[] = [
+  {
+    startInterval: 2000,
+    switchMin: 6,
+    switchMax: 6,
+    noGoRate: 0.2,
+    floorMs: 800,
+  }, // placeholder for index 0
+  {
+    startInterval: 2000,
+    switchMin: 6,
+    switchMax: 6,
+    noGoRate: 0.2,
+    floorMs: 800,
+  },
+  {
+    startInterval: 1500,
+    switchMin: 4,
+    switchMax: 6,
+    noGoRate: 0.2,
+    floorMs: 800,
+  },
+  {
+    startInterval: 1200,
+    switchMin: 3,
+    switchMax: 5,
+    noGoRate: 0.25,
+    floorMs: 800,
+  },
+];
 
 /* ---------- helpers ---------- */
 
@@ -119,7 +144,12 @@ export function evaluateResponse(
   // No-go trial
   if (trial.isNoGo) {
     if (pressed !== null) {
-      return { correct: false, points: -1, noGoFail: true, feedback: "Don't press on green!" };
+      return {
+        correct: false,
+        points: -1,
+        noGoFail: true,
+        feedback: "Don't press on green!",
+      };
     }
     return { correct: true, points: 1, feedback: "" };
   }

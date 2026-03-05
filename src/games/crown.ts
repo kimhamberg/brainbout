@@ -325,7 +325,7 @@ async function main(): Promise<void> {
 
   // Stage-based Elo tiers
   const stage = getStage("crown");
-  const eloByStage: Record<number, number> = { 1: 600, 2: 1200, 3: 1600 };
+  const eloByStage = [0, 600, 1200, 1600];
   engineElo = eloByStage[stage] ?? 1200;
   baseNodes = eloToNodes(engineElo);
 

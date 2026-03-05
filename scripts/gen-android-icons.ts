@@ -53,7 +53,9 @@ async function main() {
       .png()
       .toFile(join(dir, "ic_launcher_foreground.png"));
 
-    console.log(`  ${d.name}: ${d.legacy}px legacy, ${d.adaptive}px foreground`);
+    console.log(
+      `  ${d.name}: ${d.legacy}px legacy, ${d.adaptive}px foreground`,
+    );
   }
 
   // Adaptive icon XML
