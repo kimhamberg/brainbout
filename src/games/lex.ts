@@ -1,12 +1,7 @@
 import { initTheme, wireToggle } from "../shared/theme";
 import { createTimer } from "../shared/timer";
 import { recordSessionScore, todayString } from "../shared/progress";
-import {
-  getDueWords,
-  recordAnswer,
-  getMastery,
-  levenshtein,
-} from "./cipher-srs";
+import { getDueWords, recordAnswer, getMastery, levenshtein } from "./lex-srs";
 import { getStage, recordResult } from "../shared/stages";
 import * as sound from "../shared/sounds";
 
@@ -143,7 +138,7 @@ function pickDistractors(entry: DictEntry): string[] {
 }
 
 function getSeenWords(): Set<string> {
-  const prefix = `brainbout:cipher:${lang}:`;
+  const prefix = `brainbout:lex:${lang}:`;
   const seen = new Set<string>();
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
@@ -349,7 +344,7 @@ function wireClozeEvents(): void {
 function renderRound(): void {
   if (!currentEntry) return;
 
-  const stage = getStage("cipher");
+  const stage = getStage("lex");
   const wordMastery = getMastery(lang, currentEntry.word);
   const effectiveMastery = Math.min(wordMastery, maxMasteryForStage(stage));
 
@@ -478,9 +473,9 @@ function handleChoice(chosen: string): void {
 function showResult(): void {
   gameOver = true;
   const finalScore = Math.floor(score);
-  recordSessionScore("cipher", finalScore);
+  recordSessionScore("lex", finalScore);
   const accuracy = totalAttempts > 0 ? totalCorrect / totalAttempts : 0;
-  recordResult("cipher", accuracy);
+  recordResult("lex", accuracy);
 
   game.innerHTML = `
     <div class="result">
@@ -544,7 +539,7 @@ game.addEventListener("click", (e) => {
   } else if (target.id === "again-btn") {
     void startGame();
   } else if (target.id === "back-btn") {
-    window.location.href = "/index.html?completed=cipher";
+    window.location.href = "/index.html?completed=lex";
   }
 });
 

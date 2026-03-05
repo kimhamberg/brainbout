@@ -11,42 +11,42 @@ import {
   completeSession,
 } from "./shared/progress";
 import { getStage, readiness, advance, retreat } from "./shared/stages";
-import { getMasteredCount } from "./games/cipher-srs";
+import { getMasteredCount } from "./games/lex-srs";
 
 const GAME_LABELS: Record<string, string> = {
   crown: "Crown",
   flux: "Flux",
-  cipher: "Cipher",
+  lex: "Lex",
 };
 
 const GAME_URLS: Record<string, string> = {
   crown: "games/crown.html",
   flux: "games/flux.html",
-  cipher: "games/cipher.html",
+  lex: "games/lex.html",
 };
 
 const GAME_ICONS: Record<string, string> = {
   crown: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"/><path d="M5 21h14"/></svg>`,
   flux: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3.7 7.8 12 12l8.3-4.2M3.7 16.2 12 12l8.3 4.2"/></svg>`,
-  cipher: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 18v3c0 .6.4 1 1 1h4v-3h3v-3h2l1.4-1.4a6.5 6.5 0 1 0-4-4Z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/></svg>`,
+  lex: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>`,
 };
 
 const GAME_ACCENTS: Record<string, string> = {
   crown: "var(--ctp-blue)",
   flux: "var(--ctp-mauve)",
-  cipher: "var(--ctp-green)",
+  lex: "var(--ctp-green)",
 };
 
 const GAME_TAGLINES: Record<string, string> = {
   crown: "Outsmart Stockfish",
   flux: "Think fast, switch faster",
-  cipher: "Crack the Norwegian code",
+  lex: "Build your vocabulary",
 };
 
 const READINESS_THRESHOLDS: Record<string, number> = {
   crown: 0.6,
   flux: 0.8,
-  cipher: 0.8,
+  lex: 0.8,
 };
 
 function getGameStat(game: string): string | null {
@@ -63,7 +63,7 @@ function getGameStat(game: string): string | null {
     const best = getBest("flux");
     return best !== null ? `Best: ${String(best)} pts` : null;
   }
-  if (game === "cipher") {
+  if (game === "lex") {
     const mastered = getMasteredCount("no");
     return mastered > 0
       ? `${String(mastered)} word${mastered === 1 ? "" : "s"} mastered`
@@ -144,19 +144,20 @@ function render(): void {
     const tagline = GAME_TAGLINES[game];
     const stat = getGameStat(game);
 
-    // Line 1: icon + name + stage + readiness + controls
+    // Line 1: icon + name (left) + status area (right)
     let line1 = `<span class="game-icon">${GAME_ICONS[game]}</span>`;
     line1 += `<span class="game-name">${GAME_LABELS[game]}</span>`;
-    line1 += `<span class="game-stage">\u00b7 Stage ${String(stage)}</span>`;
-    line1 += `<span class="readiness-dot readiness-${ready}"></span>`;
+    let right = "";
     if (done) {
-      line1 += `<span class="game-check">\u2713</span>`;
+      right = `<span class="done-badge">\u2713</span>`;
     } else {
+      right = `<span class="stage-chip readiness-${ready}">Stage ${String(stage)}</span>`;
       if (ready === "green")
-        line1 += `<button class="advance-btn" data-game="${game}">Advance \u25b8</button>`;
+        right += `<button class="advance-btn" data-game="${game}">Advance \u25b8</button>`;
       if (stage > 1)
-        line1 += `<button class="retreat-btn" data-game="${game}">\u25be</button>`;
+        right += `<button class="retreat-btn" data-game="${game}">\u25be</button>`;
     }
+    line1 += `<div class="game-card-right">${right}</div>`;
 
     // Line 2: tagline
     const line2 = `<span class="game-tagline">${tagline}</span>`;

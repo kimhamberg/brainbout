@@ -20,22 +20,22 @@ beforeEach(() => {
 
 describe("recordSessionScore", () => {
   it("updates all-time best when higher", () => {
-    recordSessionScore("cipher", 5);
-    recordSessionScore("cipher", 8);
-    recordSessionScore("cipher", 3);
-    expect(getBest("cipher")).toBe(8);
+    recordSessionScore("lex", 5);
+    recordSessionScore("lex", 8);
+    recordSessionScore("lex", 3);
+    expect(getBest("lex")).toBe(8);
   });
 
   it("updates today-best when higher", () => {
-    recordSessionScore("cipher", 5);
-    recordSessionScore("cipher", 8);
-    recordSessionScore("cipher", 3);
-    expect(getTodayBest("cipher")).toBe(8);
+    recordSessionScore("lex", 5);
+    recordSessionScore("lex", 8);
+    recordSessionScore("lex", 3);
+    expect(getTodayBest("lex")).toBe(8);
   });
 
   it("returns null for unplayed games", () => {
-    expect(getBest("cipher")).toBeNull();
-    expect(getTodayBest("cipher")).toBeNull();
+    expect(getBest("lex")).toBeNull();
+    expect(getTodayBest("lex")).toBeNull();
   });
 });
 
@@ -108,6 +108,6 @@ describe("checkmate tracking", () => {
 
 describe("GAMES", () => {
   it("has three games", () => {
-    expect(GAMES).toEqual(["crown", "flux", "cipher"]);
+    expect(GAMES).toEqual(["crown", "flux", "lex"]);
   });
 });

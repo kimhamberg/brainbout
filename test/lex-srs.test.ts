@@ -9,7 +9,7 @@ import {
   getMastery,
   getMasteryStreak,
   getMasteredCount,
-} from "../src/games/cipher-srs";
+} from "../src/games/lex-srs";
 
 beforeEach(() => {
   localStorage.clear();

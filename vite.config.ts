@@ -9,7 +9,7 @@ export default defineConfig({
         main: resolve(__dirname, "index.html"),
         crown: resolve(__dirname, "games/crown.html"),
         flux: resolve(__dirname, "games/flux.html"),
-        cipher: resolve(__dirname, "games/cipher.html"),
+        lex: resolve(__dirname, "games/lex.html"),
       },
     },
   },

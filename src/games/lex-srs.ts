@@ -1,6 +1,6 @@
 export const BOX_INTERVALS = [0, 1, 3, 7, 14, 30];
 
-const PREFIX = "brainbout:cipher";
+const PREFIX = "brainbout:lex";
 const MAX_MASTERY = 2;
 const MASTERY_THRESHOLD = 3;
 

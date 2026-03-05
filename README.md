@@ -19,7 +19,7 @@ A daily brain workout. Train your brain, not your scroll thumb.
 
 - <img src="docs/icons/crown.svg" width="16" /> **Crown** — Chess960 rapid, 15+10 vs Stockfish
 - <img src="docs/icons/flux.svg" width="16" /> **Flux** — adaptive rule-switching with inhibition (60s)
-- <img src="docs/icons/key.svg" width="16" /> **Cipher** — Norwegian vocabulary with per-word mastery (120s)
+- <img src="docs/icons/book-open.svg" width="16" /> **Lex** — vocabulary with per-word mastery (120s)
 
 <p align="center"><img src="docs/screenshot.png" alt="Screenshot" width="280" /></p>
 
@@ -39,14 +39,14 @@ make dev
 
 ## Build
 
-| Target  | Command              | Output                       |
-| :------ | :------------------- | :--------------------------- |
-| Dev     | `make dev`           | `localhost:5173`             |
+| Target  | Command              | Output                        |
+| :------ | :------------------- | :---------------------------- |
+| Dev     | `make dev`           | `localhost:5173`              |
 | Desktop | `make build-server`  | `brainbout`                   |
 | Linux   | `make build-linux`   | `brainbout-linux-amd64`       |
 | Windows | `make build-windows` | `brainbout-windows-amd64.exe` |
-| Android | `make build-android` | `app-debug.apk`              |
-| Clean   | `make clean`         |                              |
+| Android | `make build-android` | `app-debug.apk`               |
+| Clean   | `make clean`         |                               |
 
 The desktop build embeds all web assets into a single binary — no runtime dependencies.
 
@@ -89,7 +89,7 @@ npm test
 
 - [ ] Every game feels vital and polished — tight animations, satisfying sounds, zero rough edges
 - [ ] Crown matches feel like playing a real human — natural move timing, personality, tension
-- [ ] Cipher actually trains vocabulary — spaced repetition that sticks, real progress over weeks
+- [ ] Lex actually trains vocabulary — spaced repetition that sticks, real progress over weeks
 
 ## Contributing
 
