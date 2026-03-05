@@ -82,33 +82,46 @@ async function loadDict(): Promise<void> {
   }
 }
 
-function pickDistractors(entry: DictEntry): string[] {
-  const picks: string[] = [];
-  const used = new Set([entry.word]);
+function commonLetters(a: string, b: string): number {
+  const freq = new Map<string, number>();
+  for (const ch of a.toLowerCase()) {
+    freq.set(ch, (freq.get(ch) ?? 0) + 1);
+  }
+  let shared = 0;
+  for (const ch of b.toLowerCase()) {
+    const count = freq.get(ch) ?? 0;
+    if (count > 0) {
+      shared++;
+      freq.set(ch, count - 1);
+    }
+  }
+  return shared;
+}
 
-  // Prefer same-POS words with similar length (harder: semantically plausible)
+function pickDistractors(entry: DictEntry): string[] {
+  // Same POS, similar length, sorted by most shared letters (hardest first)
   const posPool = wordsByPos.get(entry.pos) ?? allWords;
   const candidates = posPool.filter(
-    (w) => !used.has(w) && Math.abs(w.length - entry.word.length) <= 3,
+    (w) => w !== entry.word && Math.abs(w.length - entry.word.length) <= 3,
   );
-  shuffleArray(candidates);
 
-  for (const w of candidates) {
-    if (picks.length >= NUM_CHOICES - 1) break;
-    picks.push(w);
-    used.add(w);
-  }
+  candidates.sort((a, b) => commonLetters(b, entry.word) - commonLetters(a, entry.word));
+
+  // Pick randomly from top candidates for variety, but always confusing
+  const topN = Math.min(20, candidates.length);
+  const pool = candidates.slice(0, topN);
+  shuffleArray(pool);
+  const picks = pool.slice(0, NUM_CHOICES - 1);
 
   // Fallback: any word with similar length
   if (picks.length < NUM_CHOICES - 1) {
-    const fallback = allWords.filter(
-      (w) => !used.has(w) && Math.abs(w.length - entry.word.length) <= 3,
-    );
-    shuffleArray(fallback);
-    for (const w of fallback) {
+    const used = new Set([entry.word, ...picks]);
+    for (const w of allWords) {
       if (picks.length >= NUM_CHOICES - 1) break;
-      picks.push(w);
-      used.add(w);
+      if (!used.has(w) && Math.abs(w.length - entry.word.length) <= 3) {
+        picks.push(w);
+        used.add(w);
+      }
     }
   }
 
