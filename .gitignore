@@ -6,6 +6,7 @@ server/web/
 *.apk
 .claude/
 ref-sounds/
+.dict-cache/
 
 /chess960
 /chess960-linux-amd64

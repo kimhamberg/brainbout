@@ -13,7 +13,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "screenshot": "tsx scripts/screenshot.ts",
-    "readme": "tsx scripts/readme-stats.ts"
+    "readme": "tsx scripts/readme-stats.ts",
+    "download:dict": "tsx scripts/download-dictionaries.ts"
   },
   "keywords": [],
   "author": "",
