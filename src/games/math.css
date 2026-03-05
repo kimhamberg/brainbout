@@ -35,8 +35,8 @@
   box-shadow: var(--ctp-shadow);
 
   transition:
-    color 0.3s ease,
-    background-color 0.25s ease;
+    color var(--dur-250) ease,
+    background-color var(--dur-250) ease;
 }
 
 .problem {
@@ -69,10 +69,10 @@
   box-shadow: var(--ctp-shadow);
 
   transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease,
-    transform 0.1s ease,
-    background-color 0.25s ease;
+    border-color var(--dur-150) ease,
+    box-shadow var(--dur-150) ease,
+    transform var(--dur-100) ease,
+    background-color var(--dur-250) ease;
 
   &:hover {
     transform: translateY(-1px);
@@ -94,7 +94,7 @@
 .score-display {
   font-size: 1.125rem;
   color: var(--ctp-subtext0);
-  transition: color 0.25s ease;
+  transition: color var(--dur-250) ease;
 }
 
 .result {
@@ -108,19 +108,19 @@
     font-weight: 700;
     color: var(--ctp-green);
 
-    animation: fade-in-up 0.4s ease both;
+    animation: fade-in-up var(--dur-350) ease both;
   }
 
   & .result-label {
     color: var(--ctp-subtext0);
-    animation: fade-in-up 0.4s ease 0.1s both;
+    animation: fade-in-up var(--dur-350) ease var(--dur-100) both;
   }
 
   & .result-actions {
     display: flex;
     gap: 0.75rem;
     justify-content: center;
-    animation: fade-in-up 0.4s ease 0.2s both;
+    animation: fade-in-up var(--dur-350) ease var(--dur-200) both;
   }
 
   & button {
@@ -143,8 +143,8 @@
     box-shadow: var(--ctp-shadow);
 
     transition:
-      box-shadow 0.15s ease,
-      transform 0.1s ease;
+      box-shadow var(--dur-150) ease,
+      transform var(--dur-100) ease;
   }
 
   & button:hover {

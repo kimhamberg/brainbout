@@ -53,11 +53,11 @@
   background-clip: text;
   background-size: 200% 100%;
 
-  animation: gradient-flow 6s ease infinite;
+  animation: gradient-flow 6s ease infinite; /* ambient — outside duration scale */
 }
 
 .hub-icon {
-  animation: icon-breathe 4s ease-in-out infinite;
+  animation: icon-breathe 4s ease-in-out infinite; /* ambient — outside duration scale */
 }
 
 .hub-stats-bar {
@@ -78,7 +78,7 @@
   background: var(--ctp-surface0);
   box-shadow: var(--ctp-shadow);
 
-  transition: background-color 0.25s ease;
+  transition: background-color var(--dur-250) ease;
 }
 
 .streak-badge {
@@ -106,7 +106,7 @@
 
     & .game-icon,
     & .game-name {
-      transition: color 0.25s ease;
+      transition: color var(--dur-250) ease;
     }
   }
 }
@@ -146,11 +146,11 @@
   box-shadow: var(--ctp-shadow);
 
   transition:
-    background-size 0.3s ease,
-    box-shadow 0.25s ease,
-    opacity 0.25s ease,
-    transform 0.1s ease;
-  animation: card-enter 0.4s ease both;
+    background-size var(--dur-250) ease,
+    box-shadow var(--dur-250) ease,
+    opacity var(--dur-250) ease,
+    transform var(--dur-100) ease;
+  animation: card-enter var(--dur-350) ease both;
   animation-delay: calc(var(--i, 0) * 60ms);
 
   & .game-play {
@@ -172,8 +172,8 @@
     opacity: 0;
 
     transition:
-      transform 0.25s ease,
-      opacity 0.25s ease;
+      transform var(--dur-250) ease,
+      opacity var(--dur-250) ease;
   }
 
   & .game-icon {
@@ -181,21 +181,21 @@
     flex-shrink: 0;
     color: var(--accent, var(--ctp-subtext0));
     transition:
-      color 0.25s ease,
-      transform 0.25s ease;
+      color var(--dur-250) ease,
+      transform var(--dur-250) ease;
   }
 
   & .game-name {
     flex: 1;
     font-size: 1rem;
     transition:
-      color 0.25s ease,
-      transform 0.25s ease;
+      color var(--dur-250) ease,
+      transform var(--dur-250) ease;
   }
 
   & .game-check {
     color: var(--ctp-green);
-    transition: color 0.25s ease;
+    transition: color var(--dur-250) ease;
   }
 
   &.done {
@@ -248,9 +248,9 @@
   box-shadow: var(--ctp-shadow);
 
   transition:
-    background-color 0.15s ease,
-    box-shadow 0.15s ease,
-    transform 0.1s ease;
+    background-color var(--dur-150) ease,
+    box-shadow var(--dur-150) ease,
+    transform var(--dur-100) ease;
 
   &:hover {
     transform: translateY(-1px);
@@ -306,7 +306,7 @@
     color: var(--ctp-subtext0);
     list-style: none;
 
-    transition: color 0.15s ease;
+    transition: color var(--dur-150) ease;
   }
 }
 
@@ -327,7 +327,7 @@
   border-right: 2px solid currentcolor;
   border-bottom: 2px solid currentcolor;
 
-  transition: transform 0.2s ease;
+  transition: transform var(--dur-200) ease;
 }
 
 .stats-panel[open] summary::before {
@@ -382,7 +382,7 @@
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: var(--ctp-text);
-  transition: color 0.25s ease;
+  transition: color var(--dur-250) ease;
 }
 
 .stat-total {
@@ -393,6 +393,6 @@
   color: var(--ctp-subtext0);
 
   transition:
-    color 0.25s ease,
-    border-color 0.25s ease;
+    color var(--dur-250) ease,
+    border-color var(--dur-250) ease;
 }

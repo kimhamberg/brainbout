@@ -1,6 +1,21 @@
 @custom-media --viewport-sm (width >= 480px);
 @custom-media --motion-reduce (prefers-reduced-motion: reduce);
 
+/* ── motion tokens (theme-independent) ──────────────────────────── */
+
+:root {
+  /* duration scale */
+  --dur-100: 100ms;
+  --dur-150: 150ms;
+  --dur-200: 200ms;
+  --dur-250: 250ms;
+  --dur-350: 350ms;
+
+  /* easing curves */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+}
+
 /* Catppuccin Frappé (dark) — https://catppuccin.com/palette (MIT) */
 :root,
 [data-theme="frappe"] {
@@ -59,8 +74,8 @@ body {
     var(--ctp-base);
 
   transition:
-    background-color 0.25s ease,
-    color 0.25s ease;
+    background-color var(--dur-250) ease,
+    color var(--dur-250) ease;
 }
 
 .app {
@@ -109,10 +124,10 @@ header {
   background: none;
 
   transition:
-    border-color 0.15s ease,
-    color 0.15s ease,
-    background-color 0.15s ease,
-    transform 0.2s ease;
+    border-color var(--dur-150) ease,
+    color var(--dur-150) ease,
+    background-color var(--dur-150) ease,
+    transform var(--dur-200) ease;
 
   &:hover {
     border-color: var(--ctp-blue);
@@ -188,7 +203,7 @@ header {
 }
 
 .app.exiting {
-  animation: content-exit 280ms cubic-bezier(0.4, 0, 1, 1) forwards;
+  animation: content-exit var(--dur-250) var(--ease-exit) forwards;
 }
 
 .page-transition {
@@ -201,7 +216,7 @@ header {
 
   background: var(--transition-color, var(--ctp-blue));
 
-  animation: sweep-in 320ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: sweep-in var(--dur-350) var(--ease-standard) both;
 }
 
 .page-enter-overlay {
@@ -214,5 +229,5 @@ header {
 
   background: var(--game-accent, var(--ctp-blue));
 
-  animation: sweep-out 380ms cubic-bezier(0.4, 0, 0.2, 1) 40ms both;
+  animation: sweep-out var(--dur-350) var(--ease-standard) both;
 }
