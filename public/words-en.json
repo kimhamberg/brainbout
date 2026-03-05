@@ -1,302 +1,252 @@
 [
   {
-    "word": "ephemeral",
-    "definition": "Lasting for a very short time",
-    "cloze": "The beauty of cherry blossoms is ___.",
-    "synonyms": ["fleeting", "transient"]
-  },
-  {
-    "word": "ubiquitous",
-    "definition": "Present, appearing, or found everywhere",
-    "cloze": "Smartphones have become ___ in modern life.",
-    "synonyms": ["omnipresent", "pervasive"]
-  },
-  {
-    "word": "perfunctory",
-    "definition": "Carried out with minimal effort or reflection",
-    "cloze": "He gave a ___ nod before walking away.",
-    "synonyms": ["cursory", "superficial"]
-  },
-  {
-    "word": "sycophant",
-    "definition": "A person who flatters someone important to gain advantage",
-    "cloze": "The king was surrounded by ___ courtiers.",
-    "synonyms": ["flatterer", "toady"]
-  },
-  {
-    "word": "obstinate",
-    "definition": "Stubbornly refusing to change one's opinion or action",
-    "cloze": "The ___ negotiator refused every compromise.",
-    "synonyms": ["stubborn", "intransigent"]
-  },
-  {
-    "word": "erudite",
-    "definition": "Having or showing great knowledge or learning",
-    "cloze": "The professor gave an ___ lecture on medieval history.",
-    "synonyms": ["scholarly", "learned"]
-  },
-  {
-    "word": "pernicious",
-    "definition": "Having a harmful effect, especially in a gradual or subtle way",
-    "cloze": "The ___ influence of propaganda eroded public trust.",
-    "synonyms": ["harmful", "destructive"]
-  },
-  {
-    "word": "magnanimous",
-    "definition": "Very generous or forgiving, especially toward a rival",
-    "cloze": "The winner was ___ in victory, praising her opponent.",
-    "synonyms": ["generous", "benevolent"]
-  },
-  {
-    "word": "taciturn",
-    "definition": "Reserved or uncommunicative in speech",
-    "cloze": "The ___ farmer rarely spoke to strangers.",
-    "synonyms": ["reticent", "laconic"]
-  },
-  {
-    "word": "languid",
-    "definition": "Displaying or having a disinclination for physical exertion",
-    "cloze": "She stretched out in ___ repose under the willow tree.",
-    "synonyms": ["listless", "lethargic"]
-  },
-  {
-    "word": "recalcitrant",
-    "definition": "Having an obstinately uncooperative attitude",
-    "cloze": "The ___ student refused to follow classroom rules.",
-    "synonyms": ["defiant", "unruly"]
-  },
-  {
-    "word": "perspicacious",
-    "definition": "Having a ready insight into and understanding of things",
-    "cloze": "A ___ reader will notice the foreshadowing in chapter one.",
-    "synonyms": ["astute", "shrewd"]
-  },
-  {
-    "word": "sanguine",
-    "definition": "Optimistic or positive, especially in a difficult situation",
-    "cloze": "Despite the setbacks, she remained ___ about the outcome.",
-    "synonyms": ["optimistic", "hopeful"]
-  },
-  {
-    "word": "vitriolic",
-    "definition": "Filled with bitter criticism or malice",
-    "cloze": "The editorial was ___ in its attack on the policy.",
-    "synonyms": ["caustic", "scathing"]
-  },
-  {
-    "word": "indefatigable",
-    "definition": "Persisting tirelessly without showing signs of fatigue",
-    "cloze": "The ___ campaigner knocked on every door in the district.",
-    "synonyms": ["tireless", "unflagging"]
-  },
-  {
-    "word": "obsequious",
-    "definition": "Obedient or attentive to an excessive degree",
-    "cloze": "The ___ waiter hovered over every table.",
-    "synonyms": ["servile", "fawning"]
-  },
-  {
-    "word": "pragmatic",
-    "definition": "Dealing with things sensibly and realistically",
-    "cloze": "She took a ___ approach to solving the budget crisis.",
-    "synonyms": ["practical", "realistic"]
-  },
-  {
-    "word": "equivocal",
-    "definition": "Open to more than one interpretation; ambiguous",
-    "cloze": "His ___ response left everyone uncertain about his intentions.",
-    "synonyms": ["ambiguous", "noncommittal"]
+    "word": "abrogate",
+    "definition": "To annul by an authoritative act; to abolish by the authority of the maker or her or his successor; to repeal; — applied to the repeal of laws, decrees, ordinances, the abolition of customs, etc.",
+    "example": ""
   },
   {
     "word": "acrimonious",
-    "definition": "Angry and bitter in tone or manner",
-    "cloze": "The divorce proceedings became increasingly ___.",
-    "synonyms": ["bitter", "rancorous"]
-  },
-  {
-    "word": "intransigent",
-    "definition": "Unwilling or refusing to change one's views or agree",
-    "cloze": "The ___ faction blocked every proposed amendment.",
-    "synonyms": ["uncompromising", "inflexible"]
-  },
-  {
-    "word": "pellucid",
-    "definition": "Translucently clear in style or meaning",
-    "cloze": "Her ___ prose made even complex ideas accessible.",
-    "synonyms": ["lucid", "crystalline"]
-  },
-  {
-    "word": "inscrutable",
-    "definition": "Impossible to understand or interpret",
-    "cloze": "His ___ expression gave nothing away during the poker game.",
-    "synonyms": ["enigmatic", "impenetrable"]
-  },
-  {
-    "word": "profligate",
-    "definition": "Recklessly extravagant or wasteful in the use of resources",
-    "cloze": "The ___ spending of the regime bankrupted the treasury.",
-    "synonyms": ["extravagant", "wasteful"]
-  },
-  {
-    "word": "didactic",
-    "definition": "Intended to teach, particularly in having moral instruction",
-    "cloze": "The novel was too ___ to be enjoyable as fiction.",
-    "synonyms": ["instructive", "moralistic"]
-  },
-  {
-    "word": "ineffable",
-    "definition": "Too great or extreme to be expressed in words",
-    "cloze": "She felt an ___ joy at the birth of her child.",
-    "synonyms": ["indescribable", "inexpressible"]
-  },
-  {
-    "word": "querulous",
-    "definition": "Complaining in a petulant or whining manner",
-    "cloze": "The ___ patient demanded attention every few minutes.",
-    "synonyms": ["petulant", "peevish"]
-  },
-  {
-    "word": "mendacious",
-    "definition": "Not telling the truth; lying",
-    "cloze": "The witness gave a ___ account of the incident.",
-    "synonyms": ["dishonest", "deceitful"]
-  },
-  {
-    "word": "munificent",
-    "definition": "Larger or more generous than is usual or necessary",
-    "cloze": "The ___ donation funded the entire scholarship program.",
-    "synonyms": ["generous", "lavish"]
-  },
-  {
-    "word": "truculent",
-    "definition": "Eager or quick to argue or fight; aggressively defiant",
-    "cloze": "The ___ debater challenged every point with hostility.",
-    "synonyms": ["belligerent", "combative"]
-  },
-  {
-    "word": "laconic",
-    "definition": "Using very few words to express something",
-    "cloze": "His ___ reply of 'no' ended the discussion.",
-    "synonyms": ["terse", "succinct"]
-  },
-  {
-    "word": "propitious",
-    "definition": "Indicating a good chance of success; favorable",
-    "cloze": "The clear skies were ___ for the outdoor wedding.",
-    "synonyms": ["favorable", "auspicious"]
-  },
-  {
-    "word": "vociferous",
-    "definition": "Vehement or clamorous in expressing opinions",
-    "cloze": "The ___ crowd demanded the resignation of the official.",
-    "synonyms": ["loud", "strident"]
-  },
-  {
-    "word": "parsimonious",
-    "definition": "Unwilling to spend money or use resources; stingy",
-    "cloze": "The ___ landlord refused to fix the leaking roof.",
-    "synonyms": ["miserly", "frugal"]
-  },
-  {
-    "word": "capricious",
-    "definition": "Given to sudden and unaccountable changes of mood or behavior",
-    "cloze": "The ___ weather made it impossible to plan ahead.",
-    "synonyms": ["fickle", "mercurial"]
-  },
-  {
-    "word": "garrulous",
-    "definition": "Excessively talkative, especially on trivial matters",
-    "cloze": "The ___ neighbor talked for an hour about nothing.",
-    "synonyms": ["loquacious", "verbose"]
-  },
-  {
-    "word": "abrogate",
-    "definition": "To repeal or do away with a law, right, or formal agreement",
-    "cloze": "The new government moved to ___ the outdated treaty.",
-    "synonyms": ["revoke", "annul"]
-  },
-  {
-    "word": "excoriate",
-    "definition": "To criticize someone or something severely",
-    "cloze": "The review ___ the film for its shallow characters.",
-    "synonyms": ["denounce", "lambaste"]
-  },
-  {
-    "word": "enervate",
-    "definition": "To cause someone to feel drained of energy or vitality",
-    "cloze": "The oppressive heat seemed to ___ everyone in the room.",
-    "synonyms": ["weaken", "exhaust"]
+    "definition": "Harsh and sharp, or bitter and not pleasant to the taste; acrid, pungent.",
+    "example": ""
   },
   {
     "word": "ameliorate",
-    "definition": "To make something bad or unsatisfactory better",
-    "cloze": "New policies were introduced to ___ working conditions.",
-    "synonyms": ["improve", "mitigate"]
+    "definition": "To make better, or improve, something perceived to be in a negative condition.",
+    "example": "They offered some compromises in an effort to ameliorate the situation."
   },
   {
-    "word": "limpid",
-    "definition": "Free of anything that darkens; completely clear",
-    "cloze": "The ___ waters of the mountain lake revealed every stone.",
-    "synonyms": ["clear", "transparent"]
-  },
-  {
-    "word": "implacable",
-    "definition": "Unable to be appeased or placated",
-    "cloze": "She was an ___ opponent of corruption in government.",
-    "synonyms": ["relentless", "unappeasable"]
-  },
-  {
-    "word": "contrite",
-    "definition": "Feeling or expressing remorse for wrongdoing",
-    "cloze": "He offered a ___ apology for his hurtful remarks.",
-    "synonyms": ["remorseful", "penitent"]
-  },
-  {
-    "word": "diffident",
-    "definition": "Modest or shy because of a lack of self-confidence",
-    "cloze": "The ___ artist rarely showed her paintings to anyone.",
-    "synonyms": ["timid", "bashful"]
-  },
-  {
-    "word": "promulgate",
-    "definition": "To promote or make widely known an idea or cause",
-    "cloze": "The organization worked to ___ awareness of climate change.",
-    "synonyms": ["proclaim", "disseminate"]
-  },
-  {
-    "word": "quixotic",
-    "definition": "Exceedingly idealistic; unrealistic and impractical",
-    "cloze": "His ___ plan to end world hunger in a year impressed no one.",
-    "synonyms": ["idealistic", "impractical"]
-  },
-  {
-    "word": "indigent",
-    "definition": "Poor; needy; lacking basic necessities",
-    "cloze": "The shelter provided meals for ___ families in the area.",
-    "synonyms": ["impoverished", "destitute"]
-  },
-  {
-    "word": "lugubrious",
-    "definition": "Looking or sounding sad and dismal",
-    "cloze": "The ___ melody filled the empty cathedral.",
-    "synonyms": ["mournful", "doleful"]
-  },
-  {
-    "word": "pugnacious",
-    "definition": "Eager or quick to quarrel or fight",
-    "cloze": "The ___ terrier barked at every passerby.",
-    "synonyms": ["combative", "aggressive"]
+    "word": "capricious",
+    "definition": "Impulsive and unpredictable; determined by chance, impulse, or whim",
+    "example": "I almost died in a capricious winter storm."
   },
   {
     "word": "cogent",
-    "definition": "Clear, logical, and convincing",
-    "cloze": "She presented a ___ argument that swayed the jury.",
-    "synonyms": ["compelling", "persuasive"]
+    "definition": "Reasonable and convincing; based on evidence.",
+    "example": "The prosecution presented a cogent argument, convincing the jury of the defendant's guilt."
+  },
+  {
+    "word": "contrite",
+    "definition": "A contrite person; a penitent.",
+    "example": ""
+  },
+  {
+    "word": "didactic",
+    "definition": "A treatise on teaching or education.",
+    "example": "didactic poetry"
+  },
+  {
+    "word": "diffident",
+    "definition": "Lacking confidence in others; distrustful.",
+    "example": ""
+  },
+  {
+    "word": "enervate",
+    "definition": "To reduce strength or energy; debilitate.",
+    "example": "After being laid off three times in a row, she felt too enervated to look for another job."
+  },
+  {
+    "word": "ephemeral",
+    "definition": "Something which lasts for a short period of time.",
+    "example": ""
+  },
+  {
+    "word": "equivocal",
+    "definition": "A word or expression capable of different meanings; an ambiguous term.",
+    "example": "an equivocal sentence"
+  },
+  {
+    "word": "erudite",
+    "definition": "A learned or scholarly person",
+    "example": ""
+  },
+  {
+    "word": "excoriate",
+    "definition": "To wear off the skin of; to chafe or flay.",
+    "example": ""
+  },
+  {
+    "word": "garrulous",
+    "definition": "Excessively or tiresomely talkative.",
+    "example": ""
+  },
+  {
+    "word": "implacable",
+    "definition": "Not able to be placated or appeased.",
+    "example": ""
+  },
+  {
+    "word": "indefatigable",
+    "definition": "Extremely persistent and untiring.",
+    "example": ""
+  },
+  {
+    "word": "indigent",
+    "definition": "A person in need, or in poverty.",
+    "example": ""
+  },
+  {
+    "word": "ineffable",
+    "definition": "Beyond expression in words; unspeakable.",
+    "example": ""
+  },
+  {
+    "word": "inscrutable",
+    "definition": "One who or that which is inscrutable; a person, etc. that cannot be comprehended.",
+    "example": "His inscrutable theories would years later become the foundation of a whole new science."
+  },
+  {
+    "word": "intransigent",
+    "definition": "A person who is intransigent.",
+    "example": "Don't waste your time trying to change his mind: he's completely intransigent."
+  },
+  {
+    "word": "laconic",
+    "definition": "Using as few words as possible; pithy and concise.",
+    "example": ""
+  },
+  {
+    "word": "languid",
+    "definition": "Lacking enthusiasm, energy, or strength; drooping or flagging from weakness, fatigue, or lack of energy",
+    "example": "languid breathing"
+  },
+  {
+    "word": "limpid",
+    "definition": "Clear, transparent or bright.",
+    "example": "The limpid glass doors reveal the living room clearly from the dining room."
+  },
+  {
+    "word": "lugubrious",
+    "definition": "Gloomy, mournful or dismal, especially to an exaggerated degree.",
+    "example": "His client’s lugubrious expression tipped off the detective that something lurked beneath her optimistic words."
+  },
+  {
+    "word": "magnanimous",
+    "definition": "Noble and generous in spirit.",
+    "example": "He thinks himself ardent, impulsive, passionate, magnanimous — capable of boundless enthusiasm for an idea or a sentiment."
+  },
+  {
+    "word": "mendacious",
+    "definition": "(of a person) Lying, untruthful or dishonest.",
+    "example": ""
+  },
+  {
+    "word": "munificent",
+    "definition": "(of a person or group) Very liberal in giving or bestowing.",
+    "example": ""
+  },
+  {
+    "word": "obsequious",
+    "definition": "Obedient; compliant with someone else's orders or wishes.",
+    "example": ""
+  },
+  {
+    "word": "obstinate",
+    "definition": "Stubbornly adhering to an opinion, purpose, or course, usually with implied unreasonableness; persistent.",
+    "example": ""
+  },
+  {
+    "word": "parsimonious",
+    "definition": "Exhibiting parsimony; sparing in the expenditure of money; frugal to excess.",
+    "example": ""
+  },
+  {
+    "word": "pellucid",
+    "definition": "Allowing the passage of light; transparent.",
+    "example": ""
   },
   {
     "word": "penurious",
-    "definition": "Extremely poor or unwilling to spend money",
-    "cloze": "The ___ miser counted every coin before spending it.",
-    "synonyms": ["impecunious", "tight-fisted"]
+    "definition": "Miserly; excessively cheap.",
+    "example": "The old man died a penurious wretch; eighty-thousand dollars in the mattress and as many holes in the roof."
+  },
+  {
+    "word": "perfunctory",
+    "definition": "Done only to fulfil a duty, or in a careless or indifferent manner; performed mechanically and as a thing of rote.",
+    "example": "He did a perfunctory job cleaning his dad's car, finishing quickly but leaving a few spots still dirty."
+  },
+  {
+    "word": "pernicious",
+    "definition": "Causing much harm in a subtle way.",
+    "example": ""
+  },
+  {
+    "word": "perspicacious",
+    "definition": "Of acute discernment; having keen insight; mentally perceptive.",
+    "example": ""
+  },
+  {
+    "word": "pragmatic",
+    "definition": "A man of business.",
+    "example": "The sturdy furniture in the student lounge was pragmatic, but unattractive."
+  },
+  {
+    "word": "profligate",
+    "definition": "An abandoned person; one openly and shamelessly vicious; a dissolute person.",
+    "example": ""
+  },
+  {
+    "word": "promulgate",
+    "definition": "To make known or public.",
+    "example": ""
+  },
+  {
+    "word": "propitious",
+    "definition": "Favorable; benevolent.",
+    "example": "propitious weather"
+  },
+  {
+    "word": "pugnacious",
+    "definition": "Naturally aggressive or hostile; combative; belligerent; bellicose.",
+    "example": ""
+  },
+  {
+    "word": "querulous",
+    "definition": "Often complaining; suggesting a complaint in expression; fretful, whining.",
+    "example": ""
+  },
+  {
+    "word": "quixotic",
+    "definition": "Possessing or acting with the desire to do noble and romantic deeds, without thought of realism and practicality; exceedingly idealistic.",
+    "example": ""
+  },
+  {
+    "word": "recalcitrant",
+    "definition": "A person who is recalcitrant.",
+    "example": ""
+  },
+  {
+    "word": "sanguine",
+    "definition": "Blood colour; red.",
+    "example": "a sanguine bodily temperament"
+  },
+  {
+    "word": "sycophant",
+    "definition": "One who uses obsequious compliments to gain self-serving favor or advantage from another; a servile flatterer.",
+    "example": ""
+  },
+  {
+    "word": "taciturn",
+    "definition": "Silent; temperamentally untalkative; disinclined to speak.",
+    "example": "The two sisters could hardly have been more different, one so boisterous and expressive, the other so taciturn and calm."
+  },
+  {
+    "word": "truculent",
+    "definition": "Cruel or savage.",
+    "example": "The truculent soldiers gave us a steely-eyed stare."
+  },
+  {
+    "word": "ubiquitous",
+    "definition": "Being everywhere at once: omnipresent.",
+    "example": "To Hindus, Jews, Christians, and Muslims, God is ubiquitous."
+  },
+  {
+    "word": "vitriolic",
+    "definition": "Of or pertaining to vitriol; derived from or resembling vitriol.",
+    "example": "a vitriolic taste"
+  },
+  {
+    "word": "vociferous",
+    "definition": "Making or characterized by a noisy outcry; clamorous.",
+    "example": ""
   }
 ]
