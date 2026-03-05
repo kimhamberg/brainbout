@@ -4,18 +4,18 @@ import { recordSessionScore, todayString } from "../shared/progress";
 import { getDueWords, recordAnswer, levenshtein } from "./vocab-srs";
 import * as sound from "../shared/sounds";
 
-interface WordEntry {
+interface DictEntry {
   word: string;
+  pos: string;
   definition: string;
-  cloze: string;
-  synonyms: string[];
+  example: string;
 }
 
-type CueType = "definition" | "cloze" | "synonym";
-
 const DURATION = 120;
-const WRONG_PAUSE_MS = 2000;
-const CLOSE_THRESHOLD = 2;
+const WRONG_PAUSE_MS = 1500;
+const NUM_CHOICES = 4;
+const NEW_WORD_RATIO = 0.3;
+const SESSION_SIZE = 30;
 
 function getEl(id: string): HTMLElement {
   const el = document.getElementById(id);
@@ -24,11 +24,12 @@ function getEl(id: string): HTMLElement {
 }
 const game = getEl("game");
 
-let lang = localStorage.getItem("brainbout:vocab-lang") ?? "no";
-let words: WordEntry[] = [];
-let dueQueue: WordEntry[] = [];
-let currentWord: WordEntry | null = null;
-let currentCue: CueType = "definition";
+const lang = "no";
+let dict: DictEntry[] = [];
+let allWords: string[] = [];
+let sessionQueue: DictEntry[] = [];
+let currentEntry: DictEntry | null = null;
+let choices: string[] = [];
 let score = 0;
 let streak = 0;
 let currentRemaining = DURATION;
@@ -44,29 +45,11 @@ function shuffleArray<T>(arr: T[]): T[] {
   return arr;
 }
 
-function pickCue(entry: WordEntry): CueType {
-  const types: CueType[] = ["definition", "cloze"];
-  if (entry.synonyms.length > 0) types.push("synonym");
-  return types[Math.floor(Math.random() * types.length)];
-}
-
-function getCueText(entry: WordEntry, cue: CueType): string {
-  if (cue === "definition") return entry.definition;
-  if (cue === "cloze") return entry.cloze;
-  return `Synonym: ${entry.synonyms[Math.floor(Math.random() * entry.synonyms.length)]}`;
-}
-
-function getCueLabel(cue: CueType): string {
-  if (cue === "definition") return "Definition";
-  if (cue === "cloze") return "Fill in the blank";
-  return "Synonym";
-}
-
 function speedBonus(elapsedMs: number): number {
   const sec = elapsedMs / 1000;
-  if (sec < 5) return 5;
-  if (sec < 10) return 3;
-  if (sec < 15) return 1;
+  if (sec < 3) return 5;
+  if (sec < 6) return 3;
+  if (sec < 10) return 1;
   return 0;
 }
 
@@ -76,104 +59,174 @@ function streakMultiplier(): number {
   return 1;
 }
 
-async function loadWords(): Promise<void> {
+async function loadDict(): Promise<void> {
   const base = import.meta.env.BASE_URL;
-  const url = `${base}words-${lang}.json`;
-  const resp = await fetch(url);
-  words = (await resp.json()) as WordEntry[];
+  const resp = await fetch(`${base}dict-${lang}.json`);
+  dict = (await resp.json()) as DictEntry[];
+  allWords = dict.map((d) => d.word);
 }
 
-function buildQueue(): void {
+function pickDistractors(correctWord: string): string[] {
+  const correctLen = correctWord.length;
+  const correctLower = correctWord.toLowerCase();
+  const scored: Array<{ word: string; dist: number }> = [];
+
+  // Sample a random subset to avoid scanning 22K words every round
+  const sampleSize = Math.min(2000, allWords.length);
+  const startIdx = Math.floor(Math.random() * Math.max(1, allWords.length - sampleSize));
+  const sample = allWords.slice(startIdx, startIdx + sampleSize);
+
+  for (const w of sample) {
+    if (w === correctWord) continue;
+    if (Math.abs(w.length - correctLen) > 3) continue;
+    const dist = levenshtein(w.toLowerCase(), correctLower);
+    if (dist > 0 && dist <= 5) {
+      scored.push({ word: w, dist });
+    }
+  }
+
+  scored.sort((a, b) => a.dist - b.dist);
+  const picks = scored.slice(0, NUM_CHOICES - 1).map((s) => s.word);
+
+  // Fallback: similar length words
+  while (picks.length < NUM_CHOICES - 1) {
+    const w = allWords[Math.floor(Math.random() * allWords.length)];
+    if (w !== correctWord && !picks.includes(w)) {
+      picks.push(w);
+    }
+  }
+
+  return picks;
+}
+
+function getSeenWords(): Set<string> {
+  const prefix = `brainbout:vocab:${lang}:`;
+  const seen = new Set<string>();
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key?.startsWith(prefix)) {
+      seen.add(key.slice(prefix.length));
+    }
+  }
+  return seen;
+}
+
+function buildSessionQueue(): void {
   const today = todayString();
-  const allWordStrs = words.map((w) => w.word);
-  const dueStrs = getDueWords(lang, allWordStrs, today);
+  const seen = getSeenWords();
+  const dueStrs = getDueWords(lang, allWords, today);
   const dueSet = new Set(dueStrs);
-  dueQueue = shuffleArray(words.filter((w) => dueSet.has(w.word)));
-  if (dueQueue.length === 0) {
-    dueQueue = shuffleArray([...words]);
+
+  const review = shuffleArray(
+    dict.filter((d) => seen.has(d.word) && dueSet.has(d.word)),
+  );
+  const fresh = shuffleArray(
+    dict.filter((d) => !seen.has(d.word)),
+  );
+
+  const reviewCount = Math.min(
+    Math.round(SESSION_SIZE * (1 - NEW_WORD_RATIO)),
+    review.length,
+  );
+  const newCount = Math.min(SESSION_SIZE - reviewCount, fresh.length);
+
+  sessionQueue = shuffleArray([
+    ...review.slice(0, reviewCount),
+    ...fresh.slice(0, newCount),
+  ]);
+
+  if (sessionQueue.length < SESSION_SIZE) {
+    const used = new Set(sessionQueue.map((e) => e.word));
+    const filler = shuffleArray(dict.filter((d) => !used.has(d.word)));
+    sessionQueue.push(...filler.slice(0, SESSION_SIZE - sessionQueue.length));
   }
 }
 
-function handleSubmit(answer: string): void {
-  if (inputLocked || !currentWord) return;
+function handleChoice(chosen: string): void {
+  if (inputLocked || !currentEntry) return;
   inputLocked = true;
 
-  const trimmed = answer.trim().toLowerCase();
-  const target = currentWord.word.toLowerCase();
+  const correct = chosen === currentEntry.word;
   const elapsed = Date.now() - roundStart;
-  const input = document.getElementById("vocab-input") as HTMLInputElement;
-  const feedback = document.getElementById("feedback");
   const today = todayString();
 
-  if (trimmed === target) {
+  const buttons = game.querySelectorAll<HTMLButtonElement>(".choice-btn");
+  for (const btn of buttons) {
+    btn.disabled = true;
+    if (btn.dataset.word === currentEntry.word) {
+      btn.classList.add("correct");
+    } else if (btn.dataset.word === chosen && !correct) {
+      btn.classList.add("wrong");
+    }
+  }
+
+  const feedback = document.getElementById("feedback");
+
+  if (correct) {
     const bonus = speedBonus(elapsed);
     const mult = streakMultiplier();
     const points = (10 + bonus) * mult;
     score += points;
     streak++;
-    recordAnswer(lang, currentWord.word, true, today);
+    recordAnswer(lang, currentEntry.word, true, today);
     sound.playCorrect();
-    input.classList.add("correct");
     if (feedback) {
       feedback.classList.add("correct");
       feedback.textContent = `+${String(Math.floor(points))}`;
     }
-    setTimeout(nextRound, 500); // eslint-disable-line @typescript-eslint/no-use-before-define -- mutual recursion via setTimeout
-  } else if (levenshtein(trimmed, target) <= CLOSE_THRESHOLD) {
-    const bonus = speedBonus(elapsed);
-    const mult = streakMultiplier();
-    const points = (5 + bonus) * mult;
-    score += points;
-    sound.playCorrect();
-    input.classList.add("close");
-    input.value = "";
-    input.placeholder = `Type: ${currentWord.word}`;
-    if (feedback) {
-      feedback.classList.add("close");
-      feedback.textContent = `Close! +${String(Math.floor(points))} — retype correctly`;
-    }
-    inputLocked = false;
+    setTimeout(nextRound, 600); // eslint-disable-line @typescript-eslint/no-use-before-define -- mutual recursion
   } else {
     streak = 0;
-    recordAnswer(lang, currentWord.word, false, today);
+    recordAnswer(lang, currentEntry.word, false, today);
     sound.playWrong();
-    input.classList.add("wrong");
-    input.disabled = true;
     if (feedback) {
       feedback.classList.add("wrong");
-      feedback.textContent = `Answer: ${currentWord.word}`;
+      feedback.textContent = `Answer: ${currentEntry.word}`;
     }
-    setTimeout(nextRound, WRONG_PAUSE_MS); // eslint-disable-line @typescript-eslint/no-use-before-define -- mutual recursion via setTimeout
+    setTimeout(nextRound, WRONG_PAUSE_MS); // eslint-disable-line @typescript-eslint/no-use-before-define -- mutual recursion
   }
 }
 
 function renderRound(): void {
-  if (!currentWord) return;
+  if (!currentEntry) return;
+
+  const exHtml = currentEntry.example
+    ? `<div class="cue-example">&ldquo;${currentEntry.example}&rdquo;</div>`
+    : "";
+
+  const buttonsHtml = choices
+    .map(
+      (word) =>
+        `<button class="choice-btn" data-word="${word}">${word}</button>`,
+    )
+    .join("");
+
   game.innerHTML = `
     <div class="timer">${String(currentRemaining)}s</div>
-    <div class="cue-type">${getCueLabel(currentCue)}</div>
-    <div class="cue-text">${getCueText(currentWord, currentCue)}</div>
-    <input class="vocab-input" id="vocab-input" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" />
+    <div class="cue-type">Definition</div>
+    <div class="cue-text">${currentEntry.definition}</div>
+    ${exHtml}
+    <div class="choices">${buttonsHtml}</div>
     <div class="feedback" id="feedback"></div>
     <div class="score-display">Score: ${String(Math.floor(score))}</div>
-    <div class="streak-display">${streak >= 3 ? `Streak: ${String(streak)} (×${String(streakMultiplier())})` : ""}</div>
+    <div class="streak-display">${streak >= 3 ? `Streak: ${String(streak)} (\u00d7${String(streakMultiplier())})` : ""}</div>
   `;
 
-  const input = document.getElementById("vocab-input") as HTMLInputElement;
-  input.focus();
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      handleSubmit(input.value);
-    }
-  });
+  const buttons = game.querySelectorAll<HTMLButtonElement>(".choice-btn");
+  for (const btn of buttons) {
+    btn.addEventListener("click", () => {
+      handleChoice(btn.dataset.word ?? "");
+    });
+  }
 }
 
 function nextRound(): void {
-  if (dueQueue.length === 0) {
-    buildQueue();
+  if (sessionQueue.length === 0) {
+    buildSessionQueue();
   }
-  currentWord = dueQueue.shift() ?? words[0];
-  currentCue = pickCue(currentWord);
+  currentEntry = sessionQueue.shift() ?? dict[0];
+  const distractors = pickDistractors(currentEntry.word);
+  choices = shuffleArray([currentEntry.word, ...distractors]);
   roundStart = Date.now();
   inputLocked = false;
   renderRound();
@@ -198,11 +251,6 @@ function showResult(): void {
   });
 }
 
-function updateLangButton(): void {
-  const btn = document.getElementById("lang-btn");
-  if (btn) btn.textContent = lang.toUpperCase();
-}
-
 async function startGame(): Promise<void> {
   score = 0;
   streak = 0;
@@ -211,8 +259,8 @@ async function startGame(): Promise<void> {
 
   if (timerRef) timerRef.stop();
 
-  await loadWords();
-  buildQueue();
+  await loadDict();
+  buildSessionQueue();
 
   timerRef = createTimer({
     seconds: DURATION,
@@ -230,14 +278,6 @@ async function startGame(): Promise<void> {
   timerRef.start();
 }
 
-document.getElementById("lang-btn")?.addEventListener("click", () => {
-  lang = lang === "no" ? "en" : "no";
-  localStorage.setItem("brainbout:vocab-lang", lang);
-  updateLangButton();
-  void startGame();
-});
-
-updateLangButton();
 void startGame();
 
 initTheme();
