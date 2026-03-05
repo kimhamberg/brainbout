@@ -65,7 +65,7 @@ Runs ESLint (TypeScript), Stylelint (CSS), Ruff (Python), staticcheck + go vet (
 npm test
 ```
 
-72 tests across 11 files covering position generation, chess clock, cognitive games, engine parsing, timer, dictionary validation, and progress tracking.
+72 tests across 11 files covering position generation, chess clock, cognitive games, engine parsing, timer, and progress tracking.
 
 ## Sound
 
@@ -74,10 +74,6 @@ npm test
 ```
 .venv/bin/python scripts/gen-sounds.py
 ```
-
-## Data sources
-
-- **Cipher dictionaries** — [Wiktionary](https://en.wiktionary.org/) via [kaikki.org/wiktextract](https://kaikki.org/), licensed under [CC-BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) and [GFDL](https://www.gnu.org/licenses/fdl-1.3.html)
 
 ## Stack
 
