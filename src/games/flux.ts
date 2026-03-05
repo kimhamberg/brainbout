@@ -58,25 +58,7 @@ function renderPlaying(): void {
     ? `<div class="switch-label">SWITCH</div>`
     : "";
 
-  // Button labels depend on current rule
-  // Left = Red/Odd, Right = Blue/Even
-  let leftActive: string;
-  let leftInactive: string;
-  let rightActive: string;
-  let rightInactive: string;
-
-  if (trialRule === "color") {
-    leftActive = "Red";
-    leftInactive = "Odd";
-    rightActive = "Blue";
-    rightInactive = "Even";
-  } else {
-    leftActive = "Odd";
-    leftInactive = "Red";
-    rightActive = "Even";
-    rightInactive = "Blue";
-  }
-
+  // Labels are always Red/Odd (left) and Blue/Even (right)
   game.innerHTML = `
     <div class="timer">${String(currentRemaining)}s</div>
     <div class="rule-cue">${ruleCue}</div>
@@ -84,12 +66,12 @@ function renderPlaying(): void {
     <div class="stimulus color-${currentTrial.color}">${String(currentTrial.number)}</div>
     <div class="flux-buttons">
       <button class="flux-btn" data-side="left">
-        <span class="btn-label-active">${leftActive}</span>
-        <span class="btn-label-inactive">${leftInactive}</span>
+        <span class="btn-label">Red</span>
+        <span class="btn-label">Odd</span>
       </button>
       <button class="flux-btn" data-side="right">
-        <span class="btn-label-active">${rightActive}</span>
-        <span class="btn-label-inactive">${rightInactive}</span>
+        <span class="btn-label">Blue</span>
+        <span class="btn-label">Even</span>
       </button>
     </div>
     <div class="flux-feedback" id="feedback"></div>

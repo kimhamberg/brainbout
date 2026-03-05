@@ -207,15 +207,11 @@
   }
 }
 
-.btn-label-active {
+.btn-label {
   font-size: 1rem;
-  font-weight: 700;
-  color: var(--ctp-mauve);
-}
-
-.btn-label-inactive {
-  font-size: 0.75rem;
-  color: var(--ctp-overlay0);
+  font-weight: 600;
+  color: var(--ctp-text);
+  transition: color var(--dur-150) ease;
 }
 
 .flux-feedback {

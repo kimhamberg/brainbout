@@ -54,7 +54,7 @@
     "scales/sizes": [
       { "scale": [32, 280, 320, 400, 480], "units": ["px"] },
       { "scale": [0.45], "units": ["em"] },
-      { "scale": [0.5, 1.5, 3, 3.5], "units": ["rem"] }
+      { "scale": [0.5, 1.5, 3, 3.5, 4], "units": ["rem"] }
     ],
     "scales/space": [
       {

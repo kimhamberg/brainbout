@@ -13,11 +13,9 @@
   --board-dark: color-mix(in srgb, var(--ctp-blue) 50%, var(--ctp-mantle));
   --board-last-move: rgb(140 170 238 / 0.35);
   --board-selected: rgb(140 170 238 / 0.4);
-  --board-move-dest: 166 209 137;
-  --board-check: 231 130 132;
-  --board-premove: 239 159 118;
-  --board-coord-dark: rgb(198 208 245 / 0.8);
-  --board-coord-light: rgb(65 69 89 / 0.8);
+  --board-move-dest: 140 170 238;
+  --board-check: 140 170 238;
+  --board-premove: 140 170 238;
   --board-crust: 35 38 52;
 }
 
@@ -26,11 +24,9 @@
   --board-light: color-mix(in srgb, var(--ctp-blue) 12%, var(--ctp-surface0));
   --board-last-move: rgb(30 102 245 / 0.25);
   --board-selected: rgb(30 102 245 / 0.3);
-  --board-move-dest: 64 160 43;
-  --board-check: 210 15 57;
-  --board-premove: 254 100 11;
-  --board-coord-dark: rgb(76 79 105 / 0.8);
-  --board-coord-light: rgb(188 192 204 / 0.8);
+  --board-move-dest: 30 102 245;
+  --board-check: 30 102 245;
+  --board-premove: 30 102 245;
   --board-crust: 220 224 232;
 }
 
@@ -108,48 +104,5 @@ cg-board {
 
   & .current-premove {
     background-color: rgb(var(--board-premove) / 0.5);
-  }
-}
-
-/* On-square coordinate sizing */
-.cg-wrap .squares {
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-/* Coordinate label colors */
-.orientation-white {
-  & .ranks :nth-child(odd),
-  & .files :nth-child(even) {
-    color: var(--board-coord-dark);
-  }
-
-  & .ranks :nth-child(even),
-  & .files :nth-child(odd) {
-    color: var(--board-coord-light);
-  }
-}
-
-.orientation-black {
-  & .ranks :nth-child(even),
-  & .files :nth-child(odd) {
-    color: var(--board-coord-dark);
-  }
-
-  & .ranks :nth-child(odd),
-  & .files :nth-child(even) {
-    color: var(--board-coord-light);
-  }
-}
-
-.cg-wrap {
-  & .squares:nth-of-type(odd) :nth-child(even),
-  & .squares:nth-of-type(even) :nth-child(odd) {
-    color: var(--board-coord-dark);
-  }
-
-  & .squares:nth-of-type(odd) :nth-child(odd),
-  & .squares:nth-of-type(even) :nth-child(even) {
-    color: var(--board-coord-light);
   }
 }

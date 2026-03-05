@@ -415,7 +415,7 @@ function renderGame(): void {
     fen: makeFen(pos.toSetup()),
     orientation: playerColor,
     turnColor: pos.turn,
-    coordinatesOnSquares: true,
+    coordinates: false,
     movable: {
       free: false,
       color: playerColor,

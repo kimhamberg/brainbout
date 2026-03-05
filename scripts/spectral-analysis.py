@@ -26,15 +26,15 @@ def load_wav(path: Path) -> tuple[int, np.ndarray]:
     """Load a WAV or MP3 file, returning (sample_rate, mono_float_samples)."""
     if path.suffix == ".mp3":
         # Convert MP3 to WAV using ffmpeg
-        tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
-        tmp.close()
-        subprocess.run(
-            ["ffmpeg", "-y", "-i", str(path), "-ar", "44100", "-ac", "1", tmp.name],
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+            tmp_path = tmp.name
+        subprocess.run(  # noqa: S603
+            ["ffmpeg", "-y", "-i", str(path), "-ar", "44100", "-ac", "1", tmp_path],  # noqa: S607
             capture_output=True,
             check=True,
         )
-        sr, data = wavfile.read(tmp.name)
-        Path(tmp.name).unlink()
+        sr, data = wavfile.read(tmp_path)
+        Path(tmp_path).unlink()
     else:
         sr, data = wavfile.read(str(path))
 
@@ -47,13 +47,13 @@ def load_wav(path: Path) -> tuple[int, np.ndarray]:
         data = data.astype(np.float64)
 
     # Stereo -> mono
-    if data.ndim == 2:
+    if data.ndim == 2:  # noqa: PLR2004
         data = data.mean(axis=1)
 
     return sr, data
 
 
-def analyze(name: str, sr: int, data: np.ndarray) -> dict:
+def analyze(name: str, sr: int, data: np.ndarray) -> dict:  # noqa: PLR0912, PLR0915
     """Full spectral analysis of a sound."""
     duration = len(data) / sr
 
@@ -70,15 +70,12 @@ def analyze(name: str, sr: int, data: np.ndarray) -> dict:
 
     # Spectral centroid (brightness indicator)
     total_power = np.sum(psd)
-    if total_power > 0:
-        spectral_centroid = np.sum(freqs * psd) / total_power
-    else:
-        spectral_centroid = 0.0
+    spectral_centroid = np.sum(freqs * psd) / total_power if total_power > 0 else 0.0
 
     # Spectral bandwidth (spread around centroid)
     if total_power > 0:
         spectral_bw = np.sqrt(
-            np.sum(((freqs - spectral_centroid) ** 2) * psd) / total_power
+            np.sum(((freqs - spectral_centroid) ** 2) * psd) / total_power,
         )
     else:
         spectral_bw = 0.0
@@ -140,19 +137,21 @@ def analyze(name: str, sr: int, data: np.ndarray) -> dict:
         decay_time = duration - peak_idx / sr
 
     # Spectrogram for temporal evolution (early vs late spectrum)
-    if len(data) > 512:
-        _, _, Sxx = spectrogram(data, fs=sr, nperseg=min(512, len(data) // 2))
-        n_frames = Sxx.shape[1]
-        if n_frames >= 4:
-            early = np.mean(Sxx[:, : n_frames // 4], axis=1)
-            late = np.mean(Sxx[:, n_frames // 2 :], axis=1)
+    if len(data) > 512:  # noqa: PLR2004
+        _, _, sxx = spectrogram(data, fs=sr, nperseg=min(512, len(data) // 2))
+        n_frames = sxx.shape[1]
+        if n_frames >= 4:  # noqa: PLR2004
+            early = np.mean(sxx[:, : n_frames // 4], axis=1)
+            late = np.mean(sxx[:, n_frames // 2 :], axis=1)
             early_centroid = (
-                np.sum(np.arange(len(early)) * early) / (np.sum(early) + 1e-30)
+                np.sum(np.arange(len(early)) * early)
+                / (np.sum(early) + 1e-30)
                 * sr
                 / (2 * len(early))
             )
             late_centroid = (
-                np.sum(np.arange(len(late)) * late) / (np.sum(late) + 1e-30)
+                np.sum(np.arange(len(late)) * late)
+                / (np.sum(late) + 1e-30)
                 * sr
                 / (2 * len(late))
             )
@@ -197,7 +196,8 @@ def log_analysis(results: dict) -> None:
     log.info("  Spectral bandwidth: %.0f Hz", results["spectral_bandwidth_hz"])
     log.info("  Spectral rolloff:   %.0f Hz", results["spectral_rolloff_hz"])
     log.info(
-        "  Spectral flatness:  %.4f  (0=tonal, 1=noise)", results["spectral_flatness"]
+        "  Spectral flatness:  %.4f  (0=tonal, 1=noise)",
+        results["spectral_flatness"],
     )
     log.info("")
     log.info("  Temporal brightness:")
@@ -237,9 +237,7 @@ def compare(label: str, ours: dict, lichess: dict, chesscom: dict) -> None:
         ("Late centroid (Hz)", "late_centroid_hz", ".0f"),
     ]
 
-    log.info(
-        "\n  %-25s %12s %12s %12s", "Metric", "Ours", "Lichess", "Chess.com"
-    )
+    log.info("\n  %-25s %12s %12s %12s", "Metric", "Ours", "Lichess", "Chess.com")
     log.info("  %s %s %s %s", "-" * 25, "-" * 12, "-" * 12, "-" * 12)
     for label_m, key, fmt in metrics:
         v1 = format(ours[key], fmt)
@@ -249,9 +247,7 @@ def compare(label: str, ours: dict, lichess: dict, chesscom: dict) -> None:
 
     # Band comparison
     log.info("\n  Band energy (%%):")
-    log.info(
-        "  %-25s %12s %12s %12s", "Band", "Ours", "Lichess", "Chess.com"
-    )
+    log.info("  %-25s %12s %12s %12s", "Band", "Ours", "Lichess", "Chess.com")
     log.info("  %s %s %s %s", "-" * 25, "-" * 12, "-" * 12, "-" * 12)
     for band in ours["bands_pct"]:
         label_b = band.replace("_", " ").title()
@@ -262,6 +258,7 @@ def compare(label: str, ours: dict, lichess: dict, chesscom: dict) -> None:
 
 
 def main() -> None:
+    """Run spectral analysis on all sound files and print comparisons."""
     # Define sound files
     sounds = {
         "move": {
@@ -288,7 +285,7 @@ def main() -> None:
             log_analysis(r)
             results[source] = r
 
-        if len(results) == 3:
+        if len(results) == 3:  # noqa: PLR2004
             compare(
                 sound_type.upper(),
                 results["ours"],
@@ -304,7 +301,7 @@ def main() -> None:
         "\n  Based on the spectral comparison above, note these key differences"
         "\n  between our synthesized sounds and the recorded reference sounds."
         "\n  The analysis covers: attack characteristics, spectral content,"
-        "\n  dynamic range, duration, and timbral evolution over time.\n"
+        "\n  dynamic range, duration, and timbral evolution over time.\n",
     )
 
 

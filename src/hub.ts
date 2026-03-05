@@ -49,6 +49,12 @@ const READINESS_THRESHOLDS: Record<string, number> = {
   lex: 0.8,
 };
 
+const STAGE_DESCRIPTIONS: Record<string, string[]> = {
+  crown: ["600 Elo", "1200 Elo", "1600 Elo"],
+  flux: ["Relaxed \u00b7 2s", "Brisk \u00b7 1.5s", "Intense \u00b7 1.2s"],
+  lex: ["Multiple choice", "Hinted cloze", "Free recall"],
+};
+
 function getGameStat(game: string): string | null {
   if (game === "crown") {
     const stage = getStage(game);
@@ -151,7 +157,7 @@ function render(): void {
     if (done) {
       right = `<span class="done-badge">\u2713</span>`;
     } else {
-      right = `<span class="stage-chip readiness-${ready}">Stage ${String(stage)}</span>`;
+      right = `<button class="stage-chip readiness-${ready}" data-game="${game}">Stage ${String(stage)}</button>`;
       if (ready === "green")
         right += `<button class="advance-btn" data-game="${game}">Advance \u25b8</button>`;
       if (stage > 1)
@@ -170,7 +176,7 @@ function render(): void {
     if (done) {
       html += `<div class="game-card ${cls}" style="${style}">${inner}</div>`;
     } else {
-      html += `<a href="${GAME_URLS[game]}" class="game-card ${cls}" style="${style}">${inner}</a>`;
+      html += `<a href="${GAME_URLS[game]}" class="game-card ${cls}" style="${style}"><span class="game-play">Play</span>${inner}</a>`;
     }
   }
   html += `</div>`;
@@ -189,6 +195,50 @@ function render(): void {
   hub.innerHTML = html;
 }
 
+function dismissPopover(): void {
+  document.querySelector(".stage-popover")?.remove();
+}
+
+function showStagePopover(chip: HTMLElement, game: string): void {
+  dismissPopover();
+
+  const stage = getStage(game);
+  const descriptions = STAGE_DESCRIPTIONS[game];
+
+  const popover = document.createElement("div");
+  popover.className = "stage-popover";
+  popover.style.setProperty("--accent", GAME_ACCENTS[game]);
+
+  let rows = "";
+  for (let s = 1; s <= descriptions.length; s++) {
+    const current = s === stage ? " current" : "";
+    rows += `<div class="stage-row${current}"><span class="stage-row-num">${String(s)}</span><span>${descriptions[s - 1]}</span></div>`;
+  }
+  popover.innerHTML = rows;
+
+  // Position relative to the chip
+  const rect = chip.getBoundingClientRect();
+  const hub = document.getElementById("hub");
+  if (!hub) return;
+  const hubRect = hub.getBoundingClientRect();
+
+  popover.style.top = `${String(rect.bottom - hubRect.top + 4)}px`;
+  popover.style.right = `${String(hubRect.right - rect.right)}px`;
+
+  hub.appendChild(popover);
+
+  // Dismiss on outside click (next tick to avoid immediate dismiss)
+  requestAnimationFrame(() => {
+    function onClickOutside(ev: MouseEvent): void {
+      if (!popover.contains(ev.target as Node)) {
+        dismissPopover();
+        document.removeEventListener("click", onClickOutside, true);
+      }
+    }
+    document.addEventListener("click", onClickOutside, true);
+  });
+}
+
 function startNewSession(): void {
   session.clear();
   sessionStorage.removeItem("brainbout:current-session");
@@ -204,6 +254,17 @@ document.getElementById("hub")?.addEventListener("click", (e) => {
 
   if (target.closest(".new-session-btn") !== null) {
     startNewSession();
+    return;
+  }
+
+  const stageChip = target.closest<HTMLButtonElement>(".stage-chip");
+  if (stageChip !== null) {
+    e.preventDefault();
+    e.stopPropagation();
+    const { game } = stageChip.dataset;
+    if (game !== undefined && game !== "") {
+      showStagePopover(stageChip, game);
+    }
     return;
   }
 

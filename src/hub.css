@@ -41,6 +41,10 @@
   }
 }
 
+#hub {
+  position: relative;
+}
+
 .hub-header {
   position: relative;
 
@@ -122,6 +126,10 @@
       opacity: 0;
     }
   }
+
+  .game-card .game-play {
+    display: none;
+  }
 }
 
 .game-list {
@@ -131,7 +139,31 @@
   margin-bottom: 1rem;
 }
 
+.game-card-top {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.game-tagline {
+  font-size: 0.75rem;
+  color: var(--ctp-subtext0);
+  transition:
+    color var(--dur-250) ease,
+    transform var(--dur-250) ease;
+}
+
+.game-stat {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent, var(--ctp-subtext0));
+  transition:
+    color var(--dur-250) ease,
+    transform var(--dur-250) ease;
+}
+
 .game-card {
+  --border-w: 4px;
   --accent-wash: color-mix(
     in srgb,
     var(--accent, var(--ctp-surface1)) 12%,
@@ -145,8 +177,7 @@
   flex-direction: column;
   gap: 0.25rem;
 
-  padding: 0.75rem;
-  border-left: 4px solid var(--accent, var(--ctp-surface1));
+  padding: 0.75rem 0.75rem 0.75rem calc(0.75rem + var(--border-w));
   border-radius: 6px;
 
   color: inherit;
@@ -156,7 +187,9 @@
     linear-gradient(var(--accent-wash), var(--accent-wash)) no-repeat left / 0%
       100%,
     var(--ctp-surface0);
-  box-shadow: var(--ctp-shadow);
+  box-shadow:
+    inset var(--border-w) 0 0 var(--accent, var(--ctp-surface1)),
+    var(--ctp-shadow);
 
   transition:
     background-size var(--dur-250) ease,
@@ -166,18 +199,49 @@
   animation: card-enter var(--dur-350) ease both;
   animation-delay: calc(var(--i, 0) * 60ms);
 
+  & .game-play {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    transform: translateX(-3.5rem);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: calc(3.5rem + var(--border-w));
+
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--ctp-text);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+
+    opacity: 0;
+    background: var(--accent, var(--ctp-surface1));
+
+    transition:
+      transform var(--dur-250) ease,
+      opacity var(--dur-250) ease;
+  }
+
   & .game-icon {
     display: flex;
     flex-shrink: 0;
     color: var(--accent, var(--ctp-subtext0));
-    transition: color var(--dur-250) ease;
+    transition:
+      color var(--dur-250) ease,
+      transform var(--dur-250) ease;
   }
 
   & .game-name {
     flex: 1;
     font-size: 1rem;
     font-weight: 600;
-    transition: color var(--dur-250) ease;
+    transition:
+      color var(--dur-250) ease,
+      transform var(--dur-250) ease;
   }
 
   &.done {
@@ -186,15 +250,26 @@
 
   &:hover:not(.done) {
     transform: translateY(-1px);
-    background-size:
-      100% 100%,
-      auto;
-    box-shadow: var(--ctp-shadow-lg);
+    box-shadow:
+      inset var(--border-w) 0 0 var(--accent, var(--ctp-surface1)),
+      var(--ctp-shadow-lg);
+
+    & .game-play {
+      transform: translateX(0);
+      opacity: 1;
+    }
+
+    & .game-icon,
+    & .game-name,
+    & .game-tagline,
+    & .game-stat {
+      transform: translateX(3rem);
+    }
   }
 
   &:active:not(.done) {
     transform: translateY(0);
-    box-shadow: none;
+    box-shadow: inset var(--border-w) 0 0 var(--accent, var(--ctp-surface1));
   }
 
   &.pressed {
@@ -202,27 +277,10 @@
     background-size:
       100% 100%,
       auto;
-    box-shadow: 0 0 0 2px var(--accent, var(--ctp-surface1));
+    box-shadow:
+      inset var(--border-w) 0 0 var(--accent, var(--ctp-surface1)),
+      0 0 0 2px var(--accent, var(--ctp-surface1));
   }
-}
-
-.game-card-top {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
-
-.game-tagline {
-  font-size: 0.75rem;
-  color: var(--ctp-subtext0);
-  transition: color var(--dur-250) ease;
-}
-
-.game-stat {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--accent, var(--ctp-subtext0));
-  transition: color var(--dur-250) ease;
 }
 
 .new-session-btn {
@@ -279,8 +337,15 @@
   align-items: center;
 }
 
-.stage-chip {
+.stage-chip,
+.done-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 4rem;
   padding: 0.25rem 0.5rem;
+  border: none;
   border-radius: 6px;
 
   font-size: 0.75rem;
@@ -291,6 +356,14 @@
   transition:
     background-color var(--dur-250) ease,
     color var(--dur-250) ease;
+}
+
+.stage-chip {
+  cursor: pointer;
+
+  &:hover {
+    background: var(--ctp-surface2);
+  }
 
   &.readiness-amber {
     color: var(--ctp-peach);
@@ -302,22 +375,8 @@
 }
 
 .done-badge {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  width: 1.5rem;
-  height: 1.5rem;
-  border-radius: 50%;
-
-  font-size: 0.75rem;
   color: var(--ctp-green);
-
   background: color-mix(in srgb, var(--ctp-green) 12%, var(--ctp-surface1));
-
-  transition:
-    background-color var(--dur-250) ease,
-    color var(--dur-250) ease;
 }
 
 .advance-btn {
@@ -359,4 +418,58 @@
   &:hover {
     color: var(--ctp-text);
   }
+}
+
+/* --- Stage popover --- */
+
+@keyframes popover-enter {
+  from {
+    transform: translateY(-4px);
+    opacity: 0;
+  }
+}
+
+@media (--motion-reduce) {
+  @keyframes popover-enter {
+    from {
+      opacity: 0;
+    }
+  }
+}
+
+.stage-popover {
+  position: absolute;
+  z-index: 10;
+
+  display: flex;
+  flex-direction: column;
+
+  padding: 0.25rem;
+  border-radius: 6px;
+
+  background: var(--ctp-surface1);
+  box-shadow: var(--ctp-shadow-lg);
+
+  animation: popover-enter var(--dur-150) ease;
+}
+
+.stage-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+
+  font-size: 0.75rem;
+  color: var(--ctp-subtext0);
+
+  &.current {
+    color: var(--accent, var(--ctp-text));
+    background: var(--ctp-surface0);
+  }
+}
+
+.stage-row-num {
+  font-weight: 600;
 }

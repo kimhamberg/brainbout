@@ -5,7 +5,7 @@ Run:  .venv/bin/python scripts/gen-sounds.py
 
 Chess piece sounds (move/capture) are optimized via scipy differential
 evolution so that every measured output metric falls between Lichess and
-Chess.com reference values.  Metrics are 4 statistical moments × 2
+Chess.com reference values.  Metrics are 4 statistical moments x 2
 domains: frequency moments computed on log2(freq) axis (perceptually
 weighted), time moments on the energy envelope.
 
@@ -83,7 +83,7 @@ MASTER = Pedalboard(
 )
 
 # ── Reference metrics ─────────────────────────────────────────────
-# 8 metrics: 4 statistical moments × 2 domains.
+# 8 metrics: 4 statistical moments x 2 domains.
 # Frequency moments are computed on log2(freq) axis (perceptual weighting).
 # All target ranges are [min(lichess, chesscom), max(lichess, chesscom)].
 # Tolerance factor widens each range symmetrically (0.10 = ±10%).
@@ -108,14 +108,14 @@ def _ref_range(a: float, b: float) -> tuple[float, float]:
 #   t_centroid=55.2   t_spread=3.5     t_skewness=5.10   t_kurtosis=83.57
 
 MOVE_REF = {
-    "f_centroid":  _ref_range(635.1, 744.3),
-    "f_spread":    _ref_range(0.6374, 0.6454),
-    "f_skewness":  _ref_range(-2.87, -0.68),
-    "f_kurtosis":  _ref_range(0.93, 14.46),
-    "t_centroid":  _ref_range(55.2, 62.1),
-    "t_spread":    _ref_range(2.2, 3.5),
-    "t_skewness":  _ref_range(5.10, 9.75),
-    "t_kurtosis":  _ref_range(83.57, 166.04),
+    "f_centroid": _ref_range(635.1, 744.3),
+    "f_spread": _ref_range(0.6374, 0.6454),
+    "f_skewness": _ref_range(-2.87, -0.68),
+    "f_kurtosis": _ref_range(0.93, 14.46),
+    "t_centroid": _ref_range(55.2, 62.1),
+    "t_spread": _ref_range(2.2, 3.5),
+    "t_skewness": _ref_range(5.10, 9.75),
+    "t_kurtosis": _ref_range(83.57, 166.04),
 }
 
 # ── CAPTURE reference measurements ──
@@ -127,14 +127,14 @@ MOVE_REF = {
 #   t_centroid=63.0    t_spread=5.8     t_skewness=4.86   t_kurtosis=62.17
 
 CAPTURE_REF = {
-    "f_centroid":  _ref_range(1136.1, 1231.8),
-    "f_spread":    _ref_range(0.8339, 0.9915),
-    "f_skewness":  _ref_range(-1.89, -0.47),
-    "f_kurtosis":  _ref_range(1.70, 5.43),
-    "t_centroid":  _ref_range(63.0, 66.3),
-    "t_spread":    _ref_range(5.8, 9.6),
-    "t_skewness":  _ref_range(2.82, 4.86),
-    "t_kurtosis":  _ref_range(6.74, 62.17),
+    "f_centroid": _ref_range(1136.1, 1231.8),
+    "f_spread": _ref_range(0.8339, 0.9915),
+    "f_skewness": _ref_range(-1.89, -0.47),
+    "f_kurtosis": _ref_range(1.70, 5.43),
+    "t_centroid": _ref_range(63.0, 66.3),
+    "t_spread": _ref_range(5.8, 9.6),
+    "t_skewness": _ref_range(2.82, 4.86),
+    "t_kurtosis": _ref_range(6.74, 62.17),
 }
 
 # Key of G  ────────────────────────────────────────────────────────────
@@ -309,15 +309,15 @@ class WoodParams(NamedTuple):
     brightness: float = 2500
     mode_spread: float = 0.5
     # Weibull impact envelope — controls temporal energy distribution
-    onset: float = 0.05        # impact start time (seconds)
-    decay_tau: float = 0.005   # Weibull scale (seconds)
-    decay_beta: float = 0.5    # Weibull shape (< 1 = stretched exponential)
+    onset: float = 0.05  # impact start time (seconds)
+    decay_tau: float = 0.005  # Weibull scale (seconds)
+    decay_beta: float = 0.5  # Weibull shape (< 1 = stretched exponential)
 
 
 def wood_hit(p: WoodParams) -> np.ndarray:
     """Modal synthesis of wood-on-wood impact for chess pieces.
 
-    Minimal chain: modal sines × lognormal envelope + filtered pink noise.
+    Minimal chain: modal sines x lognormal envelope + filtered pink noise.
     No separate mode_decay, impact chirp, or noise_decay — the single
     lognormal envelope controls all temporal shaping.
     """
@@ -358,7 +358,7 @@ def wood_hit(p: WoodParams) -> np.ndarray:
 
 
 def _quick_analyze(samples: np.ndarray) -> dict:
-    """Compute 8 metrics: 4 statistical moments × 2 domains.
+    """Compute 8 metrics: 4 statistical moments x 2 domains.
 
     Frequency domain: moments on log2(freq) axis (perceptually weighted).
     - f_centroid: geometric mean frequency (Hz)
@@ -385,9 +385,9 @@ def _quick_analyze(samples: np.ndarray) -> dict:
 
     log_freqs = np.log2(freqs)
     f_centroid_log = np.sum(log_freqs * psd) / total
-    f_centroid = 2 ** f_centroid_log                        # geometric mean (Hz)
+    f_centroid = 2**f_centroid_log  # geometric mean (Hz)
     f_dev = log_freqs - f_centroid_log
-    f_spread = np.sqrt(np.sum(f_dev**2 * psd) / total)     # octaves
+    f_spread = np.sqrt(np.sum(f_dev**2 * psd) / total)  # octaves
     f_skewness = np.sum(f_dev**3 * psd) / (total * f_spread**3 + eps)
     f_kurtosis = np.sum(f_dev**4 * psd) / (total * f_spread**4 + eps) - 3  # Fisher
 
@@ -442,10 +442,10 @@ def master(samples: np.ndarray) -> np.ndarray:
     return MASTER(buf, SR).flatten()
 
 
-_REVERB_TAIL_PAD = 0.2           # seconds — room for reverb decay (tonal sounds only)
-_PRE_FX_HEADROOM = 0.75          # peak normalization before FX (–2.5 dBFS)
-_SILENCE_FLOOR = 0.001           # –60 dBFS — trim trailing silence below this
-_POST_TRIM_PAD = 0.01            # seconds — short guard after last audible sample
+_REVERB_TAIL_PAD = 0.2  # seconds — room for reverb decay (tonal sounds only)
+_PRE_FX_HEADROOM = 0.75  # peak normalization before FX (-2.5 dBFS)
+_SILENCE_FLOOR = 0.001  # -60 dBFS — trim trailing silence below this
+_POST_TRIM_PAD = 0.01  # seconds — short guard after last audible sample
 
 
 def _process(samples: np.ndarray, chain: Pedalboard | None = None) -> np.ndarray:
@@ -469,12 +469,10 @@ def _process(samples: np.ndarray, chain: Pedalboard | None = None) -> np.ndarray
     peak = np.max(np.abs(samples))
     if peak > 1.0:
         samples /= peak
-    samples = fadeout(samples)
-    return samples
+    return fadeout(samples)
 
 
-def write(name: str, samples: np.ndarray,
-          chain: Pedalboard | None = None) -> None:
+def write(name: str, samples: np.ndarray, chain: Pedalboard | None = None) -> None:
     """Process and write a sound to a WAV file.
 
     Leading silence is stripped so game sounds play instantly.
@@ -487,7 +485,7 @@ def write(name: str, samples: np.ndarray,
         first_loud += 1
     if first_loud > 0:
         guard = int(SR * _POST_TRIM_PAD)
-        samples = samples[max(0, first_loud - guard):]
+        samples = samples[max(0, first_loud - guard) :]
     data = (samples * 32767).astype(np.int16)
     path = OUT / f"{name}.wav"
     wavfile.write(str(path), SR, data)
@@ -495,8 +493,12 @@ def write(name: str, samples: np.ndarray,
     log.info("%s.wav  (%.2fs, %.0f KB)", name, len(data) / SR, kb)
 
 
-# ── parameter optimization ───────────────────────────────────────────
+# ── optimizer early-stop thresholds ───────────────────────────────────
+_COST_THRESHOLD = 0.01  # stop if cost drops below this
+_TIME_LIMIT_S = 120  # max wall-clock seconds per optimizer run
+_PLATEAU_WINDOW = 20  # number of generations to check for plateau
 
+# ── parameter optimization ───────────────────────────────────────────
 
 
 # Cached optimized chains for chess sounds
@@ -511,39 +513,46 @@ def _make_chain(hpf: float, lpf_cut: float, gn: float) -> Pedalboard:
     Reverb, compressor, and limiter removed — they added dimensions
     without meaningfully improving metric convergence.
     """
-    return Pedalboard([
-        HighpassFilter(cutoff_frequency_hz=hpf),
-        LowpassFilter(cutoff_frequency_hz=lpf_cut),
-        Gain(gain_db=gn),
-    ])
+    return Pedalboard(
+        [
+            HighpassFilter(cutoff_frequency_hz=hpf),
+            LowpassFilter(cutoff_frequency_hz=lpf_cut),
+            Gain(gain_db=gn),
+        ],
+    )
 
 
 def _make_wood(x: np.ndarray, dur: float) -> WoodParams:
     """Unpack optimizer vector into WoodParams (7 synth params)."""
     bf, nl, br, ms, onset, tau, beta = x[:7]
     return WoodParams(
-        body_freq=bf, dur=dur, noise_level=nl,
-        brightness=br, mode_spread=ms,
-        onset=onset, decay_tau=tau, decay_beta=beta,
+        body_freq=bf,
+        dur=dur,
+        noise_level=nl,
+        brightness=br,
+        mode_spread=ms,
+        onset=onset,
+        decay_tau=tau,
+        decay_beta=beta,
     )
 
 
 # Shared synth bounds (7 dims) — used by both move and capture optimizers
 _SYNTH_BOUNDS = [
-    (200, 1500),     # body_freq (Hz)
-    (0.1, 0.95),     # noise_level
-    (800, 10000),    # brightness (noise filter cutoff, Hz)
-    (0.05, 0.99),    # mode_spread
-    (0.01, 0.10),    # onset (impact start, 10-100ms)
+    (200, 1500),  # body_freq (Hz)
+    (0.1, 0.95),  # noise_level
+    (800, 10000),  # brightness (noise filter cutoff, Hz)
+    (0.05, 0.99),  # mode_spread
+    (0.01, 0.10),  # onset (impact start, 10-100ms)
     (0.0005, 0.02),  # decay_tau (Weibull scale, 0.5-20ms)
-    (0.2, 0.8),      # decay_beta (Weibull shape, <1 = stretched exp)
+    (0.2, 0.8),  # decay_beta (Weibull shape, <1 = stretched exp)
 ]
 
 # Chain bounds (3 dims)
 _CHAIN_BOUNDS = [
-    (40, 200),        # hpf_cutoff (Hz)
-    (4000, 16000),    # lpf_cutoff (Hz)
-    (0.5, 8.0),       # gain_db
+    (40, 200),  # hpf_cutoff (Hz)
+    (4000, 16000),  # lpf_cutoff (Hz)
+    (0.5, 8.0),  # gain_db
 ]
 
 
@@ -552,48 +561,52 @@ _CHAIN_BOUNDS = [
 
 # Neutral chain starting point (3 dims)
 _CHAIN_X0 = [
-    80,     # hpf_cutoff (Hz): rumble removal
-    8000,   # lpf_cutoff (Hz): preserve detail
-    2.0,    # gain_db
+    80,  # hpf_cutoff (Hz): rumble removal
+    8000,  # lpf_cutoff (Hz): preserve detail
+    2.0,  # gain_db
 ]
 
 # Move: single wood_hit, dur=0.25s
-_MOVE_X0 = np.array([
-    # -- Synth params (7 dims) --
-    690,    # body_freq: midpoint of ref f_centroid (635.1, 744.3) Hz
-    0.2,    # noise_level: low noise → narrow f_spread
-    1500,   # brightness: low → energy below centroid → negative f_skewness
-    0.2,    # mode_spread: narrow → tight f_spread (~0.64 octaves)
-    0.055,  # onset: ~55ms leading silence (matches ref t_centroid)
-    0.002,  # decay_tau: 2ms Weibull scale → tight t_spread (~3ms)
-    0.4,    # decay_beta: stretched exp → high skewness (~6) & kurtosis (~80)
-    # -- Chain params (3 dims) --
-    *_CHAIN_X0,
-])
+_MOVE_X0 = np.array(
+    [
+        # -- Synth params (7 dims) --
+        690,  # body_freq: midpoint of ref f_centroid (635.1, 744.3) Hz
+        0.2,  # noise_level: low noise → narrow f_spread
+        1500,  # brightness: low → energy below centroid → negative f_skewness
+        0.2,  # mode_spread: narrow → tight f_spread (~0.64 octaves)
+        0.055,  # onset: ~55ms leading silence (matches ref t_centroid)
+        0.002,  # decay_tau: 2ms Weibull scale → tight t_spread (~3ms)
+        0.4,  # decay_beta: stretched exp → high skewness (~6) & kurtosis (~80)
+        # -- Chain params (3 dims) --
+        *_CHAIN_X0,
+    ],
+)
 
 # Capture: clack (0.08s) + thud (0.20s) = 0.28s total
-# Ref t_centroid 63–66ms → most energy in clack (0–80ms) + early thud
-# Ref f_centroid 1136–1232 Hz → brighter than move
-_CAPTURE_X0 = np.array([
-    # -- Clack synth (7 dims) — bright, short impact --
-    1400,   # body_freq: bright clack near ref f_centroid
-    0.4,    # noise_level
-    4000,   # brightness: bright noise
-    0.4,    # mode_spread
-    0.03,   # onset: 30ms into the 80ms clack
-    0.003,  # decay_tau: slightly wider than move
-    0.45,   # decay_beta: stretched exp
-    # -- Thud synth (7 dims) — warm body resonance --
-    600,    # body_freq: warm low thud
-    0.3,    # noise_level
-    1500,   # brightness
-    0.2,    # mode_spread
-    0.01,   # onset: 10ms into thud → total ~90ms from capture start
-    0.004,  # decay_tau
-    0.45,   # decay_beta
-    # -- Chain params (3 dims) --
-    *_CHAIN_X0,
-])
+# Ref t_centroid 63-66ms → most energy in clack (0-80ms) + early thud
+# Ref f_centroid 1136-1232 Hz → brighter than move
+_CAPTURE_X0 = np.array(
+    [
+        # -- Clack synth (7 dims) — bright, short impact --
+        1400,  # body_freq: bright clack near ref f_centroid
+        0.4,  # noise_level
+        4000,  # brightness: bright noise
+        0.4,  # mode_spread
+        0.03,  # onset: 30ms into the 80ms clack
+        0.003,  # decay_tau: slightly wider than move
+        0.45,  # decay_beta: stretched exp
+        # -- Thud synth (7 dims) — warm body resonance --
+        600,  # body_freq: warm low thud
+        0.3,  # noise_level
+        1500,  # brightness
+        0.2,  # mode_spread
+        0.01,  # onset: 10ms into thud → total ~90ms from capture start
+        0.004,  # decay_tau
+        0.45,  # decay_beta
+        # -- Chain params (3 dims) --
+        *_CHAIN_X0,
+    ],
+)
 
 
 def _optimize_move() -> tuple[WoodParams, Pedalboard]:
@@ -616,30 +629,39 @@ def _optimize_move() -> tuple[WoodParams, Pedalboard]:
     best_cost = [float("inf")]
     plateau_check: list[float] = []
 
-    def _move_cb(xk, convergence=0.0):
+    def _move_cb(xk: np.ndarray, _convergence: float = 0.0) -> bool | None:
         pbar.update(1)
         cost = objective(xk)
-        if cost < best_cost[0]:
-            best_cost[0] = cost
+        best_cost[0] = min(best_cost[0], cost)
         pbar.set_postfix(cost=f"{best_cost[0]:.6f}")
         plateau_check.append(best_cost[0])
-        if best_cost[0] < 0.01 or (time.monotonic() - t0) > 120:
+        if best_cost[0] < _COST_THRESHOLD or (time.monotonic() - t0) > _TIME_LIMIT_S:
             return True
-        # Stop if <1% improvement over last 20 generations
-        if len(plateau_check) >= 20:
-            old = plateau_check[-20]
-            if old > 0 and (old - best_cost[0]) / old < 0.01:
+        # Stop if <1% improvement over last _PLATEAU_WINDOW generations
+        if len(plateau_check) >= _PLATEAU_WINDOW:
+            old = plateau_check[-_PLATEAU_WINDOW]
+            if old > 0 and (old - best_cost[0]) / old < _COST_THRESHOLD:
                 log.info("    plateau detected (gen %d)", len(plateau_check))
                 return True
+        return None
 
     result = differential_evolution(
-        objective, bounds, seed=960, maxiter=500, tol=1e-10, popsize=10,
+        objective,
+        bounds,
+        seed=960,
+        maxiter=500,
+        tol=1e-10,
+        popsize=10,
         x0=_MOVE_X0,
         callback=_move_cb,
     )
     pbar.close()
-    log.info("    cost=%.6f  nfev=%d  (%.0fs)", result.fun, result.nfev,
-             time.monotonic() - t0)
+    log.info(
+        "    cost=%.6f  nfev=%d  (%.0fs)",
+        result.fun,
+        result.nfev,
+        time.monotonic() - t0,
+    )
 
     params = _make_wood(result.x, dur=0.25)
     chain = _make_chain(*result.x[7:10])
@@ -667,30 +689,39 @@ def _optimize_capture() -> tuple[WoodParams, WoodParams, Pedalboard]:
     best_cost = [float("inf")]
     plateau_check: list[float] = []
 
-    def _cap_cb(xk, convergence=0.0):
+    def _cap_cb(xk: np.ndarray, _convergence: float = 0.0) -> bool | None:
         pbar.update(1)
         cost = objective(xk)
-        if cost < best_cost[0]:
-            best_cost[0] = cost
+        best_cost[0] = min(best_cost[0], cost)
         pbar.set_postfix(cost=f"{best_cost[0]:.6f}")
         plateau_check.append(best_cost[0])
-        if best_cost[0] < 0.01 or (time.monotonic() - t0) > 120:
+        if best_cost[0] < _COST_THRESHOLD or (time.monotonic() - t0) > _TIME_LIMIT_S:
             return True
-        # Stop if <1% improvement over last 20 generations
-        if len(plateau_check) >= 20:
-            old = plateau_check[-20]
-            if old > 0 and (old - best_cost[0]) / old < 0.01:
+        # Stop if <1% improvement over last _PLATEAU_WINDOW generations
+        if len(plateau_check) >= _PLATEAU_WINDOW:
+            old = plateau_check[-_PLATEAU_WINDOW]
+            if old > 0 and (old - best_cost[0]) / old < _COST_THRESHOLD:
                 log.info("    plateau detected (gen %d)", len(plateau_check))
                 return True
+        return None
 
     result = differential_evolution(
-        objective, bounds, seed=960, maxiter=500, tol=1e-10, popsize=10,
+        objective,
+        bounds,
+        seed=960,
+        maxiter=500,
+        tol=1e-10,
+        popsize=10,
         x0=_CAPTURE_X0,
         callback=_cap_cb,
     )
     pbar.close()
-    log.info("    cost=%.6f  nfev=%d  (%.0fs)", result.fun, result.nfev,
-             time.monotonic() - t0)
+    log.info(
+        "    cost=%.6f  nfev=%d  (%.0fs)",
+        result.fun,
+        result.nfev,
+        time.monotonic() - t0,
+    )
 
     clack_p = _make_wood(result.x[:7], dur=0.08)
     thud_p = _make_wood(result.x[7:14], dur=0.20)
@@ -734,14 +765,21 @@ def wrong() -> np.ndarray:
 def move() -> np.ndarray:
     """Wood-on-wood thud — parameters found by optimization."""
     _ensure_optimized()
-    assert _MOVE_PARAMS is not None
+    if _MOVE_PARAMS is None:
+        msg = "_MOVE_PARAMS not initialized after optimization"
+        raise RuntimeError(msg)
     return wood_hit(_MOVE_PARAMS)
 
 
 def capture() -> np.ndarray:
     """Piece-on-piece clack + board thud — parameters found by optimization."""
     _ensure_optimized()
-    assert _CAPTURE_CLACK is not None and _CAPTURE_THUD is not None
+    if _CAPTURE_CLACK is None:
+        msg = "_CAPTURE_CLACK not initialized after optimization"
+        raise RuntimeError(msg)
+    if _CAPTURE_THUD is None:
+        msg = "_CAPTURE_THUD not initialized after optimization"
+        raise RuntimeError(msg)
     clack = wood_hit(_CAPTURE_CLACK)
     thud = wood_hit(_CAPTURE_THUD)
     return np.concatenate([clack, thud])
@@ -820,16 +858,31 @@ if __name__ == "__main__":
 
     # Run optimization first (populates _MOVE_PARAMS, _CAPTURE_*, chains)
     _ensure_optimized()
-    assert _MOVE_PARAMS is not None and _MOVE_CHAIN is not None
-    assert _CAPTURE_CLACK is not None and _CAPTURE_THUD is not None
-    assert _CAPTURE_CHAIN is not None
+    if _MOVE_PARAMS is None:
+        msg = "_MOVE_PARAMS not initialized after optimization"
+        raise RuntimeError(msg)
+    if _MOVE_CHAIN is None:
+        msg = "_MOVE_CHAIN not initialized after optimization"
+        raise RuntimeError(msg)
+    if _CAPTURE_CLACK is None:
+        msg = "_CAPTURE_CLACK not initialized after optimization"
+        raise RuntimeError(msg)
+    if _CAPTURE_THUD is None:
+        msg = "_CAPTURE_THUD not initialized after optimization"
+        raise RuntimeError(msg)
+    if _CAPTURE_CHAIN is None:
+        msg = "_CAPTURE_CHAIN not initialized after optimization"
+        raise RuntimeError(msg)
 
     # Verify metrics are in range
     for label, raw, chain, ref in [
         ("move", wood_hit(_MOVE_PARAMS), _MOVE_CHAIN, MOVE_REF),
-        ("capture", np.concatenate([
-            wood_hit(_CAPTURE_CLACK), wood_hit(_CAPTURE_THUD)]),
-         _CAPTURE_CHAIN, CAPTURE_REF),
+        (
+            "capture",
+            np.concatenate([wood_hit(_CAPTURE_CLACK), wood_hit(_CAPTURE_THUD)]),
+            _CAPTURE_CHAIN,
+            CAPTURE_REF,
+        ),
     ]:
         metrics = _quick_analyze(_process(raw, chain))
         log.info("  %s metrics:", label)

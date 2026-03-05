@@ -21,15 +21,17 @@ SR = 44100
 
 
 def load_wav(path: Path) -> np.ndarray:
+    """Load a WAV or MP3 file and return normalised float64 mono samples."""
     if path.suffix == ".mp3":
-        tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
-        tmp.close()
-        subprocess.run(
-            ["ffmpeg", "-y", "-i", str(path), "-ar", str(SR), "-ac", "1", tmp.name],
-            capture_output=True, check=True,
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+            tmp_path = tmp.name
+        subprocess.run(  # noqa: S603
+            ["ffmpeg", "-y", "-i", str(path), "-ar", str(SR), "-ac", "1", tmp_path],  # noqa: S607
+            capture_output=True,
+            check=True,
         )
-        _, data = wavfile.read(tmp.name)
-        Path(tmp.name).unlink()
+        _, data = wavfile.read(tmp_path)
+        Path(tmp_path).unlink()
     else:
         _, data = wavfile.read(str(path))
     if data.dtype == np.int16:
@@ -38,12 +40,13 @@ def load_wav(path: Path) -> np.ndarray:
         data = data.astype(np.float64) / 2147483648.0
     elif data.dtype == np.float32:
         data = data.astype(np.float64)
-    if data.ndim == 2:
+    if data.ndim == 2:  # noqa: PLR2004
         data = data.mean(axis=1)
     return data
 
 
 def analyze(samples: np.ndarray) -> dict:
+    """Compute 8-moment metrics (log-frequency + time) for an audio signal."""
     eps = 1e-30
 
     # -- Frequency domain: moments on log2(freq) axis --
@@ -56,10 +59,10 @@ def analyze(samples: np.ndarray) -> dict:
     total = np.sum(psd) + eps
 
     log_freqs = np.log2(freqs)
-    f_centroid_log = np.sum(log_freqs * psd) / total      # in log2(Hz)
-    f_centroid_hz = 2 ** f_centroid_log                     # geometric mean in Hz
+    f_centroid_log = np.sum(log_freqs * psd) / total  # in log2(Hz)
+    f_centroid_hz = 2**f_centroid_log  # geometric mean in Hz
     f_dev = log_freqs - f_centroid_log
-    f_spread = np.sqrt(np.sum(f_dev**2 * psd) / total)     # in octaves
+    f_spread = np.sqrt(np.sum(f_dev**2 * psd) / total)  # in octaves
     f_skewness = np.sum(f_dev**3 * psd) / (total * f_spread**3 + eps)
     f_kurtosis = np.sum(f_dev**4 * psd) / (total * f_spread**4 + eps) - 3  # Fisher
 
@@ -103,11 +106,17 @@ if __name__ == "__main__":
         log.info("\n  %s:", name)
         log.info(
             "    f_centroid=%s  f_spread=%s  f_skewness=%s  f_kurtosis=%s",
-            m["f_centroid"], m["f_spread"], m["f_skewness"], m["f_kurtosis"],
+            m["f_centroid"],
+            m["f_spread"],
+            m["f_skewness"],
+            m["f_kurtosis"],
         )
         log.info(
             "    t_centroid=%s  t_spread=%s  t_skewness=%s  t_kurtosis=%s",
-            m["t_centroid"], m["t_spread"], m["t_skewness"], m["t_kurtosis"],
+            m["t_centroid"],
+            m["t_spread"],
+            m["t_skewness"],
+            m["t_kurtosis"],
         )
 
     # Print _ref_range calls for easy copy-paste
@@ -123,8 +132,16 @@ if __name__ == "__main__":
         cc_m = analyze(load_wav(cc_path))
         label = kind.upper()
         log.info("\n  %s_REF = {", label)
-        for key in ["f_centroid", "f_spread", "f_skewness", "f_kurtosis",
-                     "t_centroid", "t_spread", "t_skewness", "t_kurtosis"]:
+        for key in [
+            "f_centroid",
+            "f_spread",
+            "f_skewness",
+            "f_kurtosis",
+            "t_centroid",
+            "t_spread",
+            "t_skewness",
+            "t_kurtosis",
+        ]:
             a, b = li_m[key], cc_m[key]
             log.info('      "%s":  _ref_range(%s, %s),', key, a, b)
         log.info("  }")
