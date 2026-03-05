@@ -102,8 +102,13 @@ async function processJsonl(
       continue;
     }
 
-    // Skip proper nouns, single-letter entries, and symbols
-    if (entry.pos === "name" || entry.pos === "character" || entry.pos === "symbol") {
+    // Skip proper nouns, single-letter entries, symbols, and affixes
+    if (["name", "character", "symbol", "suffix", "prefix", "affix", "interfix"].includes(entry.pos)) {
+      continue;
+    }
+
+    // Skip hyphenated fragments (affixes not caught by POS)
+    if (entry.word.startsWith("-") || entry.word.endsWith("-")) {
       continue;
     }
 

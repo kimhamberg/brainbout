@@ -63,7 +63,7 @@ async function loadDict(): Promise<void> {
   const base = import.meta.env.BASE_URL;
   const resp = await fetch(`${base}dict-${lang}.json`);
   dict = (await resp.json()) as DictEntry[];
-  allWords = dict.map((d) => d.word);
+  allWords = [...new Set(dict.map((d) => d.word))];
 }
 
 function pickDistractors(correctWord: string): string[] {
