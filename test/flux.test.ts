@@ -11,13 +11,7 @@ import {
   evaluateResponse,
   updateAdaptation,
 } from "../src/games/flux-engine";
-import type {
-  Rule,
-  Trial,
-  FluxState,
-  StageParams,
-  ResponseResult,
-} from "../src/games/flux-engine";
+import type { Trial } from "../src/games/flux-engine";
 
 describe("STAGE_PARAMS", () => {
   it("has correct values for stage 1", () => {
