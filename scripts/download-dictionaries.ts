@@ -97,6 +97,11 @@ async function processJsonl(
       continue;
     }
 
+    // Skip proper nouns, single-letter entries, and symbols
+    if (entry.pos === "name" || entry.pos === "character" || entry.pos === "symbol") {
+      continue;
+    }
+
     const senses = entry.senses ?? [];
     if (senses.length === 0) {
       noSenses++;
