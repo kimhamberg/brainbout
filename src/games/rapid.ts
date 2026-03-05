@@ -14,6 +14,7 @@ import { randomChess960 } from "../chess960";
 import { StockfishEngine } from "../shared/engine";
 import { computeThinkTime, eloToNodes } from "../shared/think-time";
 import { recordSessionScore } from "../shared/progress";
+import { getStage, recordResult } from "../shared/stages";
 import { initTheme, wireToggle } from "../shared/theme";
 import * as sound from "../shared/sounds";
 
@@ -110,6 +111,7 @@ function updateStatus(text: string): void {
 
 function finishGame(result: number, message: string): void {
   recordSessionScore("rapid", result);
+  recordResult("rapid", result);
 
   const label = result === 1 ? "Won" : result === 0.5 ? "Draw" : "Lost";
 
@@ -321,8 +323,10 @@ async function main(): Promise<void> {
   const setup = parseFen(fen).unwrap();
   pos = Chess.fromSetup(setup).unwrap();
 
-  // Pick random Elo for this game
-  engineElo = 1200 + Math.floor(Math.random() * 601); // [1200, 1800]
+  // Stage-based Elo tiers
+  const stage = getStage("rapid");
+  const eloByStage: Record<number, number> = { 1: 600, 2: 1200, 3: 1600 };
+  engineElo = eloByStage[stage] ?? 1200;
   baseNodes = eloToNodes(engineElo);
 
   clock = createClock({
