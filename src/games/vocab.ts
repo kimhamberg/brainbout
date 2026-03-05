@@ -1,7 +1,7 @@
 import { initTheme, wireToggle } from "../shared/theme";
 import { createTimer } from "../shared/timer";
 import { recordSessionScore, todayString } from "../shared/progress";
-import { getDueWords, recordAnswer, levenshtein } from "./vocab-srs";
+import { getDueWords, recordAnswer } from "./vocab-srs";
 import * as sound from "../shared/sounds";
 
 interface DictEntry {
@@ -27,6 +27,7 @@ const game = getEl("game");
 const lang = "no";
 let dict: DictEntry[] = [];
 let allWords: string[] = [];
+let wordsByPos = new Map<string, string[]>();
 let sessionQueue: DictEntry[] = [];
 let currentEntry: DictEntry | null = null;
 let choices: string[] = [];
@@ -64,35 +65,50 @@ async function loadDict(): Promise<void> {
   const resp = await fetch(`${base}dict-${lang}.json`);
   dict = (await resp.json()) as DictEntry[];
   allWords = [...new Set(dict.map((d) => d.word))];
-}
 
-function pickDistractors(correctWord: string): string[] {
-  const correctLen = correctWord.length;
-  const correctLower = correctWord.toLowerCase();
-  const scored: { word: string; dist: number }[] = [];
-
-  // Sample a random subset to avoid scanning 22K words every round
-  const sampleSize = Math.min(2000, allWords.length);
-  const startIdx = Math.floor(Math.random() * Math.max(1, allWords.length - sampleSize));
-  const sample = allWords.slice(startIdx, startIdx + sampleSize);
-
-  for (const w of sample) {
-    if (w === correctWord) continue;
-    if (Math.abs(w.length - correctLen) > 3) continue;
-    const dist = levenshtein(w.toLowerCase(), correctLower);
-    if (dist > 0 && dist <= 5) {
-      scored.push({ word: w, dist });
+  // Build per-POS index for distractor selection
+  wordsByPos = new Map();
+  for (const d of dict) {
+    const list = wordsByPos.get(d.pos);
+    if (list) {
+      list.push(d.word);
+    } else {
+      wordsByPos.set(d.pos, [d.word]);
     }
   }
+  // Deduplicate each POS list
+  for (const [pos, words] of wordsByPos) {
+    wordsByPos.set(pos, [...new Set(words)]);
+  }
+}
 
-  scored.sort((a, b) => a.dist - b.dist);
-  const picks = scored.slice(0, NUM_CHOICES - 1).map((s) => s.word);
+function pickDistractors(entry: DictEntry): string[] {
+  const picks: string[] = [];
+  const used = new Set([entry.word]);
 
-  // Fallback: similar length words
-  while (picks.length < NUM_CHOICES - 1) {
-    const w = allWords[Math.floor(Math.random() * allWords.length)];
-    if (w !== correctWord && !picks.includes(w)) {
+  // Prefer same-POS words with similar length (harder: semantically plausible)
+  const posPool = wordsByPos.get(entry.pos) ?? allWords;
+  const candidates = posPool.filter(
+    (w) => !used.has(w) && Math.abs(w.length - entry.word.length) <= 3,
+  );
+  shuffleArray(candidates);
+
+  for (const w of candidates) {
+    if (picks.length >= NUM_CHOICES - 1) break;
+    picks.push(w);
+    used.add(w);
+  }
+
+  // Fallback: any word with similar length
+  if (picks.length < NUM_CHOICES - 1) {
+    const fallback = allWords.filter(
+      (w) => !used.has(w) && Math.abs(w.length - entry.word.length) <= 3,
+    );
+    shuffleArray(fallback);
+    for (const w of fallback) {
+      if (picks.length >= NUM_CHOICES - 1) break;
       picks.push(w);
+      used.add(w);
     }
   }
 
@@ -173,7 +189,7 @@ function nextRound(): void {
     buildSessionQueue();
   }
   currentEntry = sessionQueue.shift() ?? dict[0];
-  const distractors = pickDistractors(currentEntry.word);
+  const distractors = pickDistractors(currentEntry);
   choices = shuffleArray([currentEntry.word, ...distractors]);
   roundStart = Date.now();
   inputLocked = false;
@@ -221,6 +237,12 @@ function handleChoice(chosen: string): void {
       feedback.classList.add("wrong");
       feedback.textContent = `Answer: ${currentEntry.word}`;
     }
+    // Re-queue wrong word 3-7 rounds ahead so it comes back soon
+    const reinsert = Math.min(
+      3 + Math.floor(Math.random() * 5),
+      sessionQueue.length,
+    );
+    sessionQueue.splice(reinsert, 0, currentEntry);
     setTimeout(nextRound, WRONG_PAUSE_MS);
   }
 }
