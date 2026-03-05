@@ -203,17 +203,23 @@ document.getElementById("hub")?.addEventListener("click", (e) => {
   const href = card.getAttribute("href");
   if (href === null || href === "") return;
 
-  document.querySelector(".app")?.classList.add("exiting");
+  // Tactile press feedback on the card
+  card.classList.add("pressed");
 
-  const overlay = document.createElement("div");
-  overlay.className = "page-transition";
-  const accent = card.style.getPropertyValue("--accent");
-  overlay.style.setProperty("--transition-color", accent);
-  document.body.appendChild(overlay);
+  // Brief pause for the press to register, then sweep
+  setTimeout(() => {
+    document.querySelector(".app")?.classList.add("exiting");
 
-  overlay.addEventListener("animationend", () => {
-    window.location.href = href;
-  });
+    const overlay = document.createElement("div");
+    overlay.className = "page-transition";
+    const accent = card.style.getPropertyValue("--accent");
+    overlay.style.setProperty("--transition-color", accent);
+    document.body.appendChild(overlay);
+
+    overlay.addEventListener("animationend", () => {
+      window.location.href = href;
+    });
+  }, 80);
 });
 
 initTheme();

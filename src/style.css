@@ -134,28 +134,28 @@ header {
 
 @keyframes content-exit {
   to {
-    transform: translateY(6px) scale(0.99);
+    transform: scale(0.97);
     opacity: 0;
   }
 }
 
-@keyframes overlay-fade-in {
+@keyframes sweep-in {
   from {
-    opacity: 0;
+    transform: scaleX(0);
   }
 
   to {
-    opacity: 1;
+    transform: scaleX(1);
   }
 }
 
-@keyframes overlay-fade-out {
+@keyframes sweep-out {
   from {
-    opacity: 1;
+    transform: scaleX(1);
   }
 
   to {
-    opacity: 0;
+    transform: scaleX(0);
   }
 }
 
@@ -166,7 +166,7 @@ header {
     }
   }
 
-  @keyframes overlay-fade-in {
+  @keyframes sweep-in {
     from {
       opacity: 1;
     }
@@ -176,7 +176,7 @@ header {
     }
   }
 
-  @keyframes overlay-fade-out {
+  @keyframes sweep-out {
     from {
       opacity: 0;
     }
@@ -188,7 +188,7 @@ header {
 }
 
 .app.exiting {
-  animation: content-exit 220ms ease-out forwards;
+  animation: content-exit 280ms cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 
 .page-transition {
@@ -197,10 +197,11 @@ header {
   position: fixed;
   z-index: 9999;
   inset: 0;
+  transform-origin: left center;
 
   background: var(--transition-color, var(--ctp-blue));
 
-  animation: overlay-fade-in 280ms ease-out 40ms both;
+  animation: sweep-in 320ms cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
 .page-enter-overlay {
@@ -209,8 +210,9 @@ header {
   position: fixed;
   z-index: 9999;
   inset: 0;
+  transform-origin: right center;
 
   background: var(--game-accent, var(--ctp-blue));
 
-  animation: overlay-fade-out 320ms ease-in-out 60ms both;
+  animation: sweep-out 380ms cubic-bezier(0.4, 0, 0.2, 1) 40ms both;
 }
