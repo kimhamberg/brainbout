@@ -46,6 +46,11 @@ const FORM_OF_GLOSS = [
   /^imperative of /i,
   /^gerund of /i,
   /^singular .+ form of /i,
+  /^form removed /i,
+  /^nonstandard spelling of /i,
+  /^(abbreviation|initialism|acronym) of /i,
+  /^clipping of /i,
+  /^contraction of /i,
 ];
 
 function isFormOf(sense: KaikkiSense): boolean {

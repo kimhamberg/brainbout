@@ -45,6 +45,10 @@ describe("dict-no.json", () => {
       /^imperative of /i,
       /^supine of /i,
       /^gerund of /i,
+      /^form removed /i,
+      /^(abbreviation|initialism|acronym) of /i,
+      /^clipping of /i,
+      /^contraction of /i,
     ];
     for (const entry of dict.slice(0, 1000)) {
       for (const pattern of formOfPatterns) {
