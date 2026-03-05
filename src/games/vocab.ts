@@ -37,6 +37,7 @@ let currentRemaining = DURATION;
 let timerRef: ReturnType<typeof createTimer> | null = null;
 let roundStart = 0;
 let inputLocked = false;
+let gameOver = false;
 
 function shuffleArray<T>(arr: T[]): T[] {
   for (let i = arr.length - 1; i > 0; i--) {
@@ -194,6 +195,7 @@ function renderRound(): void {
 }
 
 function nextRound(): void {
+  if (gameOver) return;
   if (sessionQueue.length === 0) {
     buildSessionQueue();
   }
@@ -206,7 +208,7 @@ function nextRound(): void {
 }
 
 function handleChoice(chosen: string): void {
-  if (inputLocked || !currentEntry) return;
+  if (gameOver || inputLocked || !currentEntry) return;
   inputLocked = true;
 
   const correct = chosen === currentEntry.word;
@@ -257,6 +259,7 @@ function handleChoice(chosen: string): void {
 }
 
 function showResult(): void {
+  gameOver = true;
   const finalScore = Math.floor(score);
   recordSessionScore("vocab", finalScore);
 
@@ -279,6 +282,7 @@ async function startGame(): Promise<void> {
   streak = 0;
   currentRemaining = DURATION;
   inputLocked = false;
+  gameOver = false;
 
   if (timerRef) timerRef.stop();
 
