@@ -6,6 +6,8 @@ import {
   getDueWords,
   levenshtein,
   BOX_INTERVALS,
+  getMastery,
+  getMasteryStreak,
 } from "../src/games/vocab-srs";
 
 beforeEach(() => {
@@ -78,6 +80,41 @@ describe("recordAnswer", () => {
     }
     const state = getWordState("no", "tapper");
     expect(state.box).toBeLessThanOrEqual(maxBox);
+  });
+});
+
+describe("mastery tracking", () => {
+  it("returns mastery 0 for unknown words", () => {
+    expect(getMastery("no", "tapper")).toBe(0);
+  });
+
+  it("increments mastery streak on correct answer", () => {
+    recordAnswer("no", "tapper", true, "2026-02-27");
+    expect(getMasteryStreak("no", "tapper")).toBe(1);
+  });
+
+  it("promotes mastery after 3 consecutive correct", () => {
+    for (let i = 0; i < 3; i++) {
+      recordAnswer("no", "tapper", true, `2026-03-0${String(i + 1)}`);
+    }
+    expect(getMastery("no", "tapper")).toBe(1);
+  });
+
+  it("resets streak on wrong answer without demoting", () => {
+    for (let i = 0; i < 3; i++) {
+      recordAnswer("no", "tapper", true, `2026-03-0${String(i + 1)}`);
+    }
+    expect(getMastery("no", "tapper")).toBe(1);
+    recordAnswer("no", "tapper", false, "2026-03-04");
+    expect(getMastery("no", "tapper")).toBe(1); // no demotion
+    expect(getMasteryStreak("no", "tapper")).toBe(0);
+  });
+
+  it("caps mastery at 2", () => {
+    for (let i = 0; i < 9; i++) {
+      recordAnswer("no", "tapper", true, `2026-03-${String(i + 1).padStart(2, "0")}`);
+    }
+    expect(getMastery("no", "tapper")).toBe(2);
   });
 });
 
