@@ -13,6 +13,7 @@
 ### Task 1: Add checkmate tracking to progress.ts
 
 **Files:**
+
 - Modify: `src/shared/progress.ts`
 - Modify: `test/progress.test.ts`
 
@@ -86,6 +87,7 @@ git commit -m "feat: track checkmate wins per Elo tier"
 ### Task 2: Add mastered word count to cipher-srs.ts
 
 **Files:**
+
 - Modify: `src/games/cipher-srs.ts`
 - Modify: `test/cipher-srs.test.ts`
 
@@ -160,6 +162,7 @@ git commit -m "feat: add getMasteredCount for Cipher word mastery"
 ### Task 3: Record checkmates in crown.ts
 
 **Files:**
+
 - Modify: `src/games/crown.ts`
 
 **Step 1: Add import**
@@ -207,6 +210,7 @@ git commit -m "feat: record checkmate wins per Elo in Crown"
 ### Task 4: Redesign hub header to centered layout
 
 **Files:**
+
 - Modify: `index.html`
 - Modify: `src/hub.css`
 - Modify: `src/style.css`
@@ -312,6 +316,7 @@ git commit -m "feat: centered hub header with large brain icon"
 ### Task 5: Expand game cards with taglines and per-game stats
 
 **Files:**
+
 - Modify: `src/hub.ts`
 - Modify: `src/hub.css`
 
@@ -343,7 +348,9 @@ function getGameStat(game: string): string | null {
     const eloByStage = [0, 600, 1200, 1600];
     const elo = eloByStage[stage] ?? 1200;
     const mates = getCheckmates(elo);
-    return mates > 0 ? `${String(mates)} checkmate${mates === 1 ? "" : "s"} at ${String(elo)} Elo` : null;
+    return mates > 0
+      ? `${String(mates)} checkmate${mates === 1 ? "" : "s"} at ${String(elo)} Elo`
+      : null;
   }
   if (game === "flux") {
     const best = getBest("flux");
@@ -351,7 +358,9 @@ function getGameStat(game: string): string | null {
   }
   if (game === "cipher") {
     const mastered = getMasteredCount("no");
-    return mastered > 0 ? `${String(mastered)} word${mastered === 1 ? "" : "s"} mastered` : null;
+    return mastered > 0
+      ? `${String(mastered)} word${mastered === 1 ? "" : "s"} mastered`
+      : null;
   }
   return null;
 }
@@ -445,6 +454,7 @@ git commit -m "feat: game cards with taglines and per-game stats"
 ### Task 6: Remove details panel, add footer
 
 **Files:**
+
 - Modify: `src/hub.ts`
 - Modify: `src/hub.css`
 

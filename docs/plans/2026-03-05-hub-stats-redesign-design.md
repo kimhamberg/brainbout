@@ -19,11 +19,13 @@ Each card grows from 1 line to 3 lines:
 - **Line 3:** Key stat in the game's accent color (hidden until first play)
 
 Taglines:
+
 - Crown: "Outsmart Stockfish"
 - Flux: "Think fast, switch faster"
 - Cipher: "Crack the Norwegian code"
 
 Per-game stats:
+
 - Crown: "X checkmates at Y Elo" — tracks checkmate wins at each Elo tier
 - Flux: "Best: X pts" — existing best score
 - Cipher: "X words mastered" — count of words with mastery >= threshold

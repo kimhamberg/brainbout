@@ -46,8 +46,8 @@
 
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 0.25rem;
+  align-items: center;
 
   margin-bottom: 1rem;
   padding-top: 0.5rem;
@@ -87,6 +87,7 @@
   flex-wrap: wrap;
   gap: 0.75rem;
   justify-content: center;
+
   margin-bottom: 1rem;
 }
 
@@ -121,17 +122,6 @@
       opacity: 0;
     }
   }
-
-  .game-card {
-    & .game-play {
-      display: none;
-    }
-
-    & .game-icon,
-    & .game-name {
-      transition: color var(--dur-250) ease;
-    }
-  }
 }
 
 .game-list {
@@ -152,8 +142,8 @@
 
   overflow: hidden;
   display: flex;
-  gap: 0.75rem;
-  align-items: center;
+  flex-direction: column;
+  gap: 0.25rem;
 
   padding: 0.75rem;
   border-left: 4px solid var(--accent, var(--ctp-surface1));
@@ -176,44 +166,18 @@
   animation: card-enter var(--dur-350) ease both;
   animation-delay: calc(var(--i, 0) * 60ms);
 
-  & .game-play {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0.75rem;
-    transform: translateX(-1rem);
-
-    display: flex;
-    align-items: center;
-
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--accent, var(--ctp-subtext0));
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-
-    opacity: 0;
-
-    transition:
-      transform var(--dur-250) ease,
-      opacity var(--dur-250) ease;
-  }
-
   & .game-icon {
     display: flex;
     flex-shrink: 0;
     color: var(--accent, var(--ctp-subtext0));
-    transition:
-      color var(--dur-250) ease,
-      transform var(--dur-250) ease;
+    transition: color var(--dur-250) ease;
   }
 
   & .game-name {
     flex: 1;
     font-size: 1rem;
-    transition:
-      color var(--dur-250) ease,
-      transform var(--dur-250) ease;
+    font-weight: 600;
+    transition: color var(--dur-250) ease;
   }
 
   & .game-check {
@@ -228,19 +192,9 @@
   &:hover:not(.done) {
     transform: translateY(-1px);
     background-size:
-      calc(0.75rem + 18px + 3.5rem) 100%,
+      100% 100%,
       auto;
     box-shadow: var(--ctp-shadow-lg);
-
-    & .game-play {
-      transform: translateX(0);
-      opacity: 1;
-    }
-
-    & .game-icon,
-    & .game-name {
-      transform: translateX(3rem);
-    }
   }
 
   &:active:not(.done) {
@@ -255,6 +209,25 @@
       auto;
     box-shadow: 0 0 0 2px var(--accent, var(--ctp-surface1));
   }
+}
+
+.game-card-top {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.game-tagline {
+  font-size: 0.75rem;
+  color: var(--ctp-subtext0);
+  transition: color var(--dur-250) ease;
+}
+
+.game-stat {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent, var(--ctp-subtext0));
+  transition: color var(--dur-250) ease;
 }
 
 .new-session-btn {
@@ -293,133 +266,14 @@
   }
 }
 
-/* --- Session summary --- */
+.hub-footer {
+  padding-top: 0.5rem;
 
-.session-summary {
-  margin-bottom: 1rem;
+  font-size: 0.75rem;
+  color: var(--ctp-subtext0);
   text-align: center;
 
-  & h2 {
-    margin-bottom: 0.75rem;
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: var(--ctp-green);
-  }
-}
-
-.session-scores {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-/* --- Stats panel --- */
-
-.stats-panel {
-  margin-top: 1.5rem;
-
-  & summary {
-    cursor: pointer;
-
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-
-    padding: 0.5rem 0;
-
-    font-size: 0.875rem;
-    color: var(--ctp-subtext0);
-    list-style: none;
-
-    transition: color var(--dur-150) ease;
-  }
-}
-
-.stats-panel summary::-webkit-details-marker {
-  display: none;
-}
-
-.stats-panel summary::before {
-  content: "";
-
-  transform: rotate(-45deg);
-
-  display: inline-block;
-  flex-shrink: 0;
-
-  width: 0.45em;
-  height: 0.45em;
-  border-right: 2px solid currentcolor;
-  border-bottom: 2px solid currentcolor;
-
-  transition: transform var(--dur-200) ease;
-}
-
-.stats-panel[open] summary::before {
-  transform: rotate(45deg);
-}
-
-.stats-panel summary:hover {
-  color: var(--ctp-text);
-}
-
-.stats-panel[open] summary {
-  margin-bottom: 0.75rem;
-}
-
-.stats-content h3 {
-  margin-top: 0.75rem;
-  margin-bottom: 0.5rem;
-
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--ctp-subtext0);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-
-  &:first-child {
-    margin-top: 0;
-  }
-}
-
-.stats-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.stat-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  padding: 0.25rem 0;
-
-  font-size: 0.875rem;
-
-  .session-scores & {
-    padding: 0.25rem 0;
-    font-size: 0.875rem;
-  }
-}
-
-.stat-value {
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  color: var(--ctp-text);
   transition: color var(--dur-250) ease;
-}
-
-.stat-total {
-  margin-top: 0.75rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid var(--ctp-surface1);
-
-  color: var(--ctp-subtext0);
-
-  transition:
-    color var(--dur-250) ease,
-    border-color var(--dur-250) ease;
 }
 
 /* --- Stage & readiness --- */
@@ -432,9 +286,9 @@
 .readiness-dot {
   display: inline-block;
 
-  width: 32px;
-  height: 32px;
-  margin-left: 0.5rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-left: 0.25rem;
   border-radius: 50%;
 
   vertical-align: middle;

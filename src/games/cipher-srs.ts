@@ -100,7 +100,7 @@ export function getMasteredCount(lang: string): number {
   let count = 0;
   for (let i = 0; i < localStorage.length; i++) {
     const k = localStorage.key(i);
-    if (k !== null && k.startsWith(prefix)) {
+    if (k?.startsWith(prefix) === true) {
       const raw = localStorage.getItem(k);
       if (raw !== null) {
         const parsed = JSON.parse(raw) as Partial<WordState>;

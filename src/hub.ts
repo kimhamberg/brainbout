@@ -7,10 +7,11 @@ import {
   getSessionsToday,
   getTotalSessions,
   getBest,
-  getTodayBest,
+  getCheckmates,
   completeSession,
 } from "./shared/progress";
 import { getStage, readiness, advance, retreat } from "./shared/stages";
+import { getMasteredCount } from "./games/cipher-srs";
 
 const GAME_LABELS: Record<string, string> = {
   crown: "Crown",
@@ -36,19 +37,39 @@ const GAME_ACCENTS: Record<string, string> = {
   cipher: "var(--ctp-green)",
 };
 
+const GAME_TAGLINES: Record<string, string> = {
+  crown: "Outsmart Stockfish",
+  flux: "Think fast, switch faster",
+  cipher: "Crack the Norwegian code",
+};
+
 const READINESS_THRESHOLDS: Record<string, number> = {
   crown: 0.6,
   flux: 0.8,
   cipher: 0.8,
 };
 
-function formatScore(game: string, score: number): string {
+function getGameStat(game: string): string | null {
   if (game === "crown") {
-    if (score === 1) return "Won";
-    if (score === 0.5) return "Draw";
-    return "Lost";
+    const stage = getStage(game);
+    const eloByStage = [0, 600, 1200, 1600];
+    const elo = eloByStage[stage] ?? 1200;
+    const mates = getCheckmates(elo);
+    return mates > 0
+      ? `${String(mates)} checkmate${mates === 1 ? "" : "s"} at ${String(elo)} Elo`
+      : null;
   }
-  return String(score);
+  if (game === "flux") {
+    const best = getBest("flux");
+    return best !== null ? `Best: ${String(best)} pts` : null;
+  }
+  if (game === "cipher") {
+    const mastered = getMasteredCount("no");
+    return mastered > 0
+      ? `${String(mastered)} word${mastered === 1 ? "" : "s"} mastered`
+      : null;
+  }
+  return null;
 }
 
 // --- Session state (in-memory, persisted via sessionStorage across page navigations) ---
@@ -120,75 +141,49 @@ function render(): void {
     const stage = getStage(game);
     const threshold = READINESS_THRESHOLDS[game] ?? 0.8;
     const ready = readiness(game, threshold);
+    const tagline = GAME_TAGLINES[game];
+    const stat = getGameStat(game);
+
+    // Line 1: icon + name + stage + readiness + controls
+    let line1 = `<span class="game-icon">${GAME_ICONS[game]}</span>`;
+    line1 += `<span class="game-name">${GAME_LABELS[game]}</span>`;
+    line1 += `<span class="game-stage">\u00b7 Stage ${String(stage)}</span>`;
+    line1 += `<span class="readiness-dot readiness-${ready}"></span>`;
+    if (done) {
+      line1 += `<span class="game-check">\u2713</span>`;
+    } else {
+      if (ready === "green")
+        line1 += `<button class="advance-btn" data-game="${game}">Advance \u25b8</button>`;
+      if (stage > 1)
+        line1 += `<button class="retreat-btn" data-game="${game}">\u25be</button>`;
+    }
+
+    // Line 2: tagline
+    const line2 = `<span class="game-tagline">${tagline}</span>`;
+
+    // Line 3: per-game stat (only if data exists)
+    const line3 = stat !== null ? `<span class="game-stat">${stat}</span>` : "";
+
+    const inner = `<div class="game-card-top">${line1}</div>${line2}${line3}`;
 
     if (done) {
-      html += `<div class="game-card ${cls}" style="${style}">`;
-      html += `<span class="game-icon">${GAME_ICONS[game]}</span>`;
-      html += `<span class="game-name">${GAME_LABELS[game]}</span>`;
-      html += `<span class="game-stage">\u00b7 Stage ${String(stage)}</span>`;
-      html += `<span class="readiness-dot readiness-${ready}"></span>`;
-      html += `<span class="game-check">\u2713</span>`;
-      html += `</div>`;
+      html += `<div class="game-card ${cls}" style="${style}">${inner}</div>`;
     } else {
-      html += `<a href="${GAME_URLS[game]}" class="game-card ${cls}" style="${style}">`;
-      html += `<span class="game-play">Play</span>`;
-      html += `<span class="game-icon">${GAME_ICONS[game]}</span>`;
-      html += `<span class="game-name">${GAME_LABELS[game]}</span>`;
-      html += `<span class="game-stage">\u00b7 Stage ${String(stage)}</span>`;
-      html += `<span class="readiness-dot readiness-${ready}"></span>`;
-      if (ready === "green")
-        html += `<button class="advance-btn" data-game="${game}">Advance \u25b8</button>`;
-      if (stage > 1)
-        html += `<button class="retreat-btn" data-game="${game}">\u25be</button>`;
-      html += `</a>`;
+      html += `<a href="${GAME_URLS[game]}" class="game-card ${cls}" style="${style}">${inner}</a>`;
     }
   }
   html += `</div>`;
-
-  // Session completion summary
-  if (sessionJustCompleted) {
-    html += `<div class="session-summary">`;
-    html += `<h2>Session Complete!</h2>`;
-    html += `<div class="session-scores">`;
-    for (const game of GAMES) {
-      const best = getTodayBest(game);
-      html += `<div class="stat-row"><span>${GAME_LABELS[game]}</span><span class="stat-value">${best !== null ? formatScore(game, best) : "\u2014"}</span></div>`;
-    }
-    html += `</div></div>`;
-  }
 
   // Action button
   if (sessionJustCompleted) {
     html += `<button class="new-session-btn">New Session</button>`;
   }
 
-  // Collapsible stats
-  html += `<details class="stats-panel">`;
-  html += `<summary>Stats</summary>`;
-  html += `<div class="stats-content">`;
-
-  html += `<h3>All-time best</h3>`;
-  html += `<div class="stats-grid">`;
-  for (const game of GAMES) {
-    const best = getBest(game);
-    html += `<div class="stat-row"><span>${GAME_LABELS[game]}</span><span class="stat-value">${best !== null ? formatScore(game, best) : "\u2014"}</span></div>`;
+  // Footer
+  const totalSessions = getTotalSessions();
+  if (totalSessions > 0) {
+    html += `<div class="hub-footer">${String(totalSessions)} session${totalSessions === 1 ? "" : "s"} completed</div>`;
   }
-  html += `</div>`;
-
-  const hasTodayBests = GAMES.some((g) => getTodayBest(g) !== null);
-  if (hasTodayBests) {
-    html += `<h3>Today's best</h3>`;
-    html += `<div class="stats-grid">`;
-    for (const game of GAMES) {
-      const todayBest = getTodayBest(game);
-      html += `<div class="stat-row"><span>${GAME_LABELS[game]}</span><span class="stat-value">${todayBest !== null ? formatScore(game, todayBest) : "\u2014"}</span></div>`;
-    }
-    html += `</div>`;
-  }
-
-  html += `<div class="stat-row stat-total"><span>Total sessions</span><span class="stat-value">${String(getTotalSessions())}</span></div>`;
-
-  html += `</div></details>`;
 
   hub.innerHTML = html;
 }
