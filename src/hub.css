@@ -180,11 +180,6 @@
     transition: color var(--dur-250) ease;
   }
 
-  & .game-check {
-    color: var(--ctp-green);
-    transition: color var(--dur-250) ease;
-  }
-
   &.done {
     opacity: 0.6;
   }
@@ -278,84 +273,56 @@
 
 /* --- Stage & readiness --- */
 
-.game-stage {
+.game-card-right {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.stage-chip {
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+
   font-size: 0.75rem;
   color: var(--ctp-subtext0);
+
+  background: var(--ctp-surface1);
+
+  transition:
+    background-color var(--dur-250) ease,
+    color var(--dur-250) ease;
+
+  &.readiness-amber {
+    color: var(--ctp-peach);
+  }
+
+  &.readiness-green {
+    color: var(--ctp-green);
+  }
 }
 
-.readiness-dot {
-  display: inline-block;
+.done-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-  width: 0.5rem;
-  height: 0.5rem;
-  margin-left: 0.25rem;
+  width: 1.5rem;
+  height: 1.5rem;
   border-radius: 50%;
 
-  vertical-align: middle;
+  font-size: 0.75rem;
+  color: var(--ctp-green);
 
-  background: var(--ctp-overlay0);
+  background: color-mix(in srgb, var(--ctp-green) 12%, var(--ctp-surface1));
 
-  transition: background-color var(--dur-250) ease;
-}
-
-.readiness-grey {
-  background: var(--ctp-overlay0);
-}
-
-@keyframes readiness-pulse {
-  0%,
-  100% {
-    opacity: 0.6;
-  }
-
-  50% {
-    opacity: 1;
-  }
-}
-
-.readiness-amber {
-  background: var(--ctp-peach);
-  animation: readiness-pulse 2s ease-in-out infinite;
-}
-
-@keyframes readiness-glow {
-  0%,
-  100% {
-    box-shadow: 0 0 4px var(--ctp-green);
-  }
-
-  50% {
-    box-shadow: 0 0 8px var(--ctp-green);
-  }
-}
-
-.readiness-green {
-  background: var(--ctp-green);
-  animation: readiness-glow 2s ease-in-out infinite;
-}
-
-@media (--motion-reduce) {
-  @keyframes readiness-pulse {
-    0%,
-    50%,
-    100% {
-      opacity: 1;
-    }
-  }
-
-  @keyframes readiness-glow {
-    0%,
-    50%,
-    100% {
-      box-shadow: 0 0 4px var(--ctp-green);
-    }
-  }
+  transition:
+    background-color var(--dur-250) ease,
+    color var(--dur-250) ease;
 }
 
 .advance-btn {
   cursor: pointer;
 
-  margin-left: auto;
   padding: 0.25rem 0.5rem;
   border: 1px solid var(--ctp-green);
   border-radius: 4px;
