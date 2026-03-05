@@ -8,6 +8,7 @@ import {
   BOX_INTERVALS,
   getMastery,
   getMasteryStreak,
+  getMasteredCount,
 } from "../src/games/cipher-srs";
 
 beforeEach(() => {
@@ -120,6 +121,21 @@ describe("mastery tracking", () => {
       );
     }
     expect(getMastery("no", "tapper")).toBe(2);
+  });
+});
+
+describe("getMasteredCount", () => {
+  it("returns 0 with no data", () => {
+    expect(getMasteredCount("no")).toBe(0);
+  });
+
+  it("counts words at max mastery", () => {
+    const today = "2026-03-05";
+    // 6 correct answers = mastery 2 (3 for mastery 1, 3 more for mastery 2)
+    for (let i = 0; i < 6; i++) recordAnswer("no", "hund", true, today);
+    for (let i = 0; i < 6; i++) recordAnswer("no", "katt", true, today);
+    recordAnswer("no", "bil", true, today); // only 1 correct, not mastered
+    expect(getMasteredCount("no")).toBe(2);
   });
 });
 

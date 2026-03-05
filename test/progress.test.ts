@@ -10,6 +10,8 @@ import {
   getTotalSessions,
   getStreak,
   todayString,
+  recordCheckmate,
+  getCheckmates,
 } from "../src/shared/progress";
 
 beforeEach(() => {
@@ -81,6 +83,26 @@ describe("getStreak", () => {
 describe("todayString", () => {
   it("returns YYYY-MM-DD format", () => {
     expect(todayString()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+});
+
+describe("checkmate tracking", () => {
+  it("returns 0 for untracked elo", () => {
+    expect(getCheckmates(600)).toBe(0);
+  });
+
+  it("increments checkmate count", () => {
+    recordCheckmate(1200);
+    recordCheckmate(1200);
+    expect(getCheckmates(1200)).toBe(2);
+  });
+
+  it("tracks different elos independently", () => {
+    recordCheckmate(600);
+    recordCheckmate(1200);
+    recordCheckmate(1200);
+    expect(getCheckmates(600)).toBe(1);
+    expect(getCheckmates(1200)).toBe(2);
   });
 });
 

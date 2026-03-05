@@ -95,6 +95,22 @@ export function getDueWords(
   });
 }
 
+export function getMasteredCount(lang: string): number {
+  const prefix = `${PREFIX}:${lang}:`;
+  let count = 0;
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k !== null && k.startsWith(prefix)) {
+      const raw = localStorage.getItem(k);
+      if (raw !== null) {
+        const parsed = JSON.parse(raw) as Partial<WordState>;
+        if ((parsed.mastery ?? 0) >= MAX_MASTERY) count++;
+      }
+    }
+  }
+  return count;
+}
+
 export function levenshtein(a: string, b: string): number {
   const m = a.length;
   const n = b.length;

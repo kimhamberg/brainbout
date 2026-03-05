@@ -66,6 +66,16 @@ export function completeSession(): void {
   localStorage.setItem(key("total-sessions"), String(total + 1));
 }
 
+export function getCheckmates(elo: number): number {
+  const val = localStorage.getItem(key("checkmates", String(elo)));
+  return val === null ? 0 : Number(val);
+}
+
+export function recordCheckmate(elo: number): void {
+  const count = getCheckmates(elo);
+  localStorage.setItem(key("checkmates", String(elo)), String(count + 1));
+}
+
 export function getStreak(today: string): number {
   let streak = 0;
   const d = new Date(today + "T00:00:00");
