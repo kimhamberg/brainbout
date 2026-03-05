@@ -7,6 +7,7 @@ Analyzes move and capture sounds from all three sources and prints
 detailed spectral characteristics.
 """
 
+import logging
 import subprocess
 import tempfile
 from pathlib import Path
@@ -14,6 +15,9 @@ from pathlib import Path
 import numpy as np
 from scipy.io import wavfile
 from scipy.signal import spectrogram, welch
+
+logging.basicConfig(level=logging.INFO, format="%(message)s")
+log = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -177,44 +181,46 @@ def analyze(name: str, sr: int, data: np.ndarray) -> dict:
     }
 
 
-def print_analysis(results: dict) -> None:
-    """Pretty-print analysis results."""
-    print(f"\n{'=' * 70}")
-    print(f"  {results['name']}")
-    print(f"{'=' * 70}")
-    print(f"  Duration:           {results['duration_ms']:.1f} ms")
-    print(f"  Peak:               {results['peak_db']:.1f} dBFS")
-    print(f"  RMS:                {results['rms_db']:.1f} dBFS")
-    print(f"  Crest factor:       {results['crest_factor_db']:.1f} dB")
-    print(f"  Attack time:        {results['attack_ms']:.2f} ms")
-    print(f"  Decay time (-20dB): {results['decay_ms']:.1f} ms")
-    print()
-    print(f"  Spectral centroid:  {results['spectral_centroid_hz']:.0f} Hz")
-    print(f"  Spectral bandwidth: {results['spectral_bandwidth_hz']:.0f} Hz")
-    print(f"  Spectral rolloff:   {results['spectral_rolloff_hz']:.0f} Hz")
-    print(f"  Spectral flatness:  {results['spectral_flatness']:.4f}  (0=tonal, 1=noise)")
-    print()
-    print(f"  Temporal brightness:")
-    print(f"    Early centroid:   {results['early_centroid_hz']:.0f} Hz")
-    print(f"    Late centroid:    {results['late_centroid_hz']:.0f} Hz")
-    print(f"    Brightness decay: {results['brightness_decay']:.0f} Hz")
-    print()
-    print("  Frequency band energy distribution:")
+def log_analysis(results: dict) -> None:
+    """Log analysis results."""
+    log.info("\n%s", "=" * 70)
+    log.info("  %s", results["name"])
+    log.info("%s", "=" * 70)
+    log.info("  Duration:           %.1f ms", results["duration_ms"])
+    log.info("  Peak:               %.1f dBFS", results["peak_db"])
+    log.info("  RMS:                %.1f dBFS", results["rms_db"])
+    log.info("  Crest factor:       %.1f dB", results["crest_factor_db"])
+    log.info("  Attack time:        %.2f ms", results["attack_ms"])
+    log.info("  Decay time (-20dB): %.1f ms", results["decay_ms"])
+    log.info("")
+    log.info("  Spectral centroid:  %.0f Hz", results["spectral_centroid_hz"])
+    log.info("  Spectral bandwidth: %.0f Hz", results["spectral_bandwidth_hz"])
+    log.info("  Spectral rolloff:   %.0f Hz", results["spectral_rolloff_hz"])
+    log.info(
+        "  Spectral flatness:  %.4f  (0=tonal, 1=noise)", results["spectral_flatness"]
+    )
+    log.info("")
+    log.info("  Temporal brightness:")
+    log.info("    Early centroid:   %.0f Hz", results["early_centroid_hz"])
+    log.info("    Late centroid:    %.0f Hz", results["late_centroid_hz"])
+    log.info("    Brightness decay: %.0f Hz", results["brightness_decay"])
+    log.info("")
+    log.info("  Frequency band energy distribution:")
     for band, pct in results["bands_pct"].items():
         label = band.replace("_", " ").title()
         bar = "█" * int(pct / 2) + "░" * max(0, 50 - int(pct / 2))
-        print(f"    {label:22s} {bar} {pct:5.1f}%")
-    print()
-    print("  Top 5 peak frequencies:")
+        log.info("    %-22s %s %5.1f%%", label, bar, pct)
+    log.info("")
+    log.info("  Top 5 peak frequencies:")
     for freq, db in results["peak_freqs"]:
-        print(f"    {freq:8.1f} Hz  ({db:+.1f} dB)")
+        log.info("    %8.1f Hz  (%+.1f dB)", freq, db)
 
 
 def compare(label: str, ours: dict, lichess: dict, chesscom: dict) -> None:
-    """Print side-by-side comparison."""
-    print(f"\n{'#' * 70}")
-    print(f"  COMPARISON: {label}")
-    print(f"{'#' * 70}")
+    """Log side-by-side comparison."""
+    log.info("\n%s", "#" * 70)
+    log.info("  COMPARISON: %s", label)
+    log.info("%s", "#" * 70)
 
     metrics = [
         ("Duration (ms)", "duration_ms", ".1f"),
@@ -231,24 +237,28 @@ def compare(label: str, ours: dict, lichess: dict, chesscom: dict) -> None:
         ("Late centroid (Hz)", "late_centroid_hz", ".0f"),
     ]
 
-    print(f"\n  {'Metric':25s} {'Ours':>12s} {'Lichess':>12s} {'Chess.com':>12s}")
-    print(f"  {'-' * 25} {'-' * 12} {'-' * 12} {'-' * 12}")
+    log.info(
+        "\n  %-25s %12s %12s %12s", "Metric", "Ours", "Lichess", "Chess.com"
+    )
+    log.info("  %s %s %s %s", "-" * 25, "-" * 12, "-" * 12, "-" * 12)
     for label_m, key, fmt in metrics:
         v1 = format(ours[key], fmt)
         v2 = format(lichess[key], fmt)
         v3 = format(chesscom[key], fmt)
-        print(f"  {label_m:25s} {v1:>12s} {v2:>12s} {v3:>12s}")
+        log.info("  %-25s %12s %12s %12s", label_m, v1, v2, v3)
 
     # Band comparison
-    print(f"\n  Band energy (%):")
-    print(f"  {'Band':25s} {'Ours':>12s} {'Lichess':>12s} {'Chess.com':>12s}")
-    print(f"  {'-' * 25} {'-' * 12} {'-' * 12} {'-' * 12}")
+    log.info("\n  Band energy (%%):")
+    log.info(
+        "  %-25s %12s %12s %12s", "Band", "Ours", "Lichess", "Chess.com"
+    )
+    log.info("  %s %s %s %s", "-" * 25, "-" * 12, "-" * 12, "-" * 12)
     for band in ours["bands_pct"]:
         label_b = band.replace("_", " ").title()
         v1 = f"{ours['bands_pct'][band]:.1f}"
         v2 = f"{lichess['bands_pct'][band]:.1f}"
         v3 = f"{chesscom['bands_pct'][band]:.1f}"
-        print(f"  {label_b:25s} {v1:>12s} {v2:>12s} {v3:>12s}")
+        log.info("  %-25s %12s %12s %12s", label_b, v1, v2, v3)
 
 
 def main() -> None:
@@ -270,12 +280,12 @@ def main() -> None:
         results = {}
         for source, path in files.items():
             if not path.exists():
-                print(f"  SKIP: {path} not found")
+                log.info("  SKIP: %s not found", path)
                 continue
             sr, data = load_wav(path)
             label = f"{source.upper()} {sound_type}"
             r = analyze(label, sr, data)
-            print_analysis(r)
+            log_analysis(r)
             results[source] = r
 
         if len(results) == 3:
@@ -287,15 +297,15 @@ def main() -> None:
             )
 
     # Summary recommendations
-    print(f"\n{'=' * 70}")
-    print("  SYNTHESIS RECOMMENDATIONS")
-    print(f"{'=' * 70}")
-    print("""
-  Based on the spectral comparison above, note these key differences
-  between our synthesized sounds and the recorded reference sounds.
-  The analysis covers: attack characteristics, spectral content,
-  dynamic range, duration, and timbral evolution over time.
-    """)
+    log.info("\n%s", "=" * 70)
+    log.info("  SYNTHESIS RECOMMENDATIONS")
+    log.info("%s", "=" * 70)
+    log.info(
+        "\n  Based on the spectral comparison above, note these key differences"
+        "\n  between our synthesized sounds and the recorded reference sounds."
+        "\n  The analysis covers: attack characteristics, spectral content,"
+        "\n  dynamic range, duration, and timbral evolution over time.\n"
+    )
 
 
 if __name__ == "__main__":

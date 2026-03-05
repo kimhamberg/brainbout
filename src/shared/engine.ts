@@ -52,7 +52,7 @@ export class StockfishEngine {
     return this.ready;
   }
 
-  public async init(elo: number = 1500): Promise<void> {
+  public async init(elo = 1500): Promise<void> {
     const base = import.meta.env.BASE_URL;
     return new Promise((resolve) => {
       this.worker = new Worker(`${base}stockfish/stockfish-18-lite-single.js`);
@@ -91,9 +91,10 @@ export class StockfishEngine {
     this.infoLines = [];
     const movesStr = moves.length > 0 ? ` moves ${moves.join(" ")}` : "";
     this.send(`position fen ${startFen}${movesStr}`);
-    const searchCmd = options?.nodes
-      ? `go nodes ${options.nodes}`
-      : "go depth 8";
+    const searchCmd =
+      options?.nodes != null && options.nodes > 0
+        ? `go nodes ${options.nodes}`
+        : "go depth 8";
     this.send(searchCmd);
   }
 
@@ -111,15 +112,15 @@ export class StockfishEngine {
     this.worker = null;
   }
 
-  private send(cmd: string): void {
-    this.worker?.postMessage(cmd);
-  }
-
   public getEvalSwing(): number {
     if (this.infoLines.length < 2) return 0;
     const prev = this.infoLines[this.infoLines.length - 2];
     const curr = this.infoLines[this.infoLines.length - 1];
     return computeEvalSwing(prev, curr);
+  }
+
+  private send(cmd: string): void {
+    this.worker?.postMessage(cmd);
   }
 
   private handleLine(line: string): void {

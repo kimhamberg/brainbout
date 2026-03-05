@@ -4,6 +4,7 @@
 Run:  .venv/bin/python scripts/measure-refs.py
 """
 
+import logging
 import subprocess
 import tempfile
 from pathlib import Path
@@ -11,6 +12,9 @@ from pathlib import Path
 import numpy as np
 from scipy.io import wavfile
 from scipy.signal import welch
+
+logging.basicConfig(level=logging.INFO, format="%(message)s")
+log = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parent.parent
 SR = 44100
@@ -92,18 +96,22 @@ REFS = {
 if __name__ == "__main__":
     for name, path in REFS.items():
         if not path.exists():
-            print(f"  SKIP: {path}")
+            log.info("  SKIP: %s", path)
             continue
         data = load_wav(path)
         m = analyze(data)
-        print(f"\n  {name}:")
-        print(f"    f_centroid={m['f_centroid']}  f_spread={m['f_spread']}  "
-              f"f_skewness={m['f_skewness']}  f_kurtosis={m['f_kurtosis']}")
-        print(f"    t_centroid={m['t_centroid']}  t_spread={m['t_spread']}  "
-              f"t_skewness={m['t_skewness']}  t_kurtosis={m['t_kurtosis']}")
+        log.info("\n  %s:", name)
+        log.info(
+            "    f_centroid=%s  f_spread=%s  f_skewness=%s  f_kurtosis=%s",
+            m["f_centroid"], m["f_spread"], m["f_skewness"], m["f_kurtosis"],
+        )
+        log.info(
+            "    t_centroid=%s  t_spread=%s  t_skewness=%s  t_kurtosis=%s",
+            m["t_centroid"], m["t_spread"], m["t_skewness"], m["t_kurtosis"],
+        )
 
     # Print _ref_range calls for easy copy-paste
-    print("\n\n  # --- Copy-paste for gen-sounds.py ---")
+    log.info("\n\n  # --- Copy-paste for gen-sounds.py ---")
     for kind in ["move", "capture"]:
         li = f"lichess_{kind}"
         cc = f"chesscom_{kind}"
@@ -114,9 +122,9 @@ if __name__ == "__main__":
         li_m = analyze(load_wav(li_path))
         cc_m = analyze(load_wav(cc_path))
         label = kind.upper()
-        print(f"\n  {label}_REF = {{")
+        log.info("\n  %s_REF = {", label)
         for key in ["f_centroid", "f_spread", "f_skewness", "f_kurtosis",
                      "t_centroid", "t_spread", "t_skewness", "t_kurtosis"]:
             a, b = li_m[key], cc_m[key]
-            print(f'      "{key}":  _ref_range({a}, {b}),')
-        print("  }")
+            log.info('      "%s":  _ref_range(%s, %s),', key, a, b)
+        log.info("  }")

@@ -182,6 +182,10 @@ function checkGameEnd(): boolean {
   return false;
 }
 
+function dimClock(id: string, dim: boolean): void {
+  document.getElementById(id)?.classList.toggle("dimmed", dim);
+}
+
 function onEngineMove(uci: string): void {
   if (gameOver) return;
 
@@ -268,10 +272,6 @@ function onPlayerMove(orig: string, dest: string): void {
 function onFlag(): void {
   gameOver = true;
   finishGame(0, "Time's up — you lose");
-}
-
-function dimClock(id: string, dim: boolean): void {
-  document.getElementById(id)?.classList.toggle("dimmed", dim);
 }
 
 function onEngineFlag(): void {
