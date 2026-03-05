@@ -107,11 +107,7 @@ function pickDistractors(entry: DictEntry): string[] {
 
   candidates.sort((a, b) => commonLetters(b, entry.word) - commonLetters(a, entry.word));
 
-  // Pick randomly from top candidates for variety, but always confusing
-  const topN = Math.min(20, candidates.length);
-  const pool = candidates.slice(0, topN);
-  shuffleArray(pool);
-  const picks = pool.slice(0, NUM_CHOICES - 1);
+  const picks = candidates.slice(0, NUM_CHOICES - 1);
 
   // Fallback: any word with similar length
   if (picks.length < NUM_CHOICES - 1) {
