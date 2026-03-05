@@ -40,11 +40,12 @@ const FORM_OF_GLOSS = [
   /^(misspelling|misconstruction) of /i,
   /^(nonstandard|eye) dialect (form |spelling )?of /i,
   /^(archaic|dated|rare) (form|spelling) of /i,
-  /^alternative letter-case form of /i,
+  /^alternative (letter-case form|version) of /i,
   /^(definite |indefinite )?(singular|plural) of /i,
   /^supine of /i,
   /^imperative of /i,
   /^gerund of /i,
+  /^singular .+ form of /i,
 ];
 
 function isFormOf(sense: KaikkiSense): boolean {
