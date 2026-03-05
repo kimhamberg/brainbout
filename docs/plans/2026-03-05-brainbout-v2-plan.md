@@ -15,6 +15,7 @@
 Build the shared stage system that all games will consume.
 
 **Files:**
+
 - Create: `src/shared/stages.ts`
 - Create: `test/stages.test.ts`
 
@@ -195,8 +196,7 @@ export function readiness(gameId: string, threshold: number): Readiness {
   const data = load(gameId);
   if (data.stage >= MAX_STAGE) return "grey";
   if (data.history.length < HISTORY_SIZE) return "grey";
-  const avg =
-    data.history.reduce((sum, v) => sum + v, 0) / data.history.length;
+  const avg = data.history.reduce((sum, v) => sum + v, 0) / data.history.length;
   if (avg >= threshold) return "green";
   if (avg >= threshold - 0.1) return "amber";
   return "grey";
@@ -222,6 +222,7 @@ git commit -m "feat: add stage progression module with tests"
 Build the Flux game engine as a testable pure-logic module, separate from DOM rendering.
 
 **Files:**
+
 - Create: `src/games/flux-engine.ts`
 - Create: `test/flux.test.ts`
 
@@ -501,10 +502,7 @@ export function updateAdaptation(state: FluxState, correct: boolean): void {
   if (correct) {
     state.streak++;
     if (state.streak >= STREAK_TO_SPEED) {
-      state.intervalMs = Math.max(
-        params.floorMs,
-        state.intervalMs - SPEED_UP,
-      );
+      state.intervalMs = Math.max(params.floorMs, state.intervalMs - SPEED_UP);
       state.streak = 0;
     }
   } else {
@@ -536,6 +534,7 @@ git commit -m "feat: add Flux game engine with tests"
 Wire the Flux engine into a playable game page.
 
 **Files:**
+
 - Create: `games/flux.html`
 - Create: `src/games/flux.ts`
 - Create: `src/games/flux.css`
@@ -595,9 +594,7 @@ Create `games/flux.html` following the pattern from `games/reaction.html`:
             stroke-linecap="round"
             stroke-linejoin="round"
           >
-            <path
-              d="M12 3v18M3.7 7.8 12 12l8.3-4.2M3.7 16.2 12 12l8.3 4.2"
-            />
+            <path d="M12 3v18M3.7 7.8 12 12l8.3-4.2M3.7 16.2 12 12l8.3 4.2" />
           </svg>
           Flux
         </h1>
@@ -1013,7 +1010,8 @@ function handleResponse(pressed: ButtonSide | null): void {
 
   // Update score display
   const scoreEl = game.querySelector(".score-display");
-  if (scoreEl) scoreEl.textContent = `Score: ${String(Math.max(0, state.score))}`;
+  if (scoreEl)
+    scoreEl.textContent = `Score: ${String(Math.max(0, state.score))}`;
 
   setTimeout(nextTrial, result.correct ? 400 : 800);
 }
@@ -1137,6 +1135,7 @@ git commit -m "feat: add Flux game UI with timer, feedback, and stage integratio
 Extend the existing `vocab-srs.ts` to track per-word mastery levels for the MCQ → hinted cloze → naked cloze progression.
 
 **Files:**
+
 - Modify: `src/games/vocab-srs.ts:1-85`
 - Modify: `test/vocab-srs.test.ts`
 
@@ -1174,7 +1173,12 @@ describe("mastery tracking", () => {
 
   it("caps mastery at 2", () => {
     for (let i = 0; i < 9; i++) {
-      recordAnswer("no", "tapper", true, `2026-03-${String(i + 1).padStart(2, "0")}`);
+      recordAnswer(
+        "no",
+        "tapper",
+        true,
+        `2026-03-${String(i + 1).padStart(2, "0")}`,
+      );
     }
     expect(getMastery("no", "tapper")).toBe(2);
   });
@@ -1220,7 +1224,8 @@ Update `getWordState` to default mastery fields:
 ```typescript
 export function getWordState(lang: string, word: string): WordState {
   const raw = localStorage.getItem(stateKey(lang, word));
-  if (raw === null) return { box: 0, nextDue: "", mastery: 0, masteryStreak: 0 };
+  if (raw === null)
+    return { box: 0, nextDue: "", mastery: 0, masteryStreak: 0 };
   const parsed = JSON.parse(raw) as WordState;
   return {
     box: parsed.box ?? 0,
@@ -1298,6 +1303,7 @@ git commit -m "feat: add per-word mastery tracking to SRS"
 Add typed input with fuzzy autocomplete for cloze modes in the Cipher game.
 
 **Files:**
+
 - Modify: `src/games/vocab.ts:1-324`
 - Modify: `src/games/vocab.css`
 
@@ -1382,7 +1388,12 @@ In `src/games/vocab.ts`, add the following changes:
 1. Import `getMastery` from `vocab-srs` and `getStage` from `../shared/stages`:
 
 ```typescript
-import { getDueWords, recordAnswer, getMastery, levenshtein } from "./vocab-srs";
+import {
+  getDueWords,
+  recordAnswer,
+  getMastery,
+  levenshtein,
+} from "./vocab-srs";
 import { getStage, recordResult } from "../shared/stages";
 ```
 
@@ -1410,12 +1421,11 @@ let dropdownItems: string[] = [];
 
 function fuzzyMatch(input: string, words: string[]): string[] {
   const lower = input.toLowerCase();
-  const prefixMatches = words.filter((w) =>
-    w.toLowerCase().startsWith(lower),
-  );
+  const prefixMatches = words.filter((w) => w.toLowerCase().startsWith(lower));
   const fuzzyMatches = words.filter(
     (w) =>
-      !w.toLowerCase().startsWith(lower) && levenshtein(lower, w.toLowerCase().slice(0, lower.length)) <= 2,
+      !w.toLowerCase().startsWith(lower) &&
+      levenshtein(lower, w.toLowerCase().slice(0, lower.length)) <= 2,
   );
   return [...prefixMatches, ...fuzzyMatches].slice(0, 5);
 }
@@ -1448,9 +1458,7 @@ const effectiveMastery = Math.min(wordMastery, maxMasteryForStage(stage));
 if (effectiveMastery === 0) {
   // Existing MCQ rendering
 } else {
-  const hint = effectiveMastery === 1
-    ? currentEntry.word.slice(0, 2)
-    : "";
+  const hint = effectiveMastery === 1 ? currentEntry.word.slice(0, 2) : "";
   const hintText = hint
     ? `<div class="cloze-hint">Starts with: ${hint}...</div>`
     : "";
@@ -1485,6 +1493,7 @@ if (effectiveMastery === 0) {
 **Step 3: Verify manually**
 
 Run: `npx vite` (dev server) and test:
+
 1. MCQ mode works as before
 2. For words at mastery 1 (if stage >= 2): hinted cloze shows
 3. Autocomplete dropdown appears after typing 2+ chars
@@ -1505,6 +1514,7 @@ git commit -m "feat: add cloze modes and autocomplete to Cipher"
 Update the hub to show 3 games (Crown, Flux, Cipher), display stage info inline, and add advance/retreat buttons.
 
 **Files:**
+
 - Modify: `src/shared/progress.ts:1-2` — update GAMES array
 - Modify: `src/hub.ts` — add Flux, remove Spark/Tally, render stages
 - Modify: `src/hub.css` — add stage/readiness styles
@@ -1584,7 +1594,7 @@ const GAME_ACCENTS: Record<string, string> = {
 ```typescript
 const READINESS_THRESHOLDS: Record<string, number> = {
   rapid: 0.6, // 3/5 wins
-  flux: 0.8,  // 80% accuracy
+  flux: 0.8, // 80% accuracy
   vocab: 0.8, // 80% accuracy
 };
 ```
@@ -1728,6 +1738,7 @@ Append to `src/hub.css`:
 **Step 6: Verify manually**
 
 Run: `npx vite` and check:
+
 1. Hub shows 3 games: Crown, Flux, Cipher
 2. Each card shows "· Stage 1" and a grey dot
 3. After playing Flux, readiness data is recorded
@@ -1752,6 +1763,7 @@ git commit -m "feat: hub shows 3 games with stage progression and readiness indi
 Create the Lucide-style icon for Flux in the docs folder (for README).
 
 **Files:**
+
 - Create: `docs/icons/flux.svg`
 
 **Step 1: Create icon**
@@ -1778,6 +1790,7 @@ git commit -m "docs: add Flux icon"
 Make Crown read its stage to set engine Elo.
 
 **Files:**
+
 - Modify: `src/games/rapid.ts:325-326` — use stage to determine Elo
 - Modify: `src/games/rapid.ts` — record result after game ends
 
@@ -1826,6 +1839,7 @@ git commit -m "feat: Crown uses stage-based Elo tiers"
 Make Cipher gate mastery levels based on its stage.
 
 **Files:**
+
 - Modify: `src/games/vocab.ts` — record accuracy result after game
 
 **Step 1: Record result**
@@ -1856,6 +1870,7 @@ git commit -m "feat: Cipher records accuracy for stage progression"
 Delete the old games and clean up references.
 
 **Files:**
+
 - Delete: `src/games/reaction.ts`
 - Delete: `src/games/reaction.css`
 - Delete: `games/reaction.html`
