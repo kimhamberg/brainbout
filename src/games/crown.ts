@@ -13,7 +13,7 @@ import { chessgroundDests } from "chessops/compat";
 import { randomChess960 } from "../chess960";
 import { StockfishEngine } from "../shared/engine";
 import { computeThinkTime, eloToNodes } from "../shared/think-time";
-import { recordSessionScore } from "../shared/progress";
+import { recordSessionScore, recordCheckmate } from "../shared/progress";
 import { getStage, recordResult } from "../shared/stages";
 import { initTheme, wireToggle } from "../shared/theme";
 import * as sound from "../shared/sounds";
@@ -153,6 +153,7 @@ function checkGameEnd(): boolean {
     engineClock.stop();
     gameOver = true;
     const result = winner === playerColor ? 1 : 0;
+    if (result === 1) recordCheckmate(engineElo);
     finishGame(
       result,
       winner === playerColor ? "Checkmate — you win!" : "Checkmate — you lose",
