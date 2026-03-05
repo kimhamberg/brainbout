@@ -32,7 +32,7 @@ func main() {
 		log.Fatal(err)
 	}
 	addr := "http://" + ln.Addr().String()
-	log.Printf("Chess960 serving on %s", addr)
+	log.Printf("Brainbout serving on %s", addr)
 
 	srv := &http.Server{Handler: mux}
 

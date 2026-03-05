@@ -110,8 +110,8 @@ function updateStatus(text: string): void {
 }
 
 function finishGame(result: number, message: string): void {
-  recordSessionScore("rapid", result);
-  recordResult("rapid", result);
+  recordSessionScore("crown", result);
+  recordResult("crown", result);
 
   const label = result === 1 ? "Won" : result === 0.5 ? "Draw" : "Lost";
 
@@ -288,12 +288,12 @@ function onEngineFlag(): void {
 function renderGame(): void {
   game.innerHTML = `
     <div class="clock dimmed" id="engine-clock">${formatClock(INITIAL_MS)}</div>
-    <div class="rapid-board"></div>
+    <div class="crown-board"></div>
     <div class="game-status">Loading engine...</div>
     <div class="clock" id="player-clock">${formatClock(INITIAL_MS)}</div>
   `;
 
-  const boardEl = game.querySelector<HTMLElement>(".rapid-board");
+  const boardEl = game.querySelector<HTMLElement>(".crown-board");
   if (!boardEl) return;
 
   api = Chessground(boardEl, {
@@ -324,7 +324,7 @@ async function main(): Promise<void> {
   pos = Chess.fromSetup(setup).unwrap();
 
   // Stage-based Elo tiers
-  const stage = getStage("rapid");
+  const stage = getStage("crown");
   const eloByStage: Record<number, number> = { 1: 600, 2: 1200, 3: 1600 };
   engineElo = eloByStage[stage] ?? 1200;
   baseNodes = eloToNodes(engineElo);
@@ -372,7 +372,7 @@ game.addEventListener("click", (e) => {
   if (btn?.id === "again-btn") {
     void main();
   } else if (btn?.id === "back-btn") {
-    window.location.href = "../?completed=rapid";
+    window.location.href = "../?completed=crown";
   }
 });
 

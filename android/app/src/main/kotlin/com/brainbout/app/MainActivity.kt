@@ -1,4 +1,4 @@
-package com.chess960.app
+package com.brainbout.app
 
 import android.os.Bundle
 import android.webkit.WebResourceRequest

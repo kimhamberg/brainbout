@@ -8,7 +8,7 @@ import {
   BOX_INTERVALS,
   getMastery,
   getMasteryStreak,
-} from "../src/games/vocab-srs";
+} from "../src/games/cipher-srs";
 
 beforeEach(() => {
   localStorage.clear();

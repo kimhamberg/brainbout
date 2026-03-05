@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-// Set up the DOM before importing the module, since rapid.ts
+// Set up the DOM before importing the module, since crown.ts
 // runs document.getElementById("game") at the top level on import.
 document.body.innerHTML = '<main id="game"></main>';
 
@@ -21,7 +21,7 @@ fakeWorker.prototype.terminate = function terminate(): void {
 };
 globalThis.Worker = fakeWorker as unknown as typeof Worker;
 
-const { createClock } = await import("../src/games/rapid");
+const { createClock } = await import("../src/games/crown");
 
 beforeEach(() => {
   vi.useFakeTimers();

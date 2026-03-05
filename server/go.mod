@@ -1,3 +1,3 @@
-module chess960
+module brainbout
 
 go 1.21

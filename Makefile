@@ -9,13 +9,13 @@ build:
 	cp -r dist server/web
 
 build-server: build
-	cd server && go build -ldflags="-s -w" -o ../chess960 .
+	cd server && go build -ldflags="-s -w" -o ../brainbout .
 
 build-linux: build
-	cd server && GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o ../chess960-linux-amd64 .
+	cd server && GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o ../brainbout-linux-amd64 .
 
 build-windows: build
-	cd server && GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o ../chess960-windows-amd64.exe .
+	cd server && GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o ../brainbout-windows-amd64.exe .
 
 build-android: build
 	rm -rf android/app/src/main/assets
@@ -45,4 +45,4 @@ screenshot:
 	npm run screenshot
 
 clean:
-	rm -rf dist server/web chess960 chess960-linux-amd64 chess960-windows-amd64.exe
+	rm -rf dist server/web brainbout brainbout-linux-amd64 brainbout-windows-amd64.exe

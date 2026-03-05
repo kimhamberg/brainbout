@@ -8,6 +8,6 @@ server/web/
 ref-sounds/
 .dict-cache/
 
-/chess960
-/chess960-linux-amd64
-/chess960-windows-amd64.exe
+/brainbout
+/brainbout-linux-amd64
+/brainbout-windows-amd64.exe

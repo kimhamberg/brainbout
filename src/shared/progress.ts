@@ -1,4 +1,4 @@
-export const GAMES = ["rapid", "flux", "vocab"] as const;
+export const GAMES = ["crown", "flux", "cipher"] as const;
 export type GameId = (typeof GAMES)[number];
 
 const PREFIX = "brainbout";

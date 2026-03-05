@@ -1,7 +1,7 @@
 import { initTheme, wireToggle } from "../shared/theme";
 import { createTimer } from "../shared/timer";
 import { recordSessionScore, todayString } from "../shared/progress";
-import { getDueWords, recordAnswer, getMastery, levenshtein } from "./vocab-srs";
+import { getDueWords, recordAnswer, getMastery, levenshtein } from "./cipher-srs";
 import { getStage, recordResult } from "../shared/stages";
 import * as sound from "../shared/sounds";
 
@@ -138,7 +138,7 @@ function pickDistractors(entry: DictEntry): string[] {
 }
 
 function getSeenWords(): Set<string> {
-  const prefix = `brainbout:vocab:${lang}:`;
+  const prefix = `brainbout:cipher:${lang}:`;
   const seen = new Set<string>();
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
@@ -328,7 +328,7 @@ function wireClozeEvents(): void {
 function renderRound(): void {
   if (!currentEntry) return;
 
-  const stage = getStage("vocab");
+  const stage = getStage("cipher");
   const wordMastery = getMastery(lang, currentEntry.word);
   const effectiveMastery = Math.min(wordMastery, maxMasteryForStage(stage));
 
@@ -453,9 +453,9 @@ function handleChoice(chosen: string): void {
 function showResult(): void {
   gameOver = true;
   const finalScore = Math.floor(score);
-  recordSessionScore("vocab", finalScore);
+  recordSessionScore("cipher", finalScore);
   const accuracy = totalAttempts > 0 ? totalCorrect / totalAttempts : 0;
-  recordResult("vocab", accuracy);
+  recordResult("cipher", accuracy);
 
   game.innerHTML = `
     <div class="result">
@@ -519,7 +519,7 @@ game.addEventListener("click", (e) => {
   } else if (target.id === "again-btn") {
     void startGame();
   } else if (target.id === "back-btn") {
-    window.location.href = "../?completed=vocab";
+    window.location.href = "../?completed=cipher";
   }
 });
 

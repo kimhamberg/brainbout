@@ -7,9 +7,9 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, "index.html"),
-        rapid: resolve(__dirname, "games/rapid.html"),
+        crown: resolve(__dirname, "games/crown.html"),
         flux: resolve(__dirname, "games/flux.html"),
-        vocab: resolve(__dirname, "games/vocab.html"),
+        cipher: resolve(__dirname, "games/cipher.html"),
       },
     },
   },

@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.chess960.app"
+    namespace = "com.brainbout.app"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.chess960.app"
+        applicationId = "com.brainbout.app"
         minSdk = 21
         targetSdk = 35
         versionCode = 1

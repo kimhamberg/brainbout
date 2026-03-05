@@ -42,9 +42,9 @@ make dev
 | Target  | Command              | Output                       |
 | :------ | :------------------- | :--------------------------- |
 | Dev     | `make dev`           | `localhost:5173`             |
-| Desktop | `make build-server`  | `chess960`                   |
-| Linux   | `make build-linux`   | `chess960-linux-amd64`       |
-| Windows | `make build-windows` | `chess960-windows-amd64.exe` |
+| Desktop | `make build-server`  | `brainbout`                   |
+| Linux   | `make build-linux`   | `brainbout-linux-amd64`       |
+| Windows | `make build-windows` | `brainbout-windows-amd64.exe` |
 | Android | `make build-android` | `app-debug.apk`              |
 | Clean   | `make clean`         |                              |
 
