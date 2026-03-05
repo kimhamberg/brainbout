@@ -133,6 +133,11 @@ async function processJsonl(
 
     const definition = bestSense.glosses![0];
 
+    // Skip definitions with Wiktionary editorial markers
+    if (/\(to be confirmed\)|\(please verify\)/i.test(definition)) {
+      continue;
+    }
+
     let example = "";
     if (bestSense.examples?.length) {
       for (const ex of bestSense.examples) {
