@@ -30,6 +30,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run screenshot
       - run: npm run readme
+      - run: npx prettier --write README.md
 
       - name: Push screenshot and README if changed
         run: |
