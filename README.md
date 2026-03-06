@@ -39,14 +39,14 @@ make dev
 
 ## Build
 
-| Target  | Command              | Output                       |
-| :------ | :------------------- | :--------------------------- |
-| Dev     | `make dev`           | `localhost:5173`             |
+| Target  | Command              | Output                        |
+| :------ | :------------------- | :---------------------------- |
+| Dev     | `make dev`           | `localhost:5173`              |
 | Desktop | `make build-server`  | `brainbout`                   |
 | Linux   | `make build-linux`   | `brainbout-linux-amd64`       |
 | Windows | `make build-windows` | `brainbout-windows-amd64.exe` |
-| Android | `make build-android` | `app-debug.apk`              |
-| Clean   | `make clean`         |                              |
+| Android | `make build-android` | `app-debug.apk`               |
+| Clean   | `make clean`         |                               |
 
 The desktop build embeds all web assets into a single binary — no runtime dependencies.
 
