@@ -85,6 +85,22 @@ npm test
 - [Go](https://go.dev) — desktop server (single binary with embedded assets)
 - [Kotlin](https://kotlinlang.org) + [Android WebView](https://developer.android.com/develop/ui/views/layout/webapps/webview) — mobile wrapper
 
+## Research
+
+Each game targets a cognitive domain with peer-reviewed evidence behind it. The evidence varies in strength — spaced repetition is among the most replicated findings in psychology, while chess transfer claims face serious methodological challenges.
+
+**Flux — task switching & inhibitory control**
+
+Flux combines cued task switching with go/no-go inhibition. These target two of the three core executive functions identified by [Diamond (2013)](https://doi.org/10.1146/annurev-psych-113011-143750): cognitive flexibility and inhibitory control. Task switching produces a measurable "switch cost" — slower, more error-prone responses after a rule change — that reflects the time needed to reconfigure mental resources [(Monsell, 2003)](<https://doi.org/10.1016/S1364-6613(03)00028-7>). Go/no-go training produces immediate cognitive gains, but a meta-analysis found that go/no-go training alone does not sustain long-term benefits in healthy adults; combining it with other paradigms does [(Li et al., 2022)](https://doi.org/10.3389/fnins.2022.813975).
+
+**Crown — chess**
+
+A prospective cohort study of 469 adults over 75 in the _New England Journal of Medicine_ found that cognitively stimulating leisure activities — including board games — were associated with reduced dementia risk (HR 0.93 per point of cognitive activity), while physical activities were not [(Verghese et al., 2003)](https://doi.org/10.1056/NEJMoa022252). A meta-analysis of 24 studies found chess instruction modestly improves mathematics (d = 0.38) and cognition (d = 0.34) in school-age children [(Sala et al., 2017)](https://doi.org/10.3389/fpsyg.2017.00238). However, the same authors found that these effects drop to near zero when studies use active control groups, and far transfer from chess to unrelated cognitive domains has not been reliably demonstrated [(Sala & Gobet, 2017)](https://doi.org/10.1177/0963721417712760).
+
+**Lex — spaced repetition**
+
+The spacing effect is one of the most robust findings in memory research, first demonstrated by Ebbinghaus (1885) and [replicated 130 years later](https://doi.org/10.1371/journal.pone.0120644) with comparable results (Murre & Dros, 2015). A meta-analysis of 317 experiments across 184 articles confirmed that distributed practice produces stronger retention than massed practice, with optimal inter-study intervals scaling with the target retention interval [(Cepeda et al., 2006)](https://doi.org/10.1037/0033-2909.132.3.354). At the neural level, spacing increases pattern similarity in the ventromedial prefrontal cortex across repetitions, and irregular spacing outperforms uniform intervals — a prediction from computational models validated experimentally [(Smolen et al., 2016)](https://doi.org/10.1038/nrn.2015.18).
+
 ## Roadmap
 
 - [ ] Every game feels vital and polished — tight animations, satisfying sounds, zero rough edges
