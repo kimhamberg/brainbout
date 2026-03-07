@@ -47,6 +47,45 @@
   }
 }
 
+.clock-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.hist-btn {
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+
+  color: var(--ctp-subtext0);
+
+  background: var(--ctp-surface0);
+  box-shadow: var(--ctp-shadow);
+
+  transition:
+    color var(--dur-100) ease,
+    background-color var(--dur-100) ease;
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.3;
+  }
+
+  &:hover:not(:disabled) {
+    color: var(--ctp-text);
+    background: var(--ctp-surface1);
+  }
+}
+
 .crown-board {
   --board-size: min(calc(100vw - 2rem), calc(100dvh - 10rem), 480px);
 

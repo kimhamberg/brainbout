@@ -102,6 +102,8 @@ let engineClock: ChessClock;
 let engineElo: number;
 let baseNodes: number;
 const positionHistory: string[] = [];
+const fenHistory: string[] = [];
+let viewPly = 0;
 
 // --- Repetition tracking ---
 
@@ -117,6 +119,43 @@ function isThreefoldRepetition(): boolean {
     if (k === key && ++count >= 3) return true;
   }
   return false;
+}
+
+// --- History browsing ---
+
+function isLive(): boolean {
+  return viewPly === fenHistory.length - 1;
+}
+
+function showPly(ply: number): void {
+  if (!api || ply < 0 || ply >= fenHistory.length) return;
+  viewPly = ply;
+  const live = isLive();
+  api.set({
+    fen: fenHistory[ply],
+    lastMove:
+      ply > 0
+        ? ([moves[ply - 1].slice(0, 2), moves[ply - 1].slice(2, 4)] as [
+            Key,
+            Key,
+          ])
+        : undefined,
+    movable: {
+      color: live && !gameOver ? playerColor : undefined,
+      dests: (live && !gameOver
+        ? chessgroundDests(pos, { chess960: true })
+        : new Map()) as Dests,
+    },
+    check: live ? pos.isCheck() : false,
+  });
+  updateNavButtons();
+}
+
+function updateNavButtons(): void {
+  const prev = document.getElementById("hist-prev") as HTMLButtonElement | null;
+  const next = document.getElementById("hist-next") as HTMLButtonElement | null;
+  if (prev) prev.disabled = viewPly === 0;
+  if (next) next.disabled = isLive();
 }
 
 // --- Promotion picker ---
@@ -283,13 +322,17 @@ function onEngineMove(uci: string): void {
   const from = "from" in move ? makeSquare(move.from) : makeSquare(move.to);
   const to = makeSquare(move.to);
   const isCapture = pos.board.occupied.has(move.to);
+  const wasLive = isLive();
 
   pos.play(move);
   moves.push(uci);
   positionHistory.push(positionKey());
+  fenHistory.push(makeFen(pos.toSetup()));
+  viewPly = fenHistory.length - 1;
 
-  if (api) api.move(from as Key, to as Key);
+  if (wasLive && api) api.move(from as Key, to as Key);
   updateBoard();
+  updateNavButtons();
 
   if (isCapture) sound.playCapture();
   else sound.playMove();
@@ -312,10 +355,13 @@ function commitPlayerMove(orig: string, dest: string, promoChar: string): void {
   pos.play(move);
   moves.push(uci);
   positionHistory.push(positionKey());
+  fenHistory.push(makeFen(pos.toSetup()));
+  viewPly = fenHistory.length - 1;
 
   clock.stop();
   clock.addIncrement();
   updateBoard();
+  updateNavButtons();
 
   if (isCapture) sound.playCapture();
   else sound.playMove();
@@ -371,7 +417,7 @@ function commitPlayerMove(orig: string, dest: string, promoChar: string): void {
 }
 
 function onPlayerMove(orig: string, dest: string): void {
-  if (gameOver) return;
+  if (gameOver || !isLive()) return;
 
   // Detect promotion: pawn reaching the back rank
   const from = parseSquare(orig);
@@ -405,7 +451,15 @@ function renderGame(): void {
   game.innerHTML = `
     <div class="clock dimmed" id="engine-clock">${formatClock(INITIAL_MS)}</div>
     <div class="crown-board"></div>
-    <div class="clock" id="player-clock">${formatClock(INITIAL_MS)}</div>
+    <div class="clock-row">
+      <button class="hist-btn" id="hist-prev" disabled aria-label="Previous move">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <div class="clock" id="player-clock">${formatClock(INITIAL_MS)}</div>
+      <button class="hist-btn" id="hist-next" disabled aria-label="Next move">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+    </div>
   `;
 
   const boardEl = game.querySelector<HTMLElement>(".crown-board");
@@ -428,18 +482,39 @@ function renderGame(): void {
     animation: { enabled: true, duration: 200 },
     premovable: { enabled: true },
   });
+
+  document.getElementById("hist-prev")?.addEventListener("click", () => {
+    if (viewPly > 0) showPly(viewPly - 1);
+  });
+  document.getElementById("hist-next")?.addEventListener("click", () => {
+    if (!isLive()) showPly(viewPly + 1);
+  });
+}
+
+function onHistoryKey(e: KeyboardEvent): void {
+  if (gameOver) return;
+  if (e.key === "ArrowLeft" && viewPly > 0) {
+    e.preventDefault();
+    showPly(viewPly - 1);
+  } else if (e.key === "ArrowRight" && !isLive()) {
+    e.preventDefault();
+    showPly(viewPly + 1);
+  }
 }
 
 async function main(): Promise<void> {
   gameOver = false;
   moves.length = 0;
   positionHistory.length = 0;
+  fenHistory.length = 0;
 
   const { fen } = randomChess960();
   startFen = fen;
   const setup = parseFen(fen).unwrap();
   pos = Chess.fromSetup(setup).unwrap();
   positionHistory.push(positionKey());
+  fenHistory.push(makeFen(pos.toSetup()));
+  viewPly = 0;
 
   // Stage-based Elo tiers
   const stage = getStage("crown");
@@ -492,6 +567,8 @@ game.addEventListener("click", (e) => {
     window.location.href = "/index.html?completed=crown";
   }
 });
+
+document.addEventListener("keydown", onHistoryKey);
 
 void main();
 
