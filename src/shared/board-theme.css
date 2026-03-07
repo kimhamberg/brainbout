@@ -1,33 +1,20 @@
-/* Catppuccin-complementary chess board — overrides chessground.brown.css */
+/* Green chess board — overrides chessground.brown.css */
 
 /*
  * Board squares via conic-gradient + CSS vars (replaces hardcoded SVG).
- * Blue-tinted to match the chess game's --ctp-blue accent.
- * Frappe: light squares = ctp-blue, dark squares = blue mixed into mantle
- * Latte:  light squares = light blue tint, dark squares = stronger blue tint
+ * Green-tinted to match Crown's accent. Theme-independent — same board
+ * colors in both light and dark mode, like Chess.com.
  */
 
-:root,
-[data-theme="frappe"] {
-  --board-light: var(--ctp-blue);
-  --board-dark: color-mix(in srgb, var(--ctp-blue) 50%, var(--ctp-mantle));
-  --board-last-move: rgb(140 170 238 / 0.35);
-  --board-selected: rgb(140 170 238 / 0.4);
-  --board-move-dest: 140 170 238;
-  --board-check: 140 170 238;
-  --board-premove: 140 170 238;
+:root {
+  --board-light: #eff1f5;
+  --board-dark: color-mix(in srgb, #a6d189 60%, #292c3c);
+  --board-last-move: rgb(166 209 137 / 0.35);
+  --board-selected: rgb(166 209 137 / 0.4);
+  --board-move-dest: 166 209 137;
+  --board-check: 166 209 137;
+  --board-premove: 166 209 137;
   --board-crust: 35 38 52;
-}
-
-[data-theme="latte"] {
-  --board-dark: color-mix(in srgb, var(--ctp-blue) 45%, var(--ctp-surface0));
-  --board-light: color-mix(in srgb, var(--ctp-blue) 12%, var(--ctp-surface0));
-  --board-last-move: rgb(30 102 245 / 0.25);
-  --board-selected: rgb(30 102 245 / 0.3);
-  --board-move-dest: 30 102 245;
-  --board-check: 30 102 245;
-  --board-premove: 30 102 245;
-  --board-crust: 220 224 232;
 }
 
 /* Board squares */

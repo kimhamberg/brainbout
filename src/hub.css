@@ -72,9 +72,9 @@
 
   background: linear-gradient(
     90deg,
+    var(--ctp-green),
     var(--ctp-blue),
-    var(--ctp-peach),
-    var(--ctp-blue)
+    var(--ctp-red)
   );
   background-clip: text;
   background-size: 200% 100%;

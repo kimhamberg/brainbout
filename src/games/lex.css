@@ -121,10 +121,10 @@
   }
 
   &.wrong {
-    border-color: var(--ctp-red);
-    color: var(--ctp-red);
+    border-color: var(--ctp-maroon);
+    color: var(--ctp-maroon);
     opacity: 1;
-    background: color-mix(in srgb, var(--ctp-red) 10%, var(--ctp-surface0));
+    background: color-mix(in srgb, var(--ctp-maroon) 10%, var(--ctp-surface0));
   }
 }
 
@@ -137,7 +137,7 @@
   }
 
   &.wrong {
-    color: var(--ctp-red);
+    color: var(--ctp-maroon);
   }
 }
 
@@ -253,7 +253,7 @@
   transition: border-color var(--dur-150) ease;
 
   &:focus {
-    border-color: var(--game-accent, var(--ctp-green));
+    border-color: var(--game-accent, var(--ctp-blue));
     outline: none;
   }
 
@@ -262,47 +262,11 @@
   }
 
   &.cloze-wrong {
-    border-color: var(--ctp-red);
+    border-color: var(--ctp-maroon);
   }
 }
 
 .cloze-hint {
   font-size: 0.875rem;
   color: var(--ctp-subtext0);
-}
-
-.autocomplete-dropdown {
-  position: absolute;
-  z-index: 10;
-  right: 0;
-  left: 0;
-
-  overflow: hidden;
-
-  margin-top: 0.25rem;
-  border-radius: 6px;
-
-  background: var(--ctp-surface1);
-  box-shadow: var(--ctp-shadow-lg);
-}
-
-.autocomplete-item {
-  cursor: pointer;
-
-  padding: 0.5rem 0.75rem;
-
-  font-size: 1rem;
-  color: var(--ctp-text);
-
-  transition: background-color var(--dur-100) ease;
-
-  &:hover,
-  &.active {
-    background: var(--ctp-surface2);
-  }
-
-  & .match-prefix {
-    font-weight: 600;
-    color: var(--ctp-blue);
-  }
 }

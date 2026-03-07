@@ -17,7 +17,7 @@
 
 @keyframes flash-wrong {
   0% {
-    background: color-mix(in srgb, var(--ctp-red) 30%, var(--ctp-surface0));
+    background: color-mix(in srgb, var(--ctp-maroon) 30%, var(--ctp-surface0));
   }
 
   100% {
@@ -68,7 +68,11 @@
 
   @keyframes flash-wrong {
     0% {
-      background: color-mix(in srgb, var(--ctp-red) 30%, var(--ctp-surface0));
+      background: color-mix(
+        in srgb,
+        var(--ctp-maroon) 30%,
+        var(--ctp-surface0)
+      );
     }
 
     100% {
@@ -247,7 +251,7 @@
 
   &:hover {
     transform: translateY(-1px);
-    border-color: var(--game-accent, var(--ctp-blue));
+    border-color: var(--game-accent, var(--ctp-red));
   }
 
   &:active {
@@ -277,7 +281,7 @@
   }
 
   &.wrong {
-    color: var(--ctp-red);
+    color: var(--ctp-maroon);
   }
 }
 
@@ -340,7 +344,7 @@
     font-weight: 600;
     color: var(--ctp-mantle);
 
-    background: var(--game-accent, var(--ctp-blue));
+    background: var(--game-accent, var(--ctp-red));
     box-shadow: var(--ctp-shadow);
 
     transition:

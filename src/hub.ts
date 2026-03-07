@@ -32,9 +32,9 @@ const GAME_ICONS: Record<string, string> = {
 };
 
 const GAME_ACCENTS: Record<string, string> = {
-  crown: "var(--ctp-blue)",
-  flux: "var(--ctp-mauve)",
-  lex: "var(--ctp-green)",
+  crown: "var(--ctp-green)",
+  flux: "var(--ctp-red)",
+  lex: "var(--ctp-blue)",
 };
 
 const GAME_TAGLINES: Record<string, string> = {

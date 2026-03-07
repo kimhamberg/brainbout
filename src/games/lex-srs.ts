@@ -111,6 +111,12 @@ export function getMasteredCount(lang: string): number {
   return count;
 }
 
+export function maxTypos(wordLength: number): number {
+  if (wordLength <= 3) return 0;
+  if (wordLength <= 7) return 1;
+  return 2;
+}
+
 export function levenshtein(a: string, b: string): number {
   const m = a.length;
   const n = b.length;

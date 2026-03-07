@@ -159,7 +159,7 @@
     font-weight: 600;
     color: var(--ctp-mantle);
 
-    background: var(--game-accent, var(--ctp-blue));
+    background: var(--game-accent, var(--ctp-green));
     box-shadow: var(--ctp-shadow);
 
     transition:

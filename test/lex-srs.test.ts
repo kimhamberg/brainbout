@@ -5,6 +5,7 @@ import {
   recordAnswer,
   getDueWords,
   levenshtein,
+  maxTypos,
   BOX_INTERVALS,
   getMastery,
   getMasteryStreak,
@@ -34,6 +35,25 @@ describe("levenshtein", () => {
   it("returns 2 for two character differences", () => {
     expect(levenshtein("kitten", "mitten")).toBe(1);
     expect(levenshtein("hello", "hallo")).toBe(1);
+  });
+});
+
+describe("maxTypos", () => {
+  it("requires exact match for short words (≤3 letters)", () => {
+    expect(maxTypos(1)).toBe(0);
+    expect(maxTypos(2)).toBe(0);
+    expect(maxTypos(3)).toBe(0);
+  });
+
+  it("allows 1 typo for medium words (4-7 letters)", () => {
+    expect(maxTypos(4)).toBe(1);
+    expect(maxTypos(5)).toBe(1);
+    expect(maxTypos(7)).toBe(1);
+  });
+
+  it("allows 2 typos for long words (8+ letters)", () => {
+    expect(maxTypos(8)).toBe(2);
+    expect(maxTypos(12)).toBe(2);
   });
 });
 

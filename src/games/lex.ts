@@ -1,7 +1,13 @@
 import { initTheme, wireToggle } from "../shared/theme";
 import { createTimer } from "../shared/timer";
 import { recordSessionScore, todayString } from "../shared/progress";
-import { getDueWords, recordAnswer, getMastery, levenshtein } from "./lex-srs";
+import {
+  getDueWords,
+  recordAnswer,
+  getMastery,
+  levenshtein,
+  maxTypos,
+} from "./lex-srs";
 import { getStage, recordResult } from "../shared/stages";
 import * as sound from "../shared/sounds";
 
@@ -47,7 +53,6 @@ let inputLocked = false;
 let gameOver = false;
 let totalCorrect = 0;
 let totalAttempts = 0;
-let activeDropdownIndex = -1;
 
 function shuffleArray<T>(arr: T[]): T[] {
   for (let i = arr.length - 1; i > 0; i--) {
@@ -178,64 +183,15 @@ function buildSessionQueue(): void {
   }
 }
 
-function fuzzyMatch(input: string, words: string[]): string[] {
-  const lower = input.toLowerCase();
-  const prefixMatches = words.filter((w) => w.toLowerCase().startsWith(lower));
-  const fuzzyMatches = words.filter(
-    (w) =>
-      !w.toLowerCase().startsWith(lower) &&
-      levenshtein(lower, w.toLowerCase().slice(0, lower.length + 2)) <= 2,
-  );
-  return [...prefixMatches, ...fuzzyMatches].slice(0, 5);
-}
-
-function renderAutocomplete(
-  inputEl: HTMLInputElement,
-  matches: string[],
-): void {
-  const wrap = inputEl.closest(".cloze-input-wrap");
-  if (!wrap) return;
-  const existing = wrap.querySelector(".autocomplete-dropdown");
-  if (existing) existing.remove();
-
-  if (matches.length === 0) {
-    activeDropdownIndex = -1;
-    return;
-  }
-
-  const inputLower = inputEl.value.toLowerCase();
-  const dropdown = document.createElement("div");
-  dropdown.className = "autocomplete-dropdown";
-
-  for (let i = 0; i < matches.length; i++) {
-    const word = matches[i];
-    const wordLower = word.toLowerCase();
-    const item = document.createElement("div");
-    item.className = "autocomplete-item";
-    if (i === activeDropdownIndex) item.classList.add("active");
-    item.dataset.word = word;
-
-    // Highlight matching prefix
-    const prefixLen = wordLower.startsWith(inputLower) ? inputLower.length : 0;
-    if (prefixLen > 0) {
-      item.innerHTML = `<span class="match-prefix">${word.slice(0, prefixLen)}</span>${word.slice(prefixLen)}`;
-    } else {
-      item.textContent = word;
-    }
-
-    dropdown.appendChild(item);
-  }
-
-  wrap.appendChild(dropdown);
-}
-
 function handleClozeSubmit(input: string): void {
   if (gameOver || inputLocked || !currentEntry) return;
   inputLocked = true;
   totalAttempts++;
 
+  const allowed = maxTypos(currentEntry.word.length);
   const correct =
-    levenshtein(input.toLowerCase(), currentEntry.word.toLowerCase()) <= 1;
+    levenshtein(input.toLowerCase(), currentEntry.word.toLowerCase()) <=
+    allowed;
   const elapsed = Date.now() - roundStart;
   const today = todayString();
 
@@ -244,10 +200,6 @@ function handleClozeSubmit(input: string): void {
     "cloze-input",
   ) as HTMLInputElement | null;
   if (inputEl) inputEl.disabled = true;
-
-  // Remove dropdown
-  const dropdown = game.querySelector(".autocomplete-dropdown");
-  if (dropdown) dropdown.remove();
 
   if (correct) {
     totalCorrect++;
@@ -297,46 +249,10 @@ function wireClozeEvents(): void {
   const len = inputEl.value.length;
   inputEl.setSelectionRange(len, len);
 
-  let currentMatches: string[] = [];
-
-  inputEl.addEventListener("input", () => {
-    const val = inputEl.value.trim();
-    activeDropdownIndex = -1;
-    if (val.length >= 2) {
-      currentMatches = fuzzyMatch(val, allWords);
-      renderAutocomplete(inputEl, currentMatches);
-    } else {
-      currentMatches = [];
-      renderAutocomplete(inputEl, []);
-    }
-  });
-
   inputEl.addEventListener("keydown", (e) => {
-    if (e.key === "ArrowDown") {
+    if (e.key === "Enter") {
       e.preventDefault();
-      if (currentMatches.length > 0) {
-        activeDropdownIndex = Math.min(
-          activeDropdownIndex + 1,
-          currentMatches.length - 1,
-        );
-        renderAutocomplete(inputEl, currentMatches);
-      }
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      if (currentMatches.length > 0) {
-        activeDropdownIndex = Math.max(activeDropdownIndex - 1, -1);
-        renderAutocomplete(inputEl, currentMatches);
-      }
-    } else if (e.key === "Enter") {
-      e.preventDefault();
-      if (
-        activeDropdownIndex >= 0 &&
-        activeDropdownIndex < currentMatches.length
-      ) {
-        handleClozeSubmit(currentMatches[activeDropdownIndex]);
-      } else {
-        handleClozeSubmit(inputEl.value.trim());
-      }
+      handleClozeSubmit(inputEl.value.trim());
     }
   });
 }
@@ -399,7 +315,6 @@ function renderRound(): void {
       <div class="streak-display">${streakHtml}</div>
     `;
 
-    activeDropdownIndex = -1;
     wireClozeEvents();
   }
 }
@@ -522,16 +437,7 @@ async function startGame(): Promise<void> {
 }
 
 game.addEventListener("click", (e) => {
-  const el = e.target as HTMLElement;
-
-  // Handle autocomplete item clicks
-  const acItem = el.closest<HTMLElement>(".autocomplete-item");
-  if (acItem?.dataset.word !== undefined && acItem.dataset.word !== "") {
-    handleClozeSubmit(acItem.dataset.word);
-    return;
-  }
-
-  const target = el.closest<HTMLElement>("button");
+  const target = (e.target as HTMLElement).closest<HTMLElement>("button");
   if (!target) return;
 
   if (target.classList.contains("choice-btn")) {
