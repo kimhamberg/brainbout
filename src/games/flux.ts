@@ -60,10 +60,10 @@ function renderPlaying(): void {
 
   // Labels are always Red/Odd (left) and Blue/Even (right)
   game.innerHTML = `
-    <div class="timer">${String(currentRemaining)}s</div>
+    <div class="timer${currentRemaining <= 10 ? " low" : ""}">${String(currentRemaining)}s</div>
     <div class="rule-cue">${ruleCue}</div>
     ${switchHtml}
-    <div class="stimulus color-${currentTrial.color}">${String(currentTrial.number)}</div>
+    <div class="stimulus color-${currentTrial.color}${currentTrial.noGoStyle !== "none" ? ` ${currentTrial.noGoStyle}` : ""}">${String(currentTrial.number)}</div>
     <div class="flux-buttons">
       <button class="flux-btn" data-side="left">
         <span class="btn-label">Red</span>
@@ -186,7 +186,10 @@ function startGame(): void {
     onTick: (remaining) => {
       currentRemaining = remaining;
       const el = game.querySelector(".timer");
-      if (el) el.textContent = `${String(remaining)}s`;
+      if (el) {
+        el.textContent = `${String(remaining)}s`;
+        el.classList.toggle("low", remaining <= 10);
+      }
     },
     onDone: () => {
       showResult();

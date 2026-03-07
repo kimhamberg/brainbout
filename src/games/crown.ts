@@ -130,7 +130,7 @@ const PROMO_CHARS: Record<string, string> = {
 };
 
 function showPromotionPicker(
-  orig: string,
+  _orig: string,
   dest: string,
   callback: (role: string) => void,
 ): void {

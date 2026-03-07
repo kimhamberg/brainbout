@@ -1,11 +1,19 @@
 export type Rule = "color" | "number";
 export type ButtonSide = "left" | "right";
-export type TrialColor = "red" | "blue" | "green";
+export type TrialColor =
+  | "red"
+  | "blue"
+  | "peach"
+  | "maroon"
+  | "lavender"
+  | "mauve";
+export type NoGoStyle = "none" | "mirrored" | "clipped";
 
 export interface Trial {
   number: number;
   color: TrialColor;
   isNoGo: boolean;
+  noGoStyle: NoGoStyle;
 }
 
 export interface FluxState {
@@ -78,6 +86,15 @@ function randInt(min: number, max: number): number {
   return min + Math.floor(Math.random() * (max - min + 1));
 }
 
+function pick<T>(arr: readonly T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+/* ---------- no-go config ---------- */
+
+const IMPOSTOR_COLORS: TrialColor[] = ["peach", "maroon", "lavender", "mauve"];
+const SYMMETRIC_DIGITS = new Set([1, 8]);
+
 function rollSwitchCount(stage: number): number {
   const p = STAGE_PARAMS[stage];
   return randInt(p.switchMin, p.switchMax);
@@ -125,13 +142,22 @@ export function generateTrial(state: FluxState): Trial {
     Math.random() < STAGE_PARAMS[state.stage].noGoRate;
 
   let color: TrialColor;
+  let noGoStyle: NoGoStyle = "none";
+
   if (isNoGo) {
-    color = "green";
+    if (state.rule === "color") {
+      // Impostor color: looks close to red/blue but isn't
+      color = pick(IMPOSTOR_COLORS);
+    } else {
+      // Normal color, but the digit will be visually distorted
+      color = Math.random() < 0.5 ? "red" : "blue";
+      noGoStyle = SYMMETRIC_DIGITS.has(num) ? "clipped" : "mirrored";
+    }
   } else {
     color = Math.random() < 0.5 ? "red" : "blue";
   }
 
-  return { number: num, color, isNoGo };
+  return { number: num, color, isNoGo, noGoStyle };
 }
 
 /* ---------- response evaluation ---------- */
@@ -144,12 +170,11 @@ export function evaluateResponse(
   // No-go trial
   if (trial.isNoGo) {
     if (pressed !== null) {
-      return {
-        correct: false,
-        points: -1,
-        noGoFail: true,
-        feedback: "Don't press on green!",
-      };
+      const msg =
+        rule === "color"
+          ? "Not red or blue — don't press!"
+          : "Fake digit — don't press!";
+      return { correct: false, points: -1, noGoFail: true, feedback: msg };
     }
     return { correct: true, points: 1, feedback: "" };
   }

@@ -92,7 +92,6 @@ describe("generateTrial", () => {
     }
     expect(colors).toContain("red");
     expect(colors).toContain("blue");
-    expect(colors).not.toContain("green");
   });
 
   describe("warm-up (first 5 trials)", () => {
@@ -101,7 +100,7 @@ describe("generateTrial", () => {
       for (let i = 0; i < WARM_UP_TRIALS; i++) {
         const trial = generateTrial(state);
         expect(trial.isNoGo).toBe(false);
-        expect(trial.color).not.toBe("green");
+        expect(trial.noGoStyle).toBe("none");
       }
     });
 
@@ -124,23 +123,45 @@ describe("generateTrial", () => {
   });
 
   describe("after warm-up", () => {
-    it("can produce green (no-go) trials after no-go is unlocked", () => {
+    it("produces no-go trials with impostor colors in color rule", () => {
       const state = createFluxState(1);
       state.trialCount = WARM_UP_TRIALS;
       state.noGoUnlocked = true;
-      let sawGreen = false;
+      state.rule = "color";
+      state.trialsUntilSwitch = 999;
+      const impostorColors = new Set(["peach", "maroon", "lavender", "mauve"]);
+      let sawNoGo = false;
       for (let i = 0; i < 200; i++) {
-        // Keep state past warm-up
-        const savedCount = state.trialCount;
         const trial = generateTrial(state);
         if (trial.isNoGo) {
-          expect(trial.color).toBe("green");
-          sawGreen = true;
+          expect(impostorColors.has(trial.color)).toBe(true);
+          expect(trial.noGoStyle).toBe("none");
+          sawNoGo = true;
         }
-        // Restore trialCount to stay in post-warm-up
-        state.trialCount = savedCount + 1;
       }
-      expect(sawGreen).toBe(true);
+      expect(sawNoGo).toBe(true);
+    });
+
+    it("produces no-go trials with mirrored/clipped style in number rule", () => {
+      const state = createFluxState(1);
+      state.trialCount = WARM_UP_TRIALS;
+      state.noGoUnlocked = true;
+      state.rule = "number";
+      state.trialsUntilSwitch = 999;
+      let sawNoGo = false;
+      for (let i = 0; i < 200; i++) {
+        const trial = generateTrial(state);
+        if (trial.isNoGo) {
+          expect(["red", "blue"]).toContain(trial.color);
+          if (trial.number === 1 || trial.number === 8) {
+            expect(trial.noGoStyle).toBe("clipped");
+          } else {
+            expect(trial.noGoStyle).toBe("mirrored");
+          }
+          sawNoGo = true;
+        }
+      }
+      expect(sawNoGo).toBe(true);
     });
 
     it("switches rule when trialsUntilSwitch reaches 0", () => {
@@ -182,33 +203,36 @@ describe("generateTrial", () => {
 });
 
 describe("evaluateResponse", () => {
+  const go = (n: number, c: "red" | "blue"): Trial => ({
+    number: n,
+    color: c,
+    isNoGo: false,
+    noGoStyle: "none",
+  });
+
   describe("COLOR rule", () => {
     it("correct: red trial, left pressed", () => {
-      const trial: Trial = { number: 3, color: "red", isNoGo: false };
-      const result = evaluateResponse(trial, "color", "left");
+      const result = evaluateResponse(go(3, "red"), "color", "left");
       expect(result.correct).toBe(true);
       expect(result.points).toBe(1);
       expect(result.feedback).toBe("");
     });
 
     it("correct: blue trial, right pressed", () => {
-      const trial: Trial = { number: 4, color: "blue", isNoGo: false };
-      const result = evaluateResponse(trial, "color", "right");
+      const result = evaluateResponse(go(4, "blue"), "color", "right");
       expect(result.correct).toBe(true);
       expect(result.points).toBe(1);
     });
 
     it("wrong: red trial, right pressed", () => {
-      const trial: Trial = { number: 3, color: "red", isNoGo: false };
-      const result = evaluateResponse(trial, "color", "right");
+      const result = evaluateResponse(go(3, "red"), "color", "right");
       expect(result.correct).toBe(false);
       expect(result.points).toBe(-1);
       expect(result.feedback).toContain("Red");
     });
 
     it("wrong: blue trial, left pressed", () => {
-      const trial: Trial = { number: 4, color: "blue", isNoGo: false };
-      const result = evaluateResponse(trial, "color", "left");
+      const result = evaluateResponse(go(4, "blue"), "color", "left");
       expect(result.correct).toBe(false);
       expect(result.points).toBe(-1);
       expect(result.feedback).toContain("Blue");
@@ -217,30 +241,26 @@ describe("evaluateResponse", () => {
 
   describe("NUMBER rule", () => {
     it("correct: odd number, left pressed", () => {
-      const trial: Trial = { number: 7, color: "red", isNoGo: false };
-      const result = evaluateResponse(trial, "number", "left");
+      const result = evaluateResponse(go(7, "red"), "number", "left");
       expect(result.correct).toBe(true);
       expect(result.points).toBe(1);
     });
 
     it("correct: even number, right pressed", () => {
-      const trial: Trial = { number: 4, color: "blue", isNoGo: false };
-      const result = evaluateResponse(trial, "number", "right");
+      const result = evaluateResponse(go(4, "blue"), "number", "right");
       expect(result.correct).toBe(true);
       expect(result.points).toBe(1);
     });
 
     it("wrong: odd number, right pressed", () => {
-      const trial: Trial = { number: 3, color: "red", isNoGo: false };
-      const result = evaluateResponse(trial, "number", "right");
+      const result = evaluateResponse(go(3, "red"), "number", "right");
       expect(result.correct).toBe(false);
       expect(result.points).toBe(-1);
       expect(result.feedback).toContain("Odd");
     });
 
     it("wrong: even number, left pressed", () => {
-      const trial: Trial = { number: 8, color: "blue", isNoGo: false };
-      const result = evaluateResponse(trial, "number", "left");
+      const result = evaluateResponse(go(8, "blue"), "number", "left");
       expect(result.correct).toBe(false);
       expect(result.points).toBe(-1);
       expect(result.feedback).toContain("Even");
@@ -248,17 +268,40 @@ describe("evaluateResponse", () => {
   });
 
   describe("no-go trials", () => {
-    it("fail: pressing on a no-go trial", () => {
-      const trial: Trial = { number: 5, color: "green", isNoGo: true };
+    it("fail: pressing on a color no-go trial", () => {
+      const trial: Trial = {
+        number: 5,
+        color: "peach",
+        isNoGo: true,
+        noGoStyle: "none",
+      };
       const result = evaluateResponse(trial, "color", "left");
       expect(result.correct).toBe(false);
       expect(result.points).toBe(-1);
       expect(result.noGoFail).toBe(true);
-      expect(result.feedback).toBe("Don't press on green!");
+      expect(result.feedback).toBe("Not red or blue — don't press!");
+    });
+
+    it("fail: pressing on a number no-go trial", () => {
+      const trial: Trial = {
+        number: 3,
+        color: "red",
+        isNoGo: true,
+        noGoStyle: "mirrored",
+      };
+      const result = evaluateResponse(trial, "number", "left");
+      expect(result.correct).toBe(false);
+      expect(result.noGoFail).toBe(true);
+      expect(result.feedback).toBe("Fake digit — don't press!");
     });
 
     it("success: withholding on a no-go trial", () => {
-      const trial: Trial = { number: 5, color: "green", isNoGo: true };
+      const trial: Trial = {
+        number: 5,
+        color: "lavender",
+        isNoGo: true,
+        noGoStyle: "none",
+      };
       const result = evaluateResponse(trial, "color", null);
       expect(result.correct).toBe(true);
       expect(result.points).toBe(1);
@@ -268,8 +311,7 @@ describe("evaluateResponse", () => {
 
   describe("timeout (go trial, no press)", () => {
     it("returns too slow for go trial with no press", () => {
-      const trial: Trial = { number: 3, color: "red", isNoGo: false };
-      const result = evaluateResponse(trial, "color", null);
+      const result = evaluateResponse(go(3, "red"), "color", null);
       expect(result.correct).toBe(false);
       expect(result.points).toBe(-1);
       expect(result.feedback).toBe("Too slow!");

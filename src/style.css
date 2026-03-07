@@ -10,6 +10,7 @@
   --dur-200: 200ms;
   --dur-250: 250ms;
   --dur-350: 350ms;
+  --dur-1000: 1000ms;
 
   /* easing curves */
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
@@ -31,8 +32,10 @@
   --ctp-green: #a6d189;
   --ctp-mauve: #ca9ee6;
   --ctp-red: #e78284;
+  --ctp-maroon: #ea999c;
   --ctp-yellow: #e5c890;
   --ctp-peach: #ef9f76;
+  --ctp-lavender: #babbf1;
   --ctp-shadow: 0 1px 3px rgb(35 38 52 / 0.4);
   --ctp-shadow-lg: 0 4px 12px rgb(35 38 52 / 0.3);
   --ctp-focus-ring: 0 0 0 2px rgb(140 170 238 / 0.5);
@@ -53,8 +56,10 @@
   --ctp-green: #40a02b;
   --ctp-mauve: #8839ef;
   --ctp-red: #d20f39;
+  --ctp-maroon: #e64553;
   --ctp-yellow: #df8e1d;
   --ctp-peach: #fe640b;
+  --ctp-lavender: #7287fd;
   --ctp-shadow: 0 1px 3px rgb(172 176 190 / 0.5);
   --ctp-shadow-lg: 0 4px 12px rgb(172 176 190 / 0.35);
   --ctp-focus-ring: 0 0 0 2px rgb(30 102 245 / 0.4);

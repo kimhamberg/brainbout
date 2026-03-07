@@ -47,7 +47,12 @@ function play(name: string): void {
   preloadAll();
   const buf = buffers.get(name);
   if (!buf) {
-    void fetchBuffer(name);
+    void fetchBuffer(name).then((b) => {
+      const s = actx.createBufferSource();
+      s.buffer = b;
+      s.connect(actx.destination);
+      s.start();
+    });
     return;
   }
   const src = actx.createBufferSource();
