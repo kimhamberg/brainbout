@@ -100,6 +100,32 @@ export class StockfishEngine {
     this.send("isready");
   }
 
+  public async evalPosition(
+    fen: string,
+    movesArr: string[],
+    nodes: number,
+  ): Promise<{ score: EngineInfo["score"]; bestMove: string }> {
+    return new Promise((resolve) => {
+      let lastInfo: EngineInfo | null = null;
+      this.go(
+        fen,
+        movesArr,
+        (bestMove) => {
+          resolve({
+            score: lastInfo?.score ?? { type: "cp", value: 0 },
+            bestMove,
+          });
+        },
+        {
+          nodes,
+          onInfo: (info) => {
+            lastInfo = info;
+          },
+        },
+      );
+    });
+  }
+
   public stop(): void {
     this.send("stop");
   }

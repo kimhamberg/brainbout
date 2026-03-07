@@ -104,6 +104,9 @@ let baseNodes: number;
 const positionHistory: string[] = [];
 const fenHistory: string[] = [];
 let viewPly = 0;
+let offerPending = false;
+let drawDeclined = false;
+let takebackDeclined = false;
 
 // --- Repetition tracking ---
 
@@ -156,6 +159,146 @@ function updateNavButtons(): void {
   const next = document.getElementById("hist-next") as HTMLButtonElement | null;
   if (prev) prev.disabled = viewPly === 0;
   if (next) next.disabled = isLive();
+}
+
+// --- Game actions (draw, takeback, resign) ---
+
+const EVAL_NODES = 50_000;
+const DRAW_THRESHOLD = -100; // Engine accepts draw if eval ≤ this (losing by ≥1 pawn)
+
+function isPlayerTurn(): boolean {
+  return !gameOver && pos.turn === playerColor && isLive();
+}
+
+function updateActionButtons(): void {
+  const draw = document.getElementById(
+    "action-draw",
+  ) as HTMLButtonElement | null;
+  const take = document.getElementById(
+    "action-takeback",
+  ) as HTMLButtonElement | null;
+  const resign = document.getElementById(
+    "action-resign",
+  ) as HTMLButtonElement | null;
+  if (draw) draw.disabled = !isPlayerTurn() || offerPending || drawDeclined;
+  if (take)
+    take.disabled =
+      !isPlayerTurn() || offerPending || takebackDeclined || moves.length < 2;
+  if (resign) resign.disabled = gameOver || offerPending;
+}
+
+function showOfferResult(btnId: string, accepted: boolean): void {
+  const btn = document.getElementById(btnId);
+  if (!btn) return;
+  const label = btn.querySelector(".action-label");
+  if (!label) return;
+  const original = label.textContent;
+  label.textContent = accepted ? "Accepted" : "Declined";
+  btn.classList.add(accepted ? "accepted" : "declined");
+  setTimeout(() => {
+    label.textContent = original;
+    btn.classList.remove("accepted", "declined");
+  }, 1500);
+}
+
+function onResign(): void {
+  if (gameOver || offerPending) return;
+  clock.stop();
+  engineClock.stop();
+  gameOver = true;
+  finishGame(0, "You resigned");
+}
+
+async function onDrawOffer(): Promise<void> {
+  if (!isPlayerTurn() || offerPending || drawDeclined) return;
+  offerPending = true;
+  updateActionButtons();
+
+  const thinkDelay = 1000 + Math.random() * 2000;
+  const evalPromise = engine.evalPosition(startFen, moves, EVAL_NODES);
+  const [result] = await Promise.all([
+    evalPromise,
+    new Promise<void>((r) => {
+      setTimeout(r, thinkDelay);
+    }),
+  ]);
+
+  // Score is from engine's perspective (engine plays black = opposite of player)
+  // Stockfish reports from side-to-move perspective; it's player's turn, so
+  // positive = good for player = bad for engine
+  const cp =
+    result.score.type === "mate"
+      ? result.score.value > 0
+        ? 10000
+        : -10000
+      : result.score.value;
+  const engineEval = -cp; // Flip to engine's perspective
+
+  offerPending = false;
+
+  if (engineEval <= DRAW_THRESHOLD) {
+    clock.stop();
+    engineClock.stop();
+    gameOver = true;
+    showOfferResult("action-draw", true);
+    setTimeout(() => {
+      finishGame(0.5, "Draw by agreement");
+    }, 800);
+  } else {
+    drawDeclined = true;
+    showOfferResult("action-draw", false);
+    updateActionButtons();
+  }
+}
+
+async function onTakeback(): Promise<void> {
+  if (!isPlayerTurn() || offerPending || takebackDeclined || moves.length < 2)
+    return;
+  offerPending = true;
+  updateActionButtons();
+
+  // Evaluate position before the player's last move
+  const targetPly = fenHistory.length - 3; // Position before player's last move
+  const movesBeforePlayer = moves.slice(0, -2);
+  const playerMove = moves[moves.length - 2];
+
+  const thinkDelay = 1500 + Math.random() * 2000;
+  const evalPromise = engine.evalPosition(
+    startFen,
+    movesBeforePlayer,
+    EVAL_NODES,
+  );
+  const [result] = await Promise.all([
+    evalPromise,
+    new Promise<void>((r) => {
+      setTimeout(r, thinkDelay);
+    }),
+  ]);
+
+  offerPending = false;
+
+  if (result.bestMove === playerMove) {
+    // Player made the best move — engine gains nothing, accept takeback
+    showOfferResult("action-takeback", true);
+
+    // Undo 2 plies: player's move + engine's response
+    moves.splice(-2);
+    fenHistory.splice(targetPly + 1);
+    positionHistory.splice(targetPly + 1);
+
+    // Restore position
+    const setup = parseFen(fenHistory[targetPly]).unwrap();
+    pos = Chess.fromSetup(setup).unwrap();
+    viewPly = fenHistory.length - 1;
+
+    updateBoard();
+    updateNavButtons();
+    updateActionButtons();
+  } else {
+    takebackDeclined = true;
+    showOfferResult("action-takeback", false);
+    updateActionButtons();
+  }
 }
 
 // --- Promotion picker ---
@@ -340,6 +483,10 @@ function onEngineMove(uci: string): void {
 
   if (checkGameEnd()) return;
 
+  drawDeclined = false;
+  takebackDeclined = false;
+  updateActionButtons();
+
   clock.start();
 
   // Execute queued premove
@@ -362,6 +509,7 @@ function commitPlayerMove(orig: string, dest: string, promoChar: string): void {
   clock.addIncrement();
   updateBoard();
   updateNavButtons();
+  updateActionButtons();
 
   if (isCapture) sound.playCapture();
   else sound.playMove();
@@ -460,6 +608,20 @@ function renderGame(): void {
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
       </button>
     </div>
+    <div class="action-row">
+      <button class="action-btn" id="action-takeback" disabled aria-label="Offer takeback">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+        <span class="action-label">Takeback</span>
+      </button>
+      <button class="action-btn" id="action-draw" disabled aria-label="Offer draw">
+        <span class="draw-symbol">½</span>
+        <span class="action-label">Draw</span>
+      </button>
+      <button class="action-btn action-resign" id="action-resign" aria-label="Resign">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>
+        <span class="action-label">Resign</span>
+      </button>
+    </div>
   `;
 
   const boardEl = game.querySelector<HTMLElement>(".crown-board");
@@ -489,6 +651,13 @@ function renderGame(): void {
   document.getElementById("hist-next")?.addEventListener("click", () => {
     if (!isLive()) showPly(viewPly + 1);
   });
+  document.getElementById("action-takeback")?.addEventListener("click", () => {
+    void onTakeback();
+  });
+  document.getElementById("action-draw")?.addEventListener("click", () => {
+    void onDrawOffer();
+  });
+  document.getElementById("action-resign")?.addEventListener("click", onResign);
 }
 
 function onHistoryKey(e: KeyboardEvent): void {
@@ -507,6 +676,9 @@ async function main(): Promise<void> {
   moves.length = 0;
   positionHistory.length = 0;
   fenHistory.length = 0;
+  offerPending = false;
+  drawDeclined = false;
+  takebackDeclined = false;
 
   const { fen } = randomChess960();
   startFen = fen;
