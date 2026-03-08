@@ -1,0 +1,22 @@
+{
+  "planPath": "docs/plans/2026-03-09-flux-redesign-plan.md",
+  "tasks": [
+    {"id": 0, "subject": "Task 0: New engine types, constants, and state factory", "status": "pending"},
+    {"id": 1, "subject": "Task 1: Trial generation with shape properties", "status": "pending", "blockedBy": [0]},
+    {"id": 2, "subject": "Task 2: Rule-dependent no-go trials", "status": "pending", "blockedBy": [1]},
+    {"id": 3, "subject": "Task 3: NOT rule (inverted logic)", "status": "pending", "blockedBy": [1]},
+    {"id": 4, "subject": "Task 4: Response evaluation for all rules", "status": "pending", "blockedBy": [1]},
+    {"id": 5, "subject": "Task 5: BPM-based adaptive pacing", "status": "pending", "blockedBy": [1]},
+    {"id": 6, "subject": "Task 6: Session acts (warmup, flow, climax)", "status": "pending", "blockedBy": [5]},
+    {"id": 7, "subject": "Task 7: CSS shape rendering and layout", "status": "pending", "blockedBy": [0]},
+    {"id": 8, "subject": "Task 8: CSS juice animations and particles", "status": "pending", "blockedBy": [7]},
+    {"id": 9, "subject": "Task 9: CSS timer ring and result screen", "status": "pending", "blockedBy": [8]},
+    {"id": 10, "subject": "Task 10: Sound synthesis additions", "status": "pending"},
+    {"id": 11, "subject": "Task 11: UI rhythm loop and game rendering", "status": "pending", "blockedBy": [6, 7, 9, 10]},
+    {"id": 12, "subject": "Task 12: UI result screen and one-more-try loop", "status": "pending", "blockedBy": [11]},
+    {"id": 13, "subject": "Task 13: Verify flux.html loads redesigned game", "status": "pending", "blockedBy": [11]},
+    {"id": 14, "subject": "Task 14: Integration tests — full engine round-trip", "status": "pending", "blockedBy": [6, 12]},
+    {"id": 15, "subject": "Task 15: Final manual verification", "status": "pending", "blockedBy": [12, 13, 14]}
+  ],
+  "lastUpdated": "2026-03-09T00:00:00Z"
+}
