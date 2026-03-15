@@ -837,6 +837,104 @@ def notify() -> np.ndarray:
     return fm_bell(392.00, 0.30, mod_ratio=1.41, mod_peak=5.0, decay=5)
 
 
+# ── flux rhythm sounds ──────────────────────────────────────────────
+
+
+def beat_tick() -> np.ndarray:
+    """Low wood thump — quiet rhythmic tick for the beat loop."""
+    t = _t(0.05)
+    osc = 0.4 * sine(120, 0.05) + 0.2 * sine(240, 0.05)
+    e = np.exp(-t * 80)
+    return osc * e
+
+
+def beat_tick_accent() -> np.ndarray:
+    """Brighter tick — accented beat with high harmonic."""
+    t = _t(0.05)
+    osc = 0.4 * sine(120, 0.05) + 0.3 * sine(360, 0.05) + 0.15 * sine(600, 0.05)
+    e = np.exp(-t * 80)
+    return osc * e
+
+
+def beat_tick_urgent() -> np.ndarray:
+    """Sharper tick — climax urgency, more attack."""
+    t = _t(0.05)
+    osc = 0.4 * sine(180, 0.05) + 0.3 * sine(540, 0.05) + 0.2 * sine(900, 0.05)
+    e = np.exp(-t * 100)
+    a = min(int(SR * 0.001), len(e))
+    if a > 0:
+        e[:a] *= 0.5 * (1 - np.cos(np.pi * np.arange(a) / a))
+    return osc * e
+
+
+def correct_burst() -> np.ndarray:
+    """FM bell pop — punchy correct feedback."""
+    return fm_bell(392.00, 0.08, mod_ratio=1.41, mod_peak=5.0, decay=25)
+
+
+def wrong_crack() -> np.ndarray:
+    """Noise burst + low thud — wrong answer."""
+    t = _t(0.12)
+    noise = pink_noise(0.12) * np.exp(-t * 30) * 0.4
+    thud = 0.6 * sine(80, 0.12) * np.exp(-t * 25)
+    return lpf(noise + thud, cutoff=3000)
+
+
+def nogo_dissolve() -> np.ndarray:
+    """Airy chime — correct no-go withhold."""
+    t = _t(0.15)
+    osc = 0.5 * sine(784, 0.15) + 0.3 * sine(1175, 0.15)
+    e = np.exp(-t * 12)
+    a = min(int(SR * 0.02), len(e))
+    if a > 0:
+        e[:a] *= 0.5 * (1 - np.cos(np.pi * np.arange(a) / a))
+    return osc * e
+
+
+def nogo_fail() -> np.ndarray:
+    """Low buzz — failed no-go inhibition."""
+    t = _t(0.10)
+    osc = sine(100, 0.10) + 0.33 * sine(300, 0.10) + 0.2 * sine(500, 0.10)
+    e = np.exp(-t * 20)
+    return lpf(osc * e, cutoff=800)
+
+
+def switch_whoosh() -> np.ndarray:
+    """Filtered noise sweep (high to low) — rule switch."""
+    t = _t(0.10)
+    n = pink_noise(0.10)
+    sweep_freq = 6000 * np.exp(-t * 30) + 200
+    carrier = np.sin(2 * np.pi * np.cumsum(sweep_freq) / SR)
+    result = n * 0.3 + carrier * 0.2
+    e = np.exp(-t * 15)
+    return lpf(result * e, cutoff=8000)
+
+
+def golden_chime() -> np.ndarray:
+    """Rising FM arpeggio (3 quick notes) — golden shape."""
+    d, gap = 0.05, 0.02
+    notes = [
+        fm_bell(392.00, d, mod_ratio=1.41, mod_peak=3.0, decay=20),
+        fm_bell(493.88, d, mod_ratio=1.41, mod_peak=3.0, decay=20),
+        fm_bell(587.33, d, mod_ratio=1.41, mod_peak=3.0, decay=20),
+    ]
+    parts: list[np.ndarray] = []
+    for i, note in enumerate(notes):
+        parts.append(note)
+        if i < len(notes) - 1:
+            parts.append(silence(gap))
+    return np.concatenate(parts)
+
+
+def streak_up() -> np.ndarray:
+    """Quick rising pitch pip — streak increment."""
+    t = _t(0.06)
+    freq = 400 + 600 * t / 0.06
+    osc = np.sin(2 * np.pi * np.cumsum(freq) / SR)
+    e = np.exp(-t * 25)
+    return osc * e * 0.5
+
+
 # ── main ─────────────────────────────────────────────────────────────
 
 SOUNDS = {
@@ -849,6 +947,16 @@ SOUNDS = {
     "defeat": defeat,
     "draw": draw,
     "notify": notify,
+    "beat-tick": beat_tick,
+    "beat-tick-accent": beat_tick_accent,
+    "beat-tick-urgent": beat_tick_urgent,
+    "correct-burst": correct_burst,
+    "wrong-crack": wrong_crack,
+    "nogo-dissolve": nogo_dissolve,
+    "nogo-fail": nogo_fail,
+    "switch-whoosh": switch_whoosh,
+    "golden-chime": golden_chime,
+    "streak-up": streak_up,
 }
 
 if __name__ == "__main__":

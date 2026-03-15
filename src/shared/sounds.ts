@@ -33,6 +33,16 @@ const ALL = [
   "defeat",
   "draw",
   "notify",
+  "beat-tick",
+  "beat-tick-accent",
+  "beat-tick-urgent",
+  "correct-burst",
+  "wrong-crack",
+  "nogo-dissolve",
+  "nogo-fail",
+  "switch-whoosh",
+  "golden-chime",
+  "streak-up",
 ];
 
 let preloaded = false;
@@ -94,4 +104,36 @@ export function playDraw(): void {
 // UI
 export function playNotify(): void {
   play("notify");
+}
+
+// Flux rhythm
+export function playBeatTick(): void {
+  play("beat-tick");
+}
+export function playBeatTickAccent(): void {
+  play("beat-tick-accent");
+}
+export function playBeatTickUrgent(): void {
+  play("beat-tick-urgent");
+}
+export function playCorrectBurst(): void {
+  play("correct-burst");
+}
+export function playWrongCrack(): void {
+  play("wrong-crack");
+}
+export function playNogoDissolve(): void {
+  play("nogo-dissolve");
+}
+export function playNogoFail(): void {
+  play("nogo-fail");
+}
+export function playSwitchWhoosh(): void {
+  play("switch-whoosh");
+}
+export function playGoldenChime(): void {
+  play("golden-chime");
+}
+export function playStreakUp(): void {
+  play("streak-up");
 }
