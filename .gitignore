@@ -5,6 +5,7 @@ server/web/
 *.local
 *.apk
 .claude/
+.worktrees/
 ref-sounds/
 .dict-cache/
 
