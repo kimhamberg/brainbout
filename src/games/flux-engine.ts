@@ -341,6 +341,17 @@ export function evaluateResponse(
   };
 }
 
+/* ---------- session acts ---------- */
+
+export type SessionAct = "warmup" | "flow" | "climax";
+
+export function getSessionAct(remaining: number): SessionAct {
+  const elapsed = DURATION - remaining;
+  if (elapsed < 15) return "warmup";
+  if (remaining > 15) return "flow";
+  return "climax";
+}
+
 /* ---------- BPM helpers ---------- */
 
 export function bpmToMs(bpm: number): number {

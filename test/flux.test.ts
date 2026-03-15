@@ -13,6 +13,7 @@ import {
   getMultiplier,
   updateAdaptation,
   bpmToMs,
+  getSessionAct,
 } from "../src/games/flux-engine";
 import type { ShapeColor, ShapeForm, Trial } from "../src/games/flux-engine";
 
@@ -552,5 +553,23 @@ describe("updateAdaptation", () => {
     state.bpm = 85;
     updateAdaptation(state, false);
     expect(state.bpm).toBe(75); // back to baseBpm
+  });
+});
+
+describe("getSessionAct", () => {
+  it("returns 'warmup' for 0-15s remaining (60-75 elapsed)", () => {
+    expect(getSessionAct(75)).toBe("warmup"); // 0s elapsed
+    expect(getSessionAct(61)).toBe("warmup"); // 14s elapsed
+  });
+
+  it("returns 'flow' for 15-60s elapsed", () => {
+    expect(getSessionAct(60)).toBe("flow"); // 15s elapsed
+    expect(getSessionAct(16)).toBe("flow"); // 59s elapsed
+  });
+
+  it("returns 'climax' for final 15s", () => {
+    expect(getSessionAct(15)).toBe("climax"); // 60s elapsed
+    expect(getSessionAct(1)).toBe("climax");
+    expect(getSessionAct(0)).toBe("climax");
   });
 });
