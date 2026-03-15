@@ -214,3 +214,129 @@ export function generateTrial(state: FluxState): Trial {
   trial.isGolden = isGolden;
   return trial;
 }
+
+/* ---------- multiplier ---------- */
+
+export function getMultiplier(streak: number): number {
+  for (const t of STREAK_THRESHOLDS) {
+    if (streak >= t.min) return t.multiplier;
+  }
+  return 1;
+}
+
+export function getStreakLabel(streak: number): string {
+  for (const t of STREAK_THRESHOLDS) {
+    if (streak >= t.min) return t.label;
+  }
+  return "";
+}
+
+/* ---------- correct side ---------- */
+
+function getCorrectSide(trial: Trial, rule: Rule, isNot: boolean): ButtonSide {
+  let leftMatch: boolean;
+
+  switch (rule) {
+    case "color":
+      leftMatch = trial.color === "red" || trial.color === "peach";
+      break;
+    case "shape":
+      leftMatch = trial.shape === "circle" || trial.shape === "pill";
+      break;
+    case "size":
+      leftMatch = trial.size === "big";
+      break;
+    case "fill":
+      leftMatch = trial.fill === "solid";
+      break;
+  }
+
+  if (isNot) leftMatch = !leftMatch;
+  return leftMatch ? "left" : "right";
+}
+
+/* ---------- rule labels ---------- */
+
+export function getRuleLabels(rule: Rule, isNot: boolean): [string, string] {
+  let left: string;
+  let right: string;
+
+  switch (rule) {
+    case "color": left = "Warm"; right = "Cool"; break;
+    case "shape": left = "Round"; right = "Angular"; break;
+    case "size": left = "Big"; right = "Small"; break;
+    case "fill": left = "Solid"; right = "Hollow"; break;
+  }
+
+  if (isNot) [left, right] = [right, left];
+  return [left, right];
+}
+
+/* ---------- response evaluation ---------- */
+
+export function evaluateResponse(
+  trial: Trial,
+  rule: Rule,
+  isNot: boolean,
+  streak: number,
+  pressed: ButtonSide | null,
+): ResponseResult {
+  const multiplier = getMultiplier(streak);
+
+  // No-go trial
+  if (trial.isNoGo) {
+    if (pressed !== null) {
+      return {
+        correct: false,
+        basePoints: -1,
+        multiplier: 1,
+        totalPoints: -1,
+        noGoFail: true,
+        feedback: "Don't press!",
+      };
+    }
+    return {
+      correct: true,
+      basePoints: 1,
+      multiplier,
+      totalPoints: Math.round(1 * multiplier),
+      feedback: "",
+    };
+  }
+
+  // Go trial, no press (timeout)
+  if (pressed === null) {
+    return {
+      correct: false,
+      basePoints: -1,
+      multiplier: 1,
+      totalPoints: -1,
+      feedback: "Too slow!",
+    };
+  }
+
+  // Check correctness
+  const correctSide = getCorrectSide(trial, rule, isNot);
+  const base = trial.isGolden ? GOLDEN_BASE_POINTS : 1;
+
+  if (pressed === correctSide) {
+    return {
+      correct: true,
+      basePoints: base,
+      multiplier,
+      totalPoints: Math.round(base * multiplier),
+      ...(trial.isGolden ? { isGolden: true } : {}),
+      feedback: "",
+    };
+  }
+
+  const [leftLabel, rightLabel] = getRuleLabels(rule, isNot);
+  const correctLabel = correctSide === "left" ? leftLabel : rightLabel;
+  return {
+    correct: false,
+    basePoints: -1,
+    multiplier: 1,
+    totalPoints: -1,
+    feedback: `It was ${correctLabel}`,
+  };
+}

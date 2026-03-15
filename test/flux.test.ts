@@ -9,8 +9,10 @@ import {
   GOLDEN_BASE_POINTS,
   createFluxState,
   generateTrial,
+  evaluateResponse,
+  getMultiplier,
 } from "../src/games/flux-engine";
-import type { ShapeColor, ShapeForm } from "../src/games/flux-engine";
+import type { ShapeColor, ShapeForm, Trial } from "../src/games/flux-engine";
 
 describe("constants", () => {
   it("DURATION is 75 seconds", () => {
@@ -323,5 +325,176 @@ describe("generateTrial", () => {
     expect(state.trialCount).toBe(1);
     generateTrial(state);
     expect(state.trialCount).toBe(2);
+  });
+});
+
+describe("getMultiplier", () => {
+  it("returns 1 for streak 0-2", () => {
+    expect(getMultiplier(0)).toBe(1);
+    expect(getMultiplier(2)).toBe(1);
+  });
+  it("returns 1.5 for streak 3-4", () => {
+    expect(getMultiplier(3)).toBe(1.5);
+    expect(getMultiplier(4)).toBe(1.5);
+  });
+  it("returns 2 for streak 5-9", () => {
+    expect(getMultiplier(5)).toBe(2);
+    expect(getMultiplier(9)).toBe(2);
+  });
+  it("returns 3 for streak 10-14", () => {
+    expect(getMultiplier(10)).toBe(3);
+    expect(getMultiplier(14)).toBe(3);
+  });
+  it("returns 5 for streak 15+", () => {
+    expect(getMultiplier(15)).toBe(5);
+    expect(getMultiplier(100)).toBe(5);
+  });
+});
+
+describe("evaluateResponse", () => {
+  function goTrial(overrides?: Partial<Trial>): Trial {
+    return {
+      color: "red",
+      shape: "circle",
+      size: "big",
+      fill: "solid",
+      isNoGo: false,
+      isGolden: false,
+      ...overrides,
+    };
+  }
+
+  describe("COLOR rule", () => {
+    it("warm (red) → left is correct", () => {
+      const r = evaluateResponse(goTrial({ color: "red" }), "color", false, 0, "left");
+      expect(r.correct).toBe(true);
+      expect(r.basePoints).toBe(1);
+    });
+
+    it("warm (peach) → left is correct", () => {
+      const r = evaluateResponse(goTrial({ color: "peach" }), "color", false, 0, "left");
+      expect(r.correct).toBe(true);
+    });
+
+    it("cool (blue) → right is correct", () => {
+      const r = evaluateResponse(goTrial({ color: "blue" }), "color", false, 0, "right");
+      expect(r.correct).toBe(true);
+    });
+
+    it("cool (lavender) → right is correct", () => {
+      const r = evaluateResponse(goTrial({ color: "lavender" }), "color", false, 0, "right");
+      expect(r.correct).toBe(true);
+    });
+
+    it("warm → right is wrong", () => {
+      const r = evaluateResponse(goTrial({ color: "red" }), "color", false, 0, "right");
+      expect(r.correct).toBe(false);
+      expect(r.basePoints).toBe(-1);
+    });
+  });
+
+  describe("SHAPE rule", () => {
+    it("round (circle) → left is correct", () => {
+      const r = evaluateResponse(goTrial({ shape: "circle" }), "shape", false, 0, "left");
+      expect(r.correct).toBe(true);
+    });
+
+    it("round (pill) → left is correct", () => {
+      const r = evaluateResponse(goTrial({ shape: "pill" }), "shape", false, 0, "left");
+      expect(r.correct).toBe(true);
+    });
+
+    it("angular (diamond) → right is correct", () => {
+      const r = evaluateResponse(goTrial({ shape: "diamond" }), "shape", false, 0, "right");
+      expect(r.correct).toBe(true);
+    });
+
+    it("angular (triangle) → right is correct", () => {
+      const r = evaluateResponse(goTrial({ shape: "triangle" }), "shape", false, 0, "right");
+      expect(r.correct).toBe(true);
+    });
+  });
+
+  describe("SIZE rule", () => {
+    it("big → left is correct", () => {
+      const r = evaluateResponse(goTrial({ size: "big" }), "size", false, 0, "left");
+      expect(r.correct).toBe(true);
+    });
+
+    it("small → right is correct", () => {
+      const r = evaluateResponse(goTrial({ size: "small" }), "size", false, 0, "right");
+      expect(r.correct).toBe(true);
+    });
+  });
+
+  describe("FILL rule", () => {
+    it("solid → left is correct", () => {
+      const r = evaluateResponse(goTrial({ fill: "solid" }), "fill", false, 0, "left");
+      expect(r.correct).toBe(true);
+    });
+
+    it("hollow → right is correct", () => {
+      const r = evaluateResponse(goTrial({ fill: "hollow" }), "fill", false, 0, "right");
+      expect(r.correct).toBe(true);
+    });
+  });
+
+  describe("NOT rule", () => {
+    it("NOT COLOR: warm → right (inverted)", () => {
+      const r = evaluateResponse(goTrial({ color: "red" }), "color", true, 0, "right");
+      expect(r.correct).toBe(true);
+    });
+
+    it("NOT COLOR: cool → left (inverted)", () => {
+      const r = evaluateResponse(goTrial({ color: "blue" }), "color", true, 0, "left");
+      expect(r.correct).toBe(true);
+    });
+  });
+
+  describe("no-go trials", () => {
+    it("withholding on no-go is correct", () => {
+      const trial = goTrial({ isNoGo: true, color: "yellow" });
+      const r = evaluateResponse(trial, "color", false, 0, null);
+      expect(r.correct).toBe(true);
+      expect(r.basePoints).toBe(1);
+    });
+
+    it("pressing on no-go is wrong", () => {
+      const trial = goTrial({ isNoGo: true, color: "yellow" });
+      const r = evaluateResponse(trial, "color", false, 0, "left");
+      expect(r.correct).toBe(false);
+      expect(r.noGoFail).toBe(true);
+    });
+  });
+
+  describe("golden shapes", () => {
+    it("correct golden gives 5 base points", () => {
+      const trial = goTrial({ isGolden: true, color: "red" });
+      const r = evaluateResponse(trial, "color", false, 0, "left");
+      expect(r.correct).toBe(true);
+      expect(r.basePoints).toBe(5);
+      expect(r.isGolden).toBe(true);
+    });
+
+    it("golden with x3 multiplier gives 15 total", () => {
+      const trial = goTrial({ isGolden: true, color: "red" });
+      const r = evaluateResponse(trial, "color", false, 10, "left"); // streak 10 = x3
+      expect(r.totalPoints).toBe(15);
+    });
+  });
+
+  describe("multiplier", () => {
+    it("applies streak multiplier to base points", () => {
+      const r = evaluateResponse(goTrial({ color: "red" }), "color", false, 5, "left"); // streak 5 = x2
+      expect(r.totalPoints).toBe(2); // 1 * 2
+    });
+  });
+
+  describe("timeout", () => {
+    it("null press on go trial is wrong", () => {
+      const r = evaluateResponse(goTrial(), "color", false, 0, null);
+      expect(r.correct).toBe(false);
+      expect(r.feedback).toBe("Too slow!");
+    });
   });
 });
