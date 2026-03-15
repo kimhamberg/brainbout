@@ -213,6 +213,76 @@ describe("generateTrial", () => {
     });
   });
 
+  describe("no-go trials", () => {
+    it("COLOR no-go: yellow color (neither warm nor cool)", () => {
+      const state = createFluxState(1);
+      state.trialCount = WARM_UP_TRIALS;
+      state.noGoUnlocked = true;
+      state.rule = "color";
+      state.trialsUntilSwitch = 999;
+      let sawNoGo = false;
+      for (let i = 0; i < 300; i++) {
+        const trial = generateTrial(state);
+        if (trial.isNoGo) {
+          expect(trial.color).toBe("yellow");
+          sawNoGo = true;
+        }
+      }
+      expect(sawNoGo).toBe(true);
+    });
+
+    it("SHAPE no-go: blob shape (neither round nor angular)", () => {
+      const state = createFluxState(1);
+      state.trialCount = WARM_UP_TRIALS;
+      state.noGoUnlocked = true;
+      state.rule = "shape";
+      state.trialsUntilSwitch = 999;
+      let sawNoGo = false;
+      for (let i = 0; i < 300; i++) {
+        const trial = generateTrial(state);
+        if (trial.isNoGo) {
+          expect(trial.shape).toBe("blob");
+          sawNoGo = true;
+        }
+      }
+      expect(sawNoGo).toBe(true);
+    });
+
+    it("SIZE no-go: oscillating size", () => {
+      const state = createFluxState(1);
+      state.trialCount = WARM_UP_TRIALS;
+      state.noGoUnlocked = true;
+      state.rule = "size";
+      state.trialsUntilSwitch = 999;
+      let sawNoGo = false;
+      for (let i = 0; i < 300; i++) {
+        const trial = generateTrial(state);
+        if (trial.isNoGo) {
+          expect(trial.size).toBe("oscillating");
+          sawNoGo = true;
+        }
+      }
+      expect(sawNoGo).toBe(true);
+    });
+
+    it("FILL no-go: striped fill", () => {
+      const state = createFluxState(2); // fill rule available in stage 2
+      state.trialCount = WARM_UP_TRIALS;
+      state.noGoUnlocked = true;
+      state.rule = "fill";
+      state.trialsUntilSwitch = 999;
+      let sawNoGo = false;
+      for (let i = 0; i < 300; i++) {
+        const trial = generateTrial(state);
+        if (trial.isNoGo) {
+          expect(trial.fill).toBe("striped");
+          sawNoGo = true;
+        }
+      }
+      expect(sawNoGo).toBe(true);
+    });
+  });
+
   it("increments trialCount each call", () => {
     const state = createFluxState(1);
     expect(state.trialCount).toBe(0);

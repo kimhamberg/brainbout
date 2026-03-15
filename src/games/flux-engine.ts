@@ -107,11 +107,26 @@ function generateGoTrial(): Trial {
   };
 }
 
-function generateNoGoTrial(_rule: Rule): Trial {
-  // Stub — replaced in Task 2
-  const trial = generateGoTrial();
-  trial.isNoGo = true;
-  return trial;
+function generateNoGoTrial(rule: Rule): Trial {
+  const base = generateGoTrial();
+  base.isNoGo = true;
+
+  switch (rule) {
+    case "color":
+      base.color = "yellow";
+      break;
+    case "shape":
+      base.shape = "blob";
+      break;
+    case "size":
+      base.size = "oscillating";
+      break;
+    case "fill":
+      base.fill = "striped";
+      break;
+  }
+
+  return base;
 }
 
 /* ---------- rule switching ---------- */
