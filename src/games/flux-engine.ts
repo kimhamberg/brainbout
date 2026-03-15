@@ -171,14 +171,19 @@ export function generateTrial(state: FluxState): Trial {
     state.trialsUntilSwitch--;
     if (state.trialsUntilSwitch <= 0) {
       state.rule = pickNextRule(state);
-      state.isNot = false; // reset NOT on switch (NOT handled in Task 3)
       state.trialsUntilSwitch = rollSwitchCount(state.stage);
       state.noGoUnlocked = true;
       state.switchCount++;
 
-      // Unlock rules progressively
-      const p = defined(STAGE_PARAMS[state.stage]);
-      const maxRules = p.rules.length;
+      // NOT activation + progressive rule unlock
+      const sp = defined(STAGE_PARAMS[state.stage]);
+      if (sp.notAllowed && state.switchCount >= 6 && Math.random() < 0.3) {
+        state.isNot = true;
+      } else {
+        state.isNot = false;
+      }
+
+      const maxRules = sp.rules.length;
       if (
         state.unlockedRuleCount < maxRules &&
         state.switchCount >= defined(UNLOCK_AT_SWITCH[state.unlockedRuleCount + 1])

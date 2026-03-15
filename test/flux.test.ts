@@ -283,6 +283,39 @@ describe("generateTrial", () => {
     });
   });
 
+  describe("NOT rule", () => {
+    it("stage 3 can activate NOT on a switch", () => {
+      const state = createFluxState(3);
+      state.trialCount = WARM_UP_TRIALS;
+      state.switchCount = 6; // NOT available after 6 switches
+      state.unlockedRuleCount = 4;
+      state.trialsUntilSwitch = 1;
+      // Run many switches to see if NOT ever activates
+      let sawNot = false;
+      for (let i = 0; i < 200; i++) {
+        state.trialsUntilSwitch = 1;
+        generateTrial(state);
+        if (state.isNot) {
+          sawNot = true;
+          break;
+        }
+      }
+      expect(sawNot).toBe(true);
+    });
+
+    it("stage 1 never activates NOT", () => {
+      const state = createFluxState(1);
+      state.trialCount = WARM_UP_TRIALS;
+      state.switchCount = 100;
+      state.unlockedRuleCount = 3;
+      for (let i = 0; i < 200; i++) {
+        state.trialsUntilSwitch = 1;
+        generateTrial(state);
+        expect(state.isNot).toBe(false);
+      }
+    });
+  });
+
   it("increments trialCount each call", () => {
     const state = createFluxState(1);
     expect(state.trialCount).toBe(0);
