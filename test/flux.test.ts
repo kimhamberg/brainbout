@@ -23,8 +23,8 @@ describe("constants", () => {
     expect(DURATION).toBe(75);
   });
 
-  it("WARM_UP_TRIALS is 5", () => {
-    expect(WARM_UP_TRIALS).toBe(5);
+  it("WARM_UP_TRIALS is 8", () => {
+    expect(WARM_UP_TRIALS).toBe(8);
   });
 
   it("GOLDEN_BASE_POINTS is 5", () => {
@@ -33,37 +33,37 @@ describe("constants", () => {
 });
 
 describe("STAGE_PARAMS", () => {
-  it("stage 1: baseBpm 75, rules color+shape+size, noGoRate 0.15", () => {
+  it("stage 1: baseBpm 55, rules color+shape+size, noGoRate 0.10", () => {
     const p = defined(STAGE_PARAMS[1]);
-    expect(p.baseBpm).toBe(75);
+    expect(p.baseBpm).toBe(55);
     expect(p.floorBpm).toBe(90);
     expect(p.rules).toEqual(["color", "shape", "size"]);
     expect(p.switchMin).toBe(5);
     expect(p.switchMax).toBe(7);
-    expect(p.noGoRate).toBe(0.15);
-    expect(p.goldenRate).toBe(0.1);
+    expect(p.noGoRate).toBe(0.10);
+    expect(p.goldenRate).toBe(0.12);
   });
 
-  it("stage 2: baseBpm 90, adds fill rule", () => {
+  it("stage 2: baseBpm 70, adds fill rule", () => {
     const p = defined(STAGE_PARAMS[2]);
-    expect(p.baseBpm).toBe(90);
+    expect(p.baseBpm).toBe(70);
     expect(p.floorBpm).toBe(110);
     expect(p.rules).toEqual(["color", "shape", "size", "fill"]);
     expect(p.switchMin).toBe(4);
     expect(p.switchMax).toBe(6);
-    expect(p.noGoRate).toBe(0.2);
-    expect(p.goldenRate).toBe(0.08);
+    expect(p.noGoRate).toBe(0.15);
+    expect(p.goldenRate).toBe(0.10);
   });
 
-  it("stage 3: baseBpm 110, adds not variants", () => {
+  it("stage 3: baseBpm 90, adds not variants", () => {
     const p = defined(STAGE_PARAMS[3]);
-    expect(p.baseBpm).toBe(110);
+    expect(p.baseBpm).toBe(90);
     expect(p.floorBpm).toBe(135);
     expect(p.rules).toEqual(["color", "shape", "size", "fill"]);
     expect(p.notAllowed).toBe(true);
     expect(p.switchMin).toBe(3);
     expect(p.switchMax).toBe(5);
-    expect(p.noGoRate).toBe(0.25);
+    expect(p.noGoRate).toBe(0.20);
     expect(p.goldenRate).toBe(0.08);
   });
 });
@@ -87,7 +87,7 @@ describe("createFluxState", () => {
     expect(state.peakStreak).toBe(0);
     expect(state.trialCount).toBe(0);
     expect(state.switchCount).toBe(0);
-    expect(state.bpm).toBe(75);
+    expect(state.bpm).toBe(55);
     expect(state.rule).toBe("color");
     expect(state.isNot).toBe(false);
     expect(state.noGoUnlocked).toBe(false);
@@ -96,12 +96,12 @@ describe("createFluxState", () => {
 
   it("uses stage 2 base bpm", () => {
     const state = createFluxState(2);
-    expect(state.bpm).toBe(90);
+    expect(state.bpm).toBe(70);
   });
 
   it("uses stage 3 base bpm", () => {
     const state = createFluxState(3);
-    expect(state.bpm).toBe(110);
+    expect(state.bpm).toBe(90);
   });
 });
 
@@ -537,9 +537,9 @@ describe("updateAdaptation", () => {
 
   it("increases BPM by ~5% after streak of 5", () => {
     const state = createFluxState(1);
-    state.bpm = 75;
+    state.bpm = 55;
     for (let i = 0; i < 5; i++) updateAdaptation(state, true);
-    expect(state.bpm).toBe(79); // Math.round(75 * 1.05)
+    expect(state.bpm).toBe(58); // Math.round(55 * 1.05)
   });
 
   it("does not exceed floor BPM", () => {
@@ -551,9 +551,9 @@ describe("updateAdaptation", () => {
 
   it("resets BPM to base on wrong", () => {
     const state = createFluxState(1);
-    state.bpm = 85;
+    state.bpm = 75;
     updateAdaptation(state, false);
-    expect(state.bpm).toBe(75); // back to baseBpm
+    expect(state.bpm).toBe(55); // back to baseBpm
   });
 });
 

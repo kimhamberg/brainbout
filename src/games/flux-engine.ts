@@ -55,7 +55,7 @@ export interface ResponseResult {
 /* ---------- constants ---------- */
 
 export const DURATION = 75;
-export const WARM_UP_TRIALS = 5;
+export const WARM_UP_TRIALS = 8;
 export const GOLDEN_BASE_POINTS = 5;
 export const BPM_INCREASE_PERCENT = 0.05;
 export const STREAK_TO_SPEED = 5;
@@ -68,10 +68,10 @@ export const STREAK_THRESHOLDS = [
 ] as const;
 
 export const STAGE_PARAMS: StageParams[] = [
-  { baseBpm: 75, floorBpm: 90, rules: ["color", "shape", "size"], notAllowed: false, switchMin: 5, switchMax: 7, noGoRate: 0.15, goldenRate: 0.1 }, // placeholder index 0
-  { baseBpm: 75, floorBpm: 90, rules: ["color", "shape", "size"], notAllowed: false, switchMin: 5, switchMax: 7, noGoRate: 0.15, goldenRate: 0.1 },
-  { baseBpm: 90, floorBpm: 110, rules: ["color", "shape", "size", "fill"], notAllowed: false, switchMin: 4, switchMax: 6, noGoRate: 0.2, goldenRate: 0.08 },
-  { baseBpm: 110, floorBpm: 135, rules: ["color", "shape", "size", "fill"], notAllowed: true, switchMin: 3, switchMax: 5, noGoRate: 0.25, goldenRate: 0.08 },
+  { baseBpm: 55, floorBpm: 90, rules: ["color", "shape", "size"], notAllowed: false, switchMin: 5, switchMax: 7, noGoRate: 0.10, goldenRate: 0.12 }, // placeholder index 0
+  { baseBpm: 55, floorBpm: 90, rules: ["color", "shape", "size"], notAllowed: false, switchMin: 5, switchMax: 7, noGoRate: 0.10, goldenRate: 0.12 },
+  { baseBpm: 70, floorBpm: 110, rules: ["color", "shape", "size", "fill"], notAllowed: false, switchMin: 4, switchMax: 6, noGoRate: 0.15, goldenRate: 0.10 },
+  { baseBpm: 90, floorBpm: 135, rules: ["color", "shape", "size", "fill"], notAllowed: true, switchMin: 3, switchMax: 5, noGoRate: 0.20, goldenRate: 0.08 },
 ];
 
 /* ---------- helpers ---------- */
