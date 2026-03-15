@@ -8,13 +8,19 @@ import {
   type Trial,
   type Rule,
   type ButtonSide,
+  DURATION,
   createFluxState,
   generateTrial,
   evaluateResponse,
   updateAdaptation,
+  bpmToMs,
+  getMultiplier,
+  getStreakLabel,
+  getRuleLabels,
+  getSessionAct,
 } from "./flux-engine";
 
-const DURATION = 60;
+/* ---------- DOM ---------- */
 
 function getEl(id: string): HTMLElement {
   const el = document.getElementById(id);
@@ -23,55 +29,83 @@ function getEl(id: string): HTMLElement {
 }
 const game = getEl("game");
 
+/* ---------- state ---------- */
+
 let state: FluxState;
 let currentTrial: Trial | null = null;
 let trialRule: Rule = "color";
+let trialIsNot = false;
 let ruleJustSwitched = false;
 let currentRemaining = DURATION;
 let timerRef: ReturnType<typeof createTimer> | null = null;
+let beatTimer: ReturnType<typeof setInterval> | null = null;
 let trialTimeout: ReturnType<typeof setTimeout> | null = null;
-let advanceTimeout: ReturnType<typeof setTimeout> | null = null;
 let inputLocked = false;
 let gameOver = false;
 let totalTrials = 0;
 let correctTrials = 0;
+let responded = false;
 
-function clearTrialTimeout(): void {
-  if (trialTimeout !== null) {
-    clearTimeout(trialTimeout);
-    trialTimeout = null;
-  }
+/* ---------- timer ring constants ---------- */
+
+const RING_RADIUS = 40;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+
+/* ---------- render ---------- */
+
+function shapeClasses(trial: Trial): string {
+  const classes = ["shape"];
+  classes.push(`shape-${trial.size}`);
+  classes.push(`form-${trial.shape}`);
+  classes.push(`color-${trial.color}`);
+  classes.push(`fill-${trial.fill}`);
+  if (trial.isGolden) classes.push("golden");
+  return classes.join(" ");
 }
 
-function clearAdvanceTimeout(): void {
-  if (advanceTimeout !== null) {
-    clearTimeout(advanceTimeout);
-    advanceTimeout = null;
-  }
+function streakHtml(): string {
+  if (state.streak < 3) return "";
+  const label = getStreakLabel(state.streak);
+  const mult = getMultiplier(state.streak);
+  return `<div class="streak-display streak-${label}">x${String(mult)} ${label}</div>`;
 }
 
 function renderPlaying(): void {
   if (!currentTrial) return;
 
-  const ruleCue = trialRule === "color" ? "COLOR" : "NUMBER";
+  const [leftLabel, rightLabel] = getRuleLabels(trialRule, trialIsNot);
+  const act = getSessionAct(currentRemaining);
+  const ruleText = trialIsNot ? `NOT ${trialRule.toUpperCase()}` : trialRule.toUpperCase();
+  const ruleCueClass = trialIsNot ? "rule-cue not-active" : "rule-cue";
+
+  const fraction = currentRemaining / DURATION;
+  const offset = RING_CIRCUMFERENCE * (1 - fraction);
+  const ringClass = act === "climax" ? "timer-ring climax" : currentRemaining <= 15 ? "timer-ring low" : "timer-ring";
+
   const switchHtml = ruleJustSwitched
-    ? `<div class="switch-label">SWITCH</div>`
+    ? `<div class="switch-ring"></div>`
     : "";
 
-  // Labels are always Red/Odd (left) and Blue/Even (right)
   game.innerHTML = `
-    <div class="timer${currentRemaining <= 10 ? " low" : ""}">${String(currentRemaining)}s</div>
-    <div class="rule-cue">${ruleCue}</div>
+    <div class="${ringClass}">
+      <svg width="96" height="96" viewBox="0 0 96 96">
+        <circle class="track" cx="48" cy="48" r="${String(RING_RADIUS)}" />
+        <circle class="progress" cx="48" cy="48" r="${String(RING_RADIUS)}"
+          stroke-dasharray="${String(RING_CIRCUMFERENCE)}"
+          stroke-dashoffset="${String(offset)}" />
+      </svg>
+      <div class="timer-text">${String(currentRemaining)}s</div>
+    </div>
+    <div class="${ruleCueClass}">${ruleText}</div>
     ${switchHtml}
-    <div class="stimulus color-${currentTrial.color}${currentTrial.noGoStyle !== "none" ? ` ${currentTrial.noGoStyle}` : ""}">${String(currentTrial.number)}</div>
+    <div class="${shapeClasses(currentTrial)}"></div>
+    ${streakHtml()}
     <div class="flux-buttons">
       <button class="flux-btn" data-side="left">
-        <span class="btn-label">Red</span>
-        <span class="btn-label">Odd</span>
+        <span class="btn-label">${leftLabel}</span>
       </button>
       <button class="flux-btn" data-side="right">
-        <span class="btn-label">Blue</span>
-        <span class="btn-label">Even</span>
+        <span class="btn-label">${rightLabel}</span>
       </button>
     </div>
     <div class="flux-feedback" id="feedback"></div>
@@ -79,73 +113,254 @@ function renderPlaying(): void {
   `;
 }
 
+/* ---------- particles ---------- */
+
+function spawnParticles(color: string): void {
+  const container = document.createElement("div");
+  container.className = "particles";
+  for (let i = 0; i < 5; i++) {
+    const p = document.createElement("div");
+    p.className = "particle";
+    p.style.background = color;
+    p.style.left = "50%";
+    p.style.top = "50%";
+    container.appendChild(p);
+  }
+  const shape = game.querySelector(".shape");
+  if (shape) {
+    shape.parentElement?.insertBefore(container, shape.nextSibling);
+    setTimeout(() => {
+      container.remove();
+    }, 500);
+  }
+}
+
+/* ---------- feedback ---------- */
+
 function showFeedback(correct: boolean, message: string): void {
   const feedback = document.getElementById("feedback");
   if (feedback) {
     feedback.classList.add(correct ? "correct" : "wrong");
     feedback.textContent = message;
   }
-
-  const stimulus = game.querySelector(".stimulus");
-  if (stimulus) {
-    stimulus.classList.add(correct ? "flash-correct" : "flash-wrong");
-  }
 }
+
+function applyJuice(correct: boolean, side: ButtonSide | null, isNoGo: boolean): void {
+  if (isNoGo) {
+    if (correct) {
+      game.classList.add("juice-nogo-correct");
+    } else {
+      game.classList.add("juice-nogo-fail");
+    }
+  } else if (correct && side) {
+    game.classList.add(side === "left" ? "juice-correct-left" : "juice-correct-right");
+    spawnParticles("var(--ctp-green)");
+  } else {
+    game.classList.add("juice-wrong");
+    game.classList.add("dim-flash");
+  }
+
+  setTimeout(() => {
+    game.classList.remove(
+      "juice-correct-left",
+      "juice-correct-right",
+      "juice-wrong",
+      "juice-nogo-correct",
+      "juice-nogo-fail",
+      "dim-flash",
+    );
+  }, 500);
+}
+
+/* ---------- response handling ---------- */
 
 function handleResponse(pressed: ButtonSide | null): void {
   if (gameOver || inputLocked || !currentTrial) return;
   inputLocked = true;
-  clearTrialTimeout();
+  responded = true;
 
-  const result = evaluateResponse(currentTrial, trialRule, pressed);
-  state.score += result.points;
+  if (trialTimeout !== null) {
+    clearTimeout(trialTimeout);
+    trialTimeout = null;
+  }
+
+  const result = evaluateResponse(currentTrial, trialRule, trialIsNot, state.streak, pressed);
+  state.score += result.totalPoints;
   totalTrials++;
 
   if (result.correct) {
     correctTrials++;
-    sound.playCorrect();
-    showFeedback(true, result.feedback || "+1");
+    if (result.isGolden) {
+      sound.playGoldenChime();
+    } else if (currentTrial.isNoGo) {
+      sound.playNogoDissolve();
+    } else {
+      sound.playCorrectBurst();
+    }
+    showFeedback(true, result.feedback || `+${String(result.totalPoints)}`);
     updateAdaptation(state, true);
-    advanceTimeout = setTimeout(() => {
-      if (!gameOver) nextTrial();
-    }, 400);
+    if (state.streak >= 3) sound.playStreakUp();
   } else {
-    sound.playWrong();
+    if (result.noGoFail) {
+      sound.playNogoFail();
+    } else {
+      sound.playWrongCrack();
+    }
     showFeedback(false, result.feedback);
     updateAdaptation(state, false);
-    advanceTimeout = setTimeout(() => {
-      if (!gameOver) nextTrial();
-    }, 800);
   }
 
-  // Update score display immediately
+  applyJuice(result.correct, pressed, currentTrial.isNoGo);
+
+  // Update score display
   const scoreEl = game.querySelector(".score-display");
   if (scoreEl) scoreEl.textContent = `Score: ${String(state.score)}`;
 }
 
+/* ---------- beat loop ---------- */
+
 function nextTrial(): void {
   if (gameOver) return;
-  clearTrialTimeout();
-  clearAdvanceTimeout();
+
+  // If previous trial had no response, handle as timeout
+  if (currentTrial && !responded) {
+    handleResponse(null);
+  }
 
   const prevRule = state.rule;
   currentTrial = generateTrial(state);
   trialRule = state.rule;
+  trialIsNot = state.isNot;
   ruleJustSwitched = prevRule !== state.rule;
   inputLocked = false;
+  responded = false;
+
+  if (ruleJustSwitched) {
+    sound.playSwitchWhoosh();
+  }
 
   renderPlaying();
 
-  // Auto-advance on timeout (counts as null press)
+  // Set timeout for this beat — if no response by next beat, it's a miss
+  const interval = bpmToMs(state.bpm);
   trialTimeout = setTimeout(() => {
-    handleResponse(null);
-  }, state.intervalMs);
+    if (!responded && !gameOver) {
+      handleResponse(null);
+    }
+  }, interval);
+}
+
+function startBeatLoop(): void {
+  // First trial immediately
+  nextTrial();
+
+  // Subsequent trials on beat
+  beatTimer = setInterval(() => {
+    if (gameOver) {
+      if (beatTimer !== null) clearInterval(beatTimer);
+      return;
+    }
+    nextTrial();
+  }, bpmToMs(state.bpm));
+}
+
+function stopBeatLoop(): void {
+  if (beatTimer !== null) {
+    clearInterval(beatTimer);
+    beatTimer = null;
+  }
+  if (trialTimeout !== null) {
+    clearTimeout(trialTimeout);
+    trialTimeout = null;
+  }
+}
+
+// Restart beat loop when BPM changes (after adaptation)
+function restartBeatIfNeeded(prevBpm: number): void {
+  if (state.bpm !== prevBpm && beatTimer !== null) {
+    clearInterval(beatTimer);
+    beatTimer = setInterval(() => {
+      if (gameOver) {
+        if (beatTimer !== null) clearInterval(beatTimer);
+        return;
+      }
+      nextTrial();
+    }, bpmToMs(state.bpm));
+  }
+}
+
+/* ---------- timer ring update ---------- */
+
+function updateTimerRing(remaining: number): void {
+  currentRemaining = remaining;
+  const act = getSessionAct(remaining);
+
+  const progress = game.querySelector<SVGCircleElement>(".timer-ring .progress");
+  const text = game.querySelector(".timer-text");
+  const ring = game.querySelector(".timer-ring");
+
+  if (progress) {
+    const fraction = remaining / DURATION;
+    const offset = RING_CIRCUMFERENCE * (1 - fraction);
+    progress.setAttribute("stroke-dashoffset", String(offset));
+  }
+
+  if (text) {
+    text.textContent = `${String(remaining)}s`;
+  }
+
+  if (ring) {
+    ring.classList.toggle("low", remaining <= 15 && act !== "climax");
+    ring.classList.toggle("climax", act === "climax");
+  }
+
+  // Beat tick sound based on act
+  if (act === "climax") {
+    sound.playBeatTickUrgent();
+  } else if (act === "flow") {
+    sound.playBeatTickAccent();
+  } else {
+    sound.playBeatTick();
+  }
+}
+
+/* ---------- result screen ---------- */
+
+function animateCountUp(el: HTMLElement, target: number): void {
+  const duration = 1500;
+  const start = performance.now();
+  function frame(now: number): void {
+    const progress = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+    el.textContent = String(Math.round(target * eased));
+    if (progress < 1) {
+      requestAnimationFrame(frame);
+    } else {
+      // Add pulse to Play Again button
+      const btn = game.querySelector("#again-btn");
+      if (btn) btn.classList.add("pulse");
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
+function getBest(key: string): number | null {
+  const val = localStorage.getItem(`brainbout:${key}:best`);
+  if (val === null) return null;
+  const n = parseInt(val, 10);
+  return isNaN(n) ? null : n;
+}
+
+function saveBest(key: string, score: number): void {
+  const prev = getBest(key);
+  if (prev === null || score > prev) {
+    localStorage.setItem(`brainbout:${key}:best`, String(score));
+  }
 }
 
 function showResult(): void {
   gameOver = true;
-  clearTrialTimeout();
-  clearAdvanceTimeout();
+  stopBeatLoop();
 
   const finalScore = state.score;
   recordSessionScore("flux", finalScore);
@@ -153,19 +368,38 @@ function showResult(): void {
   const accuracy = totalTrials > 0 ? correctTrials / totalTrials : 0;
   recordResult("flux", accuracy);
 
+  const best = getBest("flux");
+  const isNewBest = best === null || finalScore > best;
+  const nearMiss = !isNewBest && best !== null && finalScore >= best * 0.9;
+  const diff = best !== null ? best - finalScore : 0;
+
+  saveBest("flux", finalScore);
+
+  const streakLabel = getStreakLabel(state.peakStreak);
+  const streakMult = getMultiplier(state.peakStreak);
+
   game.innerHTML = `
     <div class="result">
-      <div class="final-score">${String(finalScore)}</div>
+      <div class="final-score" data-target="${String(finalScore)}">0</div>
+      ${isNewBest ? '<div class="new-best">NEW BEST</div>' : ""}
+      ${nearMiss ? `<div class="near-miss">Only ${String(diff)} from your best!</div>` : ""}
       <div class="result-label">points in ${String(DURATION)} seconds</div>
+      <div class="peak-streak">Best streak: ${String(state.peakStreak)}${streakLabel ? ` (x${String(streakMult)} ${streakLabel})` : ""}</div>
+      <div class="accuracy">${String(correctTrials)}/${String(totalTrials)} correct</div>
       <div class="result-actions">
-        <button id="again-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>Play Again</button>
-        <button id="back-btn" class="secondary"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Back to Hub</button>
+        <button id="again-btn">Play Again</button>
+        <button id="back-btn" class="secondary">Back to Hub</button>
       </div>
     </div>
   `;
 
+  const scoreEl = game.querySelector<HTMLElement>(".final-score");
+  if (scoreEl) animateCountUp(scoreEl, finalScore);
+
   sound.playVictory();
 }
+
+/* ---------- game start ---------- */
 
 function startGame(): void {
   const stage = getStage("flux");
@@ -176,20 +410,15 @@ function startGame(): void {
   gameOver = false;
   totalTrials = 0;
   correctTrials = 0;
+  responded = false;
 
   if (timerRef !== null) timerRef.stop();
-  clearTrialTimeout();
-  clearAdvanceTimeout();
+  stopBeatLoop();
 
   timerRef = createTimer({
     seconds: DURATION,
     onTick: (remaining) => {
-      currentRemaining = remaining;
-      const el = game.querySelector(".timer");
-      if (el) {
-        el.textContent = `${String(remaining)}s`;
-        el.classList.toggle("low", remaining <= 10);
-      }
+      updateTimerRing(remaining);
     },
     onDone: () => {
       showResult();
@@ -197,16 +426,22 @@ function startGame(): void {
   });
 
   timerRef.start();
-  nextTrial();
+  startBeatLoop();
 }
+
+/* ---------- input ---------- */
 
 game.addEventListener("click", (e) => {
   const target = (e.target as HTMLElement).closest<HTMLElement>("button");
   if (!target) return;
 
   if (target.classList.contains("flux-btn")) {
-    const side = target.dataset['side'] as ButtonSide | undefined;
-    if (side) handleResponse(side);
+    const side = target.dataset["side"] as ButtonSide | undefined;
+    if (side) {
+      const prevBpm = state.bpm;
+      handleResponse(side);
+      restartBeatIfNeeded(prevBpm);
+    }
   } else if (target.id === "again-btn") {
     startGame();
   } else if (target.id === "back-btn") {
@@ -214,7 +449,23 @@ game.addEventListener("click", (e) => {
   }
 });
 
-startGame();
+document.addEventListener("keydown", (e) => {
+  if (gameOver || inputLocked) return;
+  if (e.key === "ArrowLeft") {
+    e.preventDefault();
+    const prevBpm = state.bpm;
+    handleResponse("left");
+    restartBeatIfNeeded(prevBpm);
+  } else if (e.key === "ArrowRight") {
+    e.preventDefault();
+    const prevBpm = state.bpm;
+    handleResponse("right");
+    restartBeatIfNeeded(prevBpm);
+  }
+});
 
+/* ---------- init ---------- */
+
+startGame();
 initTheme();
 wireToggle();
