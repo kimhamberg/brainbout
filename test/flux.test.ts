@@ -14,6 +14,7 @@ import {
   updateAdaptation,
   bpmToMs,
   getSessionAct,
+  type ButtonSide,
 } from "../src/games/flux-engine";
 import type { ShapeColor, ShapeForm, Trial } from "../src/games/flux-engine";
 
@@ -571,5 +572,59 @@ describe("getSessionAct", () => {
     expect(getSessionAct(15)).toBe("climax"); // 60s elapsed
     expect(getSessionAct(1)).toBe("climax");
     expect(getSessionAct(0)).toBe("climax");
+  });
+});
+
+describe("full session simulation", () => {
+  it("runs 50 trials through the engine without errors", () => {
+    const state = createFluxState(2);
+    let score = 0;
+
+    for (let i = 0; i < 50; i++) {
+      generateTrial(state);
+      const rule = state.rule;
+      const isNot = state.isNot;
+      const trial = generateTrial(state);
+
+      // Simulate correct response for go trials, withhold for no-go
+      const pressed: ButtonSide | null = trial.isNoGo
+        ? null
+        : (() => {
+            const leftResult = evaluateResponse(trial, rule, isNot, state.streak, "left");
+            return (leftResult.correct ? "left" : "right") as ButtonSide;
+          })();
+
+      const result = evaluateResponse(trial, rule, isNot, state.streak, pressed);
+      expect(result.correct).toBe(true);
+      score += result.totalPoints;
+      updateAdaptation(state, true);
+    }
+
+    expect(score).toBeGreaterThan(0);
+    expect(state.streak).toBeGreaterThan(0);
+    expect(state.bpm).toBeGreaterThanOrEqual(defined(STAGE_PARAMS[2]).baseBpm);
+  });
+
+  it("handles wrong answers gracefully", () => {
+    const state = createFluxState(1);
+
+    for (let i = 0; i < 20; i++) {
+      generateTrial(state);
+      const rule = state.rule;
+      const isNot = state.isNot;
+
+      // Always press left (will be wrong ~50% of the time)
+      const trial = generateTrial(state);
+      const result = evaluateResponse(trial, rule, isNot, state.streak, "left");
+      if (result.correct) {
+        updateAdaptation(state, true);
+      } else {
+        updateAdaptation(state, false);
+      }
+    }
+
+    // State should still be valid
+    expect(state.bpm).toBeGreaterThan(0);
+    expect(state.trialCount).toBe(40); // 20 iterations x 2 generateTrial calls
   });
 });
