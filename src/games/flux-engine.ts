@@ -1,84 +1,77 @@
 import { defined } from "../shared/assert";
-export type Rule = "color" | "number";
+
+export type Rule = "color" | "shape" | "size" | "fill";
 export type ButtonSide = "left" | "right";
-export type TrialColor =
-  | "red"
-  | "blue"
-  | "peach"
-  | "maroon"
-  | "lavender"
-  | "mauve";
-export type NoGoStyle = "none" | "mirrored" | "clipped";
+export type ShapeColor = "red" | "peach" | "blue" | "lavender" | "yellow";
+export type ShapeForm = "circle" | "pill" | "diamond" | "triangle" | "blob";
+export type ShapeSize = "big" | "small" | "oscillating";
+export type ShapeFill = "solid" | "hollow" | "striped";
 
 export interface Trial {
-  number: number;
-  color: TrialColor;
+  color: ShapeColor;
+  shape: ShapeForm;
+  size: ShapeSize;
+  fill: ShapeFill;
   isNoGo: boolean;
-  noGoStyle: NoGoStyle;
+  isGolden: boolean;
 }
 
 export interface FluxState {
   score: number;
   streak: number;
+  peakStreak: number;
   trialCount: number;
-  intervalMs: number;
+  switchCount: number;
+  bpm: number;
   rule: Rule;
+  isNot: boolean;
   trialsUntilSwitch: number;
   noGoUnlocked: boolean;
   stage: number;
+  unlockedRuleCount: number;
 }
 
 export interface StageParams {
-  startInterval: number;
+  baseBpm: number;
+  floorBpm: number;
+  rules: Rule[];
+  notAllowed: boolean;
   switchMin: number;
   switchMax: number;
   noGoRate: number;
-  floorMs: number;
+  goldenRate: number;
 }
 
 export interface ResponseResult {
   correct: boolean;
-  points: number;
+  basePoints: number;
+  multiplier: number;
+  totalPoints: number;
   noGoFail?: boolean;
+  isGolden?: boolean;
   feedback: string;
 }
 
 /* ---------- constants ---------- */
 
+export const DURATION = 75;
 export const WARM_UP_TRIALS = 5;
-export const SPEED_UP = 75;
-export const SLOW_DOWN = 150;
+export const GOLDEN_BASE_POINTS = 5;
+export const BPM_INCREASE_PERCENT = 0.05;
 export const STREAK_TO_SPEED = 5;
 
+export const STREAK_THRESHOLDS = [
+  { min: 15, multiplier: 5, label: "inferno" },
+  { min: 10, multiplier: 3, label: "blaze" },
+  { min: 5, multiplier: 2, label: "flame" },
+  { min: 3, multiplier: 1.5, label: "spark" },
+] as const;
+
 export const STAGE_PARAMS: StageParams[] = [
-  {
-    startInterval: 2000,
-    switchMin: 6,
-    switchMax: 6,
-    noGoRate: 0.2,
-    floorMs: 800,
-  }, // placeholder for index 0
-  {
-    startInterval: 2000,
-    switchMin: 6,
-    switchMax: 6,
-    noGoRate: 0.2,
-    floorMs: 800,
-  },
-  {
-    startInterval: 1500,
-    switchMin: 4,
-    switchMax: 6,
-    noGoRate: 0.2,
-    floorMs: 800,
-  },
-  {
-    startInterval: 1200,
-    switchMin: 3,
-    switchMax: 5,
-    noGoRate: 0.25,
-    floorMs: 800,
-  },
+  { baseBpm: 75, floorBpm: 90, rules: ["color", "shape", "size"], notAllowed: false, switchMin: 5, switchMax: 7, noGoRate: 0.15, goldenRate: 0.1 }, // placeholder index 0
+  { baseBpm: 75, floorBpm: 90, rules: ["color", "shape", "size"], notAllowed: false, switchMin: 5, switchMax: 7, noGoRate: 0.15, goldenRate: 0.1 },
+  { baseBpm: 90, floorBpm: 110, rules: ["color", "shape", "size", "fill"], notAllowed: false, switchMin: 4, switchMax: 6, noGoRate: 0.2, goldenRate: 0.08 },
+  { baseBpm: 110, floorBpm: 135, rules: ["color", "shape", "size", "fill"], notAllowed: true, switchMin: 3, switchMax: 5, noGoRate: 0.25, goldenRate: 0.08 },
 ];
 
 /* ---------- helpers ---------- */
@@ -90,11 +83,6 @@ function randInt(min: number, max: number): number {
 function pick<T>(arr: readonly T[]): T {
   return defined(arr[Math.floor(Math.random() * arr.length)]);
 }
-
-/* ---------- no-go config ---------- */
-
-const IMPOSTOR_COLORS: TrialColor[] = ["peach", "maroon", "lavender", "mauve"];
-const SYMMETRIC_DIGITS = new Set([1, 8]);
 
 function rollSwitchCount(stage: number): number {
   const p = defined(STAGE_PARAMS[stage]);
@@ -108,115 +96,15 @@ export function createFluxState(stage: number): FluxState {
   return {
     score: 0,
     streak: 0,
+    peakStreak: 0,
     trialCount: 0,
-    intervalMs: p.startInterval,
-    rule: "color",
+    switchCount: 0,
+    bpm: p.baseBpm,
+    rule: defined(p.rules[0]),
+    isNot: false,
     trialsUntilSwitch: rollSwitchCount(stage),
     noGoUnlocked: false,
     stage,
+    unlockedRuleCount: 1,
   };
-}
-
-/* ---------- trial generation ---------- */
-
-export function generateTrial(state: FluxState): Trial {
-  const isWarmUp = state.trialCount < WARM_UP_TRIALS;
-
-  // Handle rule switching (only after warm-up)
-  if (!isWarmUp) {
-    state.trialsUntilSwitch--;
-    if (state.trialsUntilSwitch <= 0) {
-      state.rule = state.rule === "color" ? "number" : "color";
-      state.trialsUntilSwitch = rollSwitchCount(state.stage);
-      state.noGoUnlocked = true;
-    }
-  }
-
-  state.trialCount++;
-
-  const num = randInt(1, 9);
-
-  // Determine if no-go
-  const isNoGo =
-    !isWarmUp &&
-    state.noGoUnlocked &&
-    Math.random() < defined(STAGE_PARAMS[state.stage]).noGoRate;
-
-  let color: TrialColor;
-  let noGoStyle: NoGoStyle = "none";
-
-  if (isNoGo) {
-    if (state.rule === "color") {
-      // Impostor color: looks close to red/blue but isn't
-      color = pick(IMPOSTOR_COLORS);
-    } else {
-      // Normal color, but the digit will be visually distorted
-      color = Math.random() < 0.5 ? "red" : "blue";
-      noGoStyle = SYMMETRIC_DIGITS.has(num) ? "clipped" : "mirrored";
-    }
-  } else {
-    color = Math.random() < 0.5 ? "red" : "blue";
-  }
-
-  return { number: num, color, isNoGo, noGoStyle };
-}
-
-/* ---------- response evaluation ---------- */
-
-export function evaluateResponse(
-  trial: Trial,
-  rule: Rule,
-  pressed: ButtonSide | null,
-): ResponseResult {
-  // No-go trial
-  if (trial.isNoGo) {
-    if (pressed !== null) {
-      const msg =
-        rule === "color"
-          ? "Not red or blue — don't press!"
-          : "Fake digit — don't press!";
-      return { correct: false, points: -1, noGoFail: true, feedback: msg };
-    }
-    return { correct: true, points: 1, feedback: "" };
-  }
-
-  // Go trial, no press
-  if (pressed === null) {
-    return { correct: false, points: -1, feedback: "Too slow!" };
-  }
-
-  // Determine correct side
-  let correctSide: ButtonSide;
-  let correctLabel: string;
-
-  if (rule === "color") {
-    correctSide = trial.color === "red" ? "left" : "right";
-    correctLabel = trial.color === "red" ? "Red" : "Blue";
-  } else {
-    correctSide = trial.number % 2 === 1 ? "left" : "right";
-    correctLabel = trial.number % 2 === 1 ? "Odd" : "Even";
-  }
-
-  if (pressed === correctSide) {
-    return { correct: true, points: 1, feedback: "" };
-  }
-
-  return { correct: false, points: -1, feedback: `It was ${correctLabel}` };
-}
-
-/* ---------- adaptive difficulty ---------- */
-
-export function updateAdaptation(state: FluxState, correct: boolean): void {
-  const p = defined(STAGE_PARAMS[state.stage]);
-
-  if (correct) {
-    state.streak++;
-    if (state.streak >= STREAK_TO_SPEED) {
-      state.intervalMs = Math.max(p.floorMs, state.intervalMs - SPEED_UP);
-      state.streak = 0;
-    }
-  } else {
-    state.streak = 0;
-    state.intervalMs = Math.min(p.startInterval, state.intervalMs + SLOW_DOWN);
-  }
 }
