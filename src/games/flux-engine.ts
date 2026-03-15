@@ -89,6 +89,43 @@ function rollSwitchCount(stage: number): number {
   return randInt(p.switchMin, p.switchMax);
 }
 
+/* ---------- shape generation ---------- */
+
+const GO_COLORS: ShapeColor[] = ["red", "peach", "blue", "lavender"];
+const ROUND_SHAPES: ShapeForm[] = ["circle", "pill"];
+const ANGULAR_SHAPES: ShapeForm[] = ["diamond", "triangle"];
+const GO_SHAPES: ShapeForm[] = [...ROUND_SHAPES, ...ANGULAR_SHAPES];
+
+function generateGoTrial(): Trial {
+  return {
+    color: pick(GO_COLORS),
+    shape: pick(GO_SHAPES),
+    size: Math.random() < 0.5 ? "big" : "small",
+    fill: Math.random() < 0.5 ? "solid" : "hollow",
+    isNoGo: false,
+    isGolden: false,
+  };
+}
+
+function generateNoGoTrial(_rule: Rule): Trial {
+  // Stub — replaced in Task 2
+  const trial = generateGoTrial();
+  trial.isNoGo = true;
+  return trial;
+}
+
+/* ---------- rule switching ---------- */
+
+// How many switches needed to unlock the Nth rule
+const UNLOCK_AT_SWITCH = [0, 0, 0, 2, 4, 6]; // index = unlockedRuleCount after unlock
+
+function pickNextRule(state: FluxState): Rule {
+  const p = defined(STAGE_PARAMS[state.stage]);
+  const available = p.rules.slice(0, state.unlockedRuleCount);
+  const others = available.filter((r) => r !== state.rule);
+  return pick(others.length > 0 ? others : available);
+}
+
 /* ---------- state factory ---------- */
 
 export function createFluxState(stage: number): FluxState {
@@ -107,4 +144,53 @@ export function createFluxState(stage: number): FluxState {
     stage,
     unlockedRuleCount: 1,
   };
+}
+
+/* ---------- trial generation ---------- */
+
+export function generateTrial(state: FluxState): Trial {
+  const isWarmUp = state.trialCount < WARM_UP_TRIALS;
+
+  // Handle rule switching (only after warm-up)
+  if (!isWarmUp) {
+    state.trialsUntilSwitch--;
+    if (state.trialsUntilSwitch <= 0) {
+      state.rule = pickNextRule(state);
+      state.isNot = false; // reset NOT on switch (NOT handled in Task 3)
+      state.trialsUntilSwitch = rollSwitchCount(state.stage);
+      state.noGoUnlocked = true;
+      state.switchCount++;
+
+      // Unlock rules progressively
+      const p = defined(STAGE_PARAMS[state.stage]);
+      const maxRules = p.rules.length;
+      if (
+        state.unlockedRuleCount < maxRules &&
+        state.switchCount >= defined(UNLOCK_AT_SWITCH[state.unlockedRuleCount + 1])
+      ) {
+        state.unlockedRuleCount++;
+      }
+    }
+  }
+
+  state.trialCount++;
+
+  // Determine if golden (not during warm-up)
+  const isGolden =
+    !isWarmUp && Math.random() < defined(STAGE_PARAMS[state.stage]).goldenRate;
+
+  // Determine if no-go (not during warm-up, must be unlocked)
+  const isNoGo =
+    !isWarmUp &&
+    !isGolden && // golden and no-go are mutually exclusive
+    state.noGoUnlocked &&
+    Math.random() < defined(STAGE_PARAMS[state.stage]).noGoRate;
+
+  if (isNoGo) {
+    return generateNoGoTrial(state.rule);
+  }
+
+  const trial = generateGoTrial();
+  trial.isGolden = isGolden;
+  return trial;
 }
