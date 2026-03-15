@@ -340,3 +340,29 @@ export function evaluateResponse(
     feedback: `It was ${correctLabel}`,
   };
 }
+
+/* ---------- BPM helpers ---------- */
+
+export function bpmToMs(bpm: number): number {
+  return Math.round(60000 / bpm);
+}
+
+/* ---------- adaptive difficulty ---------- */
+
+export function updateAdaptation(state: FluxState, correct: boolean): void {
+  const p = defined(STAGE_PARAMS[state.stage]);
+
+  if (correct) {
+    state.streak++;
+    if (state.streak > state.peakStreak) {
+      state.peakStreak = state.streak;
+    }
+    if (state.streak % STREAK_TO_SPEED === 0) {
+      const newBpm = Math.round(state.bpm * (1 + BPM_INCREASE_PERCENT));
+      state.bpm = Math.min(p.floorBpm, newBpm);
+    }
+  } else {
+    state.streak = 0;
+    state.bpm = p.baseBpm;
+  }
+}

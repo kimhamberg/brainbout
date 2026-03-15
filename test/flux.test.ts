@@ -11,6 +11,8 @@ import {
   generateTrial,
   evaluateResponse,
   getMultiplier,
+  updateAdaptation,
+  bpmToMs,
 } from "../src/games/flux-engine";
 import type { ShapeColor, ShapeForm, Trial } from "../src/games/flux-engine";
 
@@ -496,5 +498,59 @@ describe("evaluateResponse", () => {
       expect(r.correct).toBe(false);
       expect(r.feedback).toBe("Too slow!");
     });
+  });
+});
+
+describe("bpmToMs", () => {
+  it("converts 75 BPM to 800ms", () => {
+    expect(bpmToMs(75)).toBe(800);
+  });
+
+  it("converts 120 BPM to 500ms", () => {
+    expect(bpmToMs(120)).toBe(500);
+  });
+});
+
+describe("updateAdaptation", () => {
+  it("increments streak on correct", () => {
+    const state = createFluxState(1);
+    updateAdaptation(state, true);
+    expect(state.streak).toBe(1);
+  });
+
+  it("resets streak on wrong", () => {
+    const state = createFluxState(1);
+    state.streak = 10;
+    updateAdaptation(state, false);
+    expect(state.streak).toBe(0);
+  });
+
+  it("tracks peakStreak", () => {
+    const state = createFluxState(1);
+    for (let i = 0; i < 8; i++) updateAdaptation(state, true);
+    expect(state.peakStreak).toBe(8);
+    updateAdaptation(state, false);
+    expect(state.peakStreak).toBe(8); // preserved
+  });
+
+  it("increases BPM by ~5% after streak of 5", () => {
+    const state = createFluxState(1);
+    state.bpm = 75;
+    for (let i = 0; i < 5; i++) updateAdaptation(state, true);
+    expect(state.bpm).toBe(79); // Math.round(75 * 1.05)
+  });
+
+  it("does not exceed floor BPM", () => {
+    const state = createFluxState(1);
+    state.bpm = 89; // close to floor of 90
+    for (let i = 0; i < 5; i++) updateAdaptation(state, true);
+    expect(state.bpm).toBe(90); // capped at floorBpm
+  });
+
+  it("resets BPM to base on wrong", () => {
+    const state = createFluxState(1);
+    state.bpm = 85;
+    updateAdaptation(state, false);
+    expect(state.bpm).toBe(75); // back to baseBpm
   });
 });
