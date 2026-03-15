@@ -54,6 +54,138 @@
   }
 }
 
+@keyframes burst-left {
+  to {
+    transform: translateX(-60px) scale(0.5);
+    opacity: 0;
+  }
+}
+
+@keyframes burst-right {
+  to {
+    transform: translateX(60px) scale(0.5);
+    opacity: 0;
+  }
+}
+
+@keyframes crack-split {
+  0% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+
+  30% {
+    transform: scale(1.1);
+    filter: brightness(1.5);
+  }
+
+  100% {
+    transform: scale(0.3) rotate(15deg);
+    opacity: 0;
+  }
+}
+
+@keyframes dissolve {
+  to {
+    transform: translateY(-20px) scale(0.8);
+    opacity: 0;
+  }
+}
+
+@keyframes explode {
+  0% {
+    transform: scale(1);
+  }
+
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+@keyframes particle-1 {
+  to {
+    transform: translate(-30px, -40px) scale(0);
+    opacity: 0;
+  }
+}
+
+@keyframes particle-2 {
+  to {
+    transform: translate(35px, -25px) scale(0);
+    opacity: 0;
+  }
+}
+
+@keyframes particle-3 {
+  to {
+    transform: translate(-20px, 35px) scale(0);
+    opacity: 0;
+  }
+}
+
+@keyframes particle-4 {
+  to {
+    transform: translate(25px, 30px) scale(0);
+    opacity: 0;
+  }
+}
+
+@keyframes particle-5 {
+  to {
+    transform: translate(0, -45px) scale(0);
+    opacity: 0;
+  }
+}
+
+@keyframes btn-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  20%,
+  60% {
+    transform: translateX(-4px);
+  }
+
+  40%,
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+@keyframes btn-glow {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--ctp-green) 40%, transparent);
+  }
+
+  100% {
+    box-shadow: 0 0 0 8px transparent;
+  }
+}
+
+@keyframes dim-flash {
+  0% {
+    background: color-mix(in srgb, var(--ctp-maroon) 15%, transparent);
+  }
+
+  100% {
+    background: transparent;
+  }
+}
+
+@keyframes pulse-btn {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.03);
+  }
+}
+
 @media (--motion-reduce) {
   @keyframes stimulus-enter {
     from {
@@ -92,6 +224,48 @@
     from {
       opacity: 0;
     }
+  }
+
+  @keyframes burst-left,
+  @keyframes burst-right,
+  @keyframes crack-split,
+  @keyframes dissolve,
+  @keyframes explode {
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes btn-shake {
+    0%,
+    100% {
+      transform: none;
+    }
+  }
+
+  @keyframes btn-glow {
+    0%,
+    100% {
+      box-shadow: none;
+    }
+  }
+
+  @keyframes dim-flash {
+    0%,
+    100% {
+      background: transparent;
+    }
+  }
+
+  @keyframes pulse-btn {
+    0%,
+    100% {
+      transform: none;
+    }
+  }
+
+  .particles {
+    display: none;
   }
 }
 
@@ -509,4 +683,79 @@
     color: var(--ctp-text);
     box-shadow: none;
   }
+}
+
+/* ========== Particles ========== */
+
+.particles {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+}
+
+.particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  will-change: transform, opacity;
+}
+
+.particle:nth-child(1) {
+  animation: particle-1 400ms ease forwards;
+}
+
+.particle:nth-child(2) {
+  animation: particle-2 400ms ease forwards;
+}
+
+.particle:nth-child(3) {
+  animation: particle-3 400ms ease forwards;
+}
+
+.particle:nth-child(4) {
+  animation: particle-4 400ms ease forwards;
+}
+
+.particle:nth-child(5) {
+  animation: particle-5 400ms ease forwards;
+}
+
+/* ========== Juice classes ========== */
+
+.juice-correct-left .shape {
+  animation: burst-left 300ms ease forwards;
+}
+
+.juice-correct-right .shape {
+  animation: burst-right 300ms ease forwards;
+}
+
+.juice-wrong .shape {
+  animation: crack-split 400ms ease forwards;
+}
+
+.juice-nogo-correct .shape {
+  animation: dissolve 400ms ease forwards;
+}
+
+.juice-nogo-fail .shape {
+  animation: explode 300ms ease forwards;
+}
+
+.juice-wrong .flux-btn {
+  animation: btn-shake 300ms ease;
+}
+
+.juice-correct-left .flux-btn[data-side="left"],
+.juice-correct-right .flux-btn[data-side="right"] {
+  animation: btn-glow 400ms ease;
+}
+
+.dim-flash {
+  animation: dim-flash 300ms ease;
+}
+
+.pulse {
+  animation: pulse-btn 1.5s ease infinite;
 }
