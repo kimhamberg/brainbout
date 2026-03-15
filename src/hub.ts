@@ -1,4 +1,5 @@
 import { initTheme, wireToggle } from "./shared/theme";
+import { defined } from "./shared/assert";
 import {
   GAMES,
   type GameId,
@@ -139,7 +140,7 @@ function render(): void {
   // Game list
   html += `<div class="game-list">`;
   for (let i = 0; i < GAMES.length; i++) {
-    const game = GAMES[i];
+    const game = defined(GAMES[i]);
     const done = session.has(game);
     const cls = done ? "done" : "";
     const style = `--i:${String(i)};--accent:${GAME_ACCENTS[game]}`;
@@ -204,10 +205,11 @@ function showStagePopover(chip: HTMLElement, game: string): void {
 
   const stage = getStage(game);
   const descriptions = STAGE_DESCRIPTIONS[game];
+  if (!descriptions) return;
 
   const popover = document.createElement("div");
   popover.className = "stage-popover";
-  popover.style.setProperty("--accent", GAME_ACCENTS[game]);
+  popover.style.setProperty("--accent", GAME_ACCENTS[game] ?? "");
 
   let rows = "";
   for (let s = 1; s <= descriptions.length; s++) {

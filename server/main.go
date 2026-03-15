@@ -1,8 +1,10 @@
+// Package main serves the brainbout web app and opens the browser.
 package main
 
 import (
 	"context"
 	"embed"
+	"errors"
 	"io/fs"
 	"log"
 	"net"
@@ -18,6 +20,8 @@ import (
 //go:embed web
 var webFiles embed.FS
 
+const shutdownTimeout = 5 * time.Second
+
 func main() {
 	sub, err := fs.Sub(webFiles, "web")
 	if err != nil {
@@ -27,21 +31,28 @@ func main() {
 	mux := http.NewServeMux()
 	mux.Handle("/", addHeaders(http.FileServer(http.FS(sub))))
 
-	ln, err := net.Listen("tcp", "127.0.0.1:8960")
+	listenConfig := net.ListenConfig{}
+
+	listener, err := listenConfig.Listen(context.Background(), "tcp", "127.0.0.1:8960")
 	if err != nil {
 		log.Fatal(err)
 	}
-	addr := "http://" + ln.Addr().String()
+
+	addr := "http://" + listener.Addr().String()
 	log.Printf("Brainbout serving on %s", addr)
 
-	srv := &http.Server{Handler: mux}
+	srv := &http.Server{
+		Handler:           mux,
+		ReadHeaderTimeout: shutdownTimeout,
+	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
 	go func() {
-		if err := srv.Serve(ln); err != nil && err != http.ErrServerClosed {
-			log.Fatal(err)
+		serveErr := srv.Serve(listener)
+		if serveErr != nil && !errors.Is(serveErr, http.ErrServerClosed) {
+			log.Fatal(serveErr)
 		}
 	}()
 
@@ -49,9 +60,15 @@ func main() {
 
 	<-ctx.Done()
 	log.Println("Shutting down…")
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+
 	defer cancel()
-	srv.Shutdown(shutdownCtx)
+
+	shutdownErr := srv.Shutdown(shutdownCtx)
+	if shutdownErr != nil {
+		log.Printf("Shutdown error: %v", shutdownErr)
+	}
 }
 
 func addHeaders(h http.Handler) http.Handler {
@@ -64,7 +81,9 @@ func addHeaders(h http.Handler) http.Handler {
 
 func openBrowser(url string) {
 	var cmd string
+
 	var args []string
+
 	switch runtime.GOOS {
 	case "windows":
 		cmd, args = "cmd", []string{"/c", "start", url}
@@ -73,7 +92,9 @@ func openBrowser(url string) {
 	default:
 		cmd, args = "xdg-open", []string{url}
 	}
-	if err := exec.Command(cmd, args...).Start(); err != nil {
-		log.Printf("Could not open browser: %v", err)
+
+	startErr := exec.CommandContext(context.Background(), cmd, args...).Start()
+	if startErr != nil {
+		log.Printf("Could not open browser: %v", startErr)
 	}
 }

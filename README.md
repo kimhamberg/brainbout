@@ -25,9 +25,9 @@ A daily brain workout. Train your brain, not your scroll thumb.
 
 ## Requirements
 
-- [Node.js](https://nodejs.org) 20+
-- [uv](https://docs.astral.sh/uv/) (Python scripts)
-- [Go](https://go.dev) 1.23+ (desktop builds only)
+- [Node.js](https://nodejs.org) 22+
+- [Python](https://python.org) 3.14+ via [uv](https://docs.astral.sh/uv/) (sound generation, linting)
+- [Go](https://go.dev) 1.24+ (desktop builds only)
 - [Android SDK](https://developer.android.com/studio) + [Gradle](https://gradle.org) (Android builds only)
 
 ## Quick start
@@ -56,7 +56,7 @@ The desktop build embeds all web assets into a single binary — no runtime depe
 make lint
 ```
 
-Runs ESLint (TypeScript), Stylelint (CSS), Ruff (Python), staticcheck + go vet (Go), ktlint (Kotlin), and Prettier (all files).
+Runs tsc (type check), ESLint (TypeScript), Stylelint (CSS), Ruff + ty (Python), golangci-lint (Go), ktlint + detekt (Kotlin), and Prettier (all files).
 
 ## Tests
 

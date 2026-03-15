@@ -1,4 +1,5 @@
 // src/chess960.ts
+import { defined } from "./shared/assert";
 
 export function chess960Backrank(id: number): string[] {
   const pieces = new Array<string | null>(8).fill(null);
@@ -38,7 +39,7 @@ export function chess960Backrank(id: number): string[] {
     [2, 4],
     [3, 4],
   ];
-  const [kn1, kn2] = knightTable[n];
+  const [kn1, kn2] = defined(knightTable[n]);
   count = 0;
   for (let i = 0; i < 8; i++) {
     if (pieces[i] === null) {
@@ -54,7 +55,7 @@ export function chess960Backrank(id: number): string[] {
   let ri = 0;
   for (let i = 0; i < 8; i++) {
     if (pieces[i] === null) {
-      pieces[i] = rkr[ri];
+      pieces[i] = defined(rkr[ri]);
       ri += 1;
     }
   }
@@ -76,10 +77,10 @@ export function chess960Fen(id: number): { fen: string; id: number } {
   }
   // Rightmost rook file first (kingside), then leftmost (queenside)
   const castling =
-    rookFiles[1] +
-    rookFiles[0] +
-    rookFiles[1].toLowerCase() +
-    rookFiles[0].toLowerCase();
+    defined(rookFiles[1]) +
+    defined(rookFiles[0]) +
+    defined(rookFiles[1]).toLowerCase() +
+    defined(rookFiles[0]).toLowerCase();
 
   const fen = `${blackRank}/pppppppp/8/8/8/8/PPPPPPPP/${whiteRank} w ${castling} - 0 1`;
   return { fen, id };

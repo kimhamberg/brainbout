@@ -1,3 +1,4 @@
+import { defined } from "../shared/assert";
 export type Rule = "color" | "number";
 export type ButtonSide = "left" | "right";
 export type TrialColor =
@@ -87,7 +88,7 @@ function randInt(min: number, max: number): number {
 }
 
 function pick<T>(arr: readonly T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)];
+  return defined(arr[Math.floor(Math.random() * arr.length)]);
 }
 
 /* ---------- no-go config ---------- */
@@ -96,14 +97,14 @@ const IMPOSTOR_COLORS: TrialColor[] = ["peach", "maroon", "lavender", "mauve"];
 const SYMMETRIC_DIGITS = new Set([1, 8]);
 
 function rollSwitchCount(stage: number): number {
-  const p = STAGE_PARAMS[stage];
+  const p = defined(STAGE_PARAMS[stage]);
   return randInt(p.switchMin, p.switchMax);
 }
 
 /* ---------- state factory ---------- */
 
 export function createFluxState(stage: number): FluxState {
-  const p = STAGE_PARAMS[stage];
+  const p = defined(STAGE_PARAMS[stage]);
   return {
     score: 0,
     streak: 0,
@@ -139,7 +140,7 @@ export function generateTrial(state: FluxState): Trial {
   const isNoGo =
     !isWarmUp &&
     state.noGoUnlocked &&
-    Math.random() < STAGE_PARAMS[state.stage].noGoRate;
+    Math.random() < defined(STAGE_PARAMS[state.stage]).noGoRate;
 
   let color: TrialColor;
   let noGoStyle: NoGoStyle = "none";
@@ -206,7 +207,7 @@ export function evaluateResponse(
 /* ---------- adaptive difficulty ---------- */
 
 export function updateAdaptation(state: FluxState, correct: boolean): void {
-  const p = STAGE_PARAMS[state.stage];
+  const p = defined(STAGE_PARAMS[state.stage]);
 
   if (correct) {
     state.streak++;

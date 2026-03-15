@@ -1,3 +1,5 @@
+import { defined } from "./assert";
+
 export interface EngineInfo {
   depth: number;
   score: { type: "cp" | "mate"; value: number };
@@ -24,13 +26,13 @@ export function parseInfoLine(line: string): EngineInfo | null {
   if (!scoreMatch) return null;
 
   const pvMatch = /\bpv\s+(.+)$/.exec(line);
-  const pv = pvMatch ? pvMatch[1].trim().split(/\s+/) : [];
+  const pv = pvMatch ? defined(pvMatch[1]).trim().split(/\s+/) : [];
 
   return {
-    depth: parseInt(depthMatch[1], 10),
+    depth: parseInt(defined(depthMatch[1]), 10),
     score: {
-      type: scoreMatch[1] as "cp" | "mate",
-      value: parseInt(scoreMatch[2], 10),
+      type: defined(scoreMatch[1]) as "cp" | "mate",
+      value: parseInt(defined(scoreMatch[2]), 10),
     },
     pv,
   };
@@ -137,8 +139,8 @@ export class StockfishEngine {
 
   public getEvalSwing(): number {
     if (this.infoLines.length < 2) return 0;
-    const prev = this.infoLines[this.infoLines.length - 2];
-    const curr = this.infoLines[this.infoLines.length - 1];
+    const prev = defined(this.infoLines[this.infoLines.length - 2]);
+    const curr = defined(this.infoLines[this.infoLines.length - 1]);
     return computeEvalSwing(prev, curr);
   }
 

@@ -9,6 +9,7 @@ import {
   maxTypos,
 } from "./lex-srs";
 import { getStage, recordResult } from "../shared/stages";
+import { defined } from "../shared/assert";
 import * as sound from "../shared/sounds";
 
 interface DictEntry {
@@ -57,7 +58,7 @@ let totalAttempts = 0;
 function shuffleArray<T>(arr: T[]): T[] {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
+    [arr[i], arr[j]] = [defined(arr[j]), defined(arr[i])];
   }
   return arr;
 }
@@ -324,9 +325,9 @@ function nextRound(): void {
   if (sessionQueue.length === 0) {
     buildSessionQueue();
   }
-  currentEntry = sessionQueue.shift() ?? dict[0];
-  const distractors = pickDistractors(currentEntry);
-  choices = shuffleArray([currentEntry.word, ...distractors]);
+  currentEntry = sessionQueue.shift() ?? defined(dict[0]);
+  const distractors = pickDistractors(defined(currentEntry));
+  choices = shuffleArray([defined(currentEntry).word, ...distractors]);
   roundStart = Date.now();
   inputLocked = false;
   renderRound();
@@ -344,9 +345,9 @@ function handleChoice(chosen: string): void {
   const buttons = game.querySelectorAll<HTMLButtonElement>(".choice-btn");
   for (const btn of buttons) {
     btn.disabled = true;
-    if (btn.dataset.word === currentEntry.word) {
+    if (btn.dataset['word'] === currentEntry.word) {
       btn.classList.add("correct");
-    } else if (btn.dataset.word === chosen && !correct) {
+    } else if (btn.dataset['word'] === chosen && !correct) {
       btn.classList.add("wrong");
     }
   }
@@ -441,7 +442,7 @@ game.addEventListener("click", (e) => {
   if (!target) return;
 
   if (target.classList.contains("choice-btn")) {
-    handleChoice(target.dataset.word ?? "");
+    handleChoice(target.dataset['word'] ?? "");
   } else if (target.id === "again-btn") {
     void startGame();
   } else if (target.id === "back-btn") {

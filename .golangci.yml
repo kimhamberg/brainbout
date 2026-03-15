@@ -1,0 +1,23 @@
+version: "2"
+
+linters:
+  default: all
+  disable:
+    - wsl # deprecated, replaced by wsl_v5
+
+  settings:
+    exhaustruct:
+      exclude:
+        - 'net\.ListenConfig'
+        - 'net\.KeepAliveConfig'
+        - 'net/http\.Server'
+
+  exclusions:
+    rules:
+      - linters: [gosec]
+        text: "G204" # subprocess with variable args — unavoidable for browser launch
+
+formatters:
+  enable:
+    - gofmt
+    - goimports

@@ -205,7 +205,7 @@ game.addEventListener("click", (e) => {
   if (!target) return;
 
   if (target.classList.contains("flux-btn")) {
-    const side = target.dataset.side as ButtonSide | undefined;
+    const side = target.dataset['side'] as ButtonSide | undefined;
     if (side) handleResponse(side);
   } else if (target.id === "again-btn") {
     startGame();

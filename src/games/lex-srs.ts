@@ -1,3 +1,5 @@
+import { defined } from "../shared/assert";
+
 export const BOX_INTERVALS = [0, 1, 3, 7, 14, 30];
 
 const PREFIX = "brainbout:lex";
@@ -46,7 +48,7 @@ export function recordAnswer(
   const state = getWordState(lang, word);
   if (correct) {
     const newBox = Math.min(state.box + 1, BOX_INTERVALS.length - 1);
-    const interval = BOX_INTERVALS[newBox];
+    const interval = defined(BOX_INTERVALS[newBox]);
     const nextDue = addDays(today, interval);
     let newStreak = state.masteryStreak + 1;
     let newMastery = state.mastery;
@@ -124,19 +126,19 @@ export function levenshtein(a: string, b: string): number {
     Array.from({ length: n + 1 }, () => 0),
   );
 
-  for (let i = 0; i <= m; i++) dp[i][0] = i;
-  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 0; i <= m; i++) defined(dp[i])[0] = i;
+  for (let j = 0; j <= n; j++) defined(dp[0])[j] = j;
 
   for (let i = 1; i <= m; i++) {
     for (let j = 1; j <= n; j++) {
       const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      dp[i][j] = Math.min(
-        dp[i - 1][j] + 1,
-        dp[i][j - 1] + 1,
-        dp[i - 1][j - 1] + cost,
+      defined(dp[i])[j] = Math.min(
+        defined(defined(dp[i - 1])[j]) + 1,
+        defined(defined(dp[i])[j - 1]) + 1,
+        defined(defined(dp[i - 1])[j - 1]) + cost,
       );
     }
   }
 
-  return dp[m][n];
+  return defined(defined(dp[m])[n]);
 }

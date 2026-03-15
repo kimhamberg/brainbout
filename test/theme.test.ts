@@ -27,7 +27,7 @@ describe("theme", () => {
     });
     const { initTheme } = await import("../src/shared/theme");
     initTheme();
-    expect(document.documentElement.dataset.theme).toBe("frappe");
+    expect(document.documentElement.dataset['theme']).toBe("frappe");
   });
 
   it("defaults to latte when OS prefers light", async () => {
@@ -39,7 +39,7 @@ describe("theme", () => {
     vi.resetModules();
     const { initTheme } = await import("../src/shared/theme");
     initTheme();
-    expect(document.documentElement.dataset.theme).toBe("latte");
+    expect(document.documentElement.dataset['theme']).toBe("latte");
   });
 
   it("uses localStorage override when set", async () => {
@@ -52,7 +52,7 @@ describe("theme", () => {
     vi.resetModules();
     const { initTheme } = await import("../src/shared/theme");
     initTheme();
-    expect(document.documentElement.dataset.theme).toBe("latte");
+    expect(document.documentElement.dataset['theme']).toBe("latte");
   });
 
   it("toggleTheme flips from frappe to latte", async () => {
@@ -64,7 +64,7 @@ describe("theme", () => {
     const { initTheme, toggleTheme } = await import("../src/shared/theme");
     initTheme();
     toggleTheme();
-    expect(document.documentElement.dataset.theme).toBe("latte");
+    expect(document.documentElement.dataset['theme']).toBe("latte");
     expect(localStorage.getItem("theme")).toBe("latte");
   });
 
@@ -78,7 +78,7 @@ describe("theme", () => {
     const { initTheme, toggleTheme } = await import("../src/shared/theme");
     initTheme();
     toggleTheme();
-    expect(document.documentElement.dataset.theme).toBe("frappe");
+    expect(document.documentElement.dataset['theme']).toBe("frappe");
     expect(localStorage.getItem("theme")).toBe("frappe");
   });
 });

@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect } from "vitest";
+import { defined } from "../src/shared/assert";
 import {
   STAGE_PARAMS,
   WARM_UP_TRIALS,
@@ -347,11 +348,11 @@ describe("updateAdaptation", () => {
 
   it("does not go below floor", () => {
     const state = createFluxState(1);
-    state.intervalMs = STAGE_PARAMS[1].floorMs + 10;
+    state.intervalMs = defined(STAGE_PARAMS[1]).floorMs + 10;
     for (let i = 0; i < STREAK_TO_SPEED; i++) {
       updateAdaptation(state, true);
     }
-    expect(state.intervalMs).toBe(STAGE_PARAMS[1].floorMs);
+    expect(state.intervalMs).toBe(defined(STAGE_PARAMS[1]).floorMs);
   });
 
   it("slows down by 150ms on wrong response", () => {
@@ -363,8 +364,8 @@ describe("updateAdaptation", () => {
 
   it("does not exceed start interval on slow down", () => {
     const state = createFluxState(1);
-    state.intervalMs = STAGE_PARAMS[1].startInterval - 50;
+    state.intervalMs = defined(STAGE_PARAMS[1]).startInterval - 50;
     updateAdaptation(state, false);
-    expect(state.intervalMs).toBe(STAGE_PARAMS[1].startInterval);
+    expect(state.intervalMs).toBe(defined(STAGE_PARAMS[1]).startInterval);
   });
 });

@@ -25,21 +25,22 @@ build-android: build
 	@echo "APK: android/app/build/outputs/apk/debug/app-debug.apk"
 
 lint: lint-go lint-kt lint-py
+	npx tsc --noEmit
 	npm run lint
 	npm run lint:css
 	npm run format:check
 
 lint-go:
-	gofmt -l server/ | grep . && exit 1 || true
-	cd server && go vet ./...
-	cd server && staticcheck ./...
+	cd server && golangci-lint run ./...
+
+lint-kt:
+	@command -v ktlint >/dev/null 2>&1 && ktlint "android/**/*.kt" || echo "ktlint not installed, skipping"
+	@command -v detekt-cli >/dev/null 2>&1 && detekt-cli --input android/ --config detekt.yml --build-upon-default-config --all-rules || echo "detekt not installed, skipping"
 
 lint-py:
 	uv run ruff check
 	uv run ruff format --check
-
-lint-kt:
-	@command -v ktlint >/dev/null 2>&1 && ktlint "android/**/*.kt" || echo "ktlint not installed, skipping"
+	uv run ty check
 
 screenshot:
 	npm run screenshot

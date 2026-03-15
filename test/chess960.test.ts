@@ -1,6 +1,7 @@
 // test/chess960.test.ts
 import { describe, it, expect } from "vitest";
 import { chess960Backrank, chess960Fen } from "../src/chess960";
+import { defined } from "../src/shared/assert";
 
 describe("chess960Backrank", () => {
   it("returns standard chess position for id 518", () => {
@@ -37,8 +38,8 @@ describe("chess960Backrank", () => {
       );
       const kingIndex = rank.indexOf("K");
       expect(rookIndices).toHaveLength(2);
-      expect(kingIndex).toBeGreaterThan(rookIndices[0]);
-      expect(kingIndex).toBeLessThan(rookIndices[1]);
+      expect(kingIndex).toBeGreaterThan(defined(rookIndices[0]));
+      expect(kingIndex).toBeLessThan(defined(rookIndices[1]));
     }
   });
 
@@ -50,7 +51,7 @@ describe("chess960Backrank", () => {
         [],
       );
       expect(bishopIndices).toHaveLength(2);
-      expect(bishopIndices[0] % 2).not.toBe(bishopIndices[1] % 2);
+      expect(defined(bishopIndices[0]) % 2).not.toBe(defined(bishopIndices[1]) % 2);
     }
   });
 

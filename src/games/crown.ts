@@ -17,6 +17,7 @@ import { recordSessionScore, recordCheckmate } from "../shared/progress";
 import { getStage, recordResult } from "../shared/stages";
 import { initTheme, wireToggle } from "../shared/theme";
 import * as sound from "../shared/sounds";
+import { defined } from "../shared/assert";
 
 // --- Chess clock ---
 
@@ -135,16 +136,17 @@ function showPly(ply: number): void {
   viewPly = ply;
   const live = isLive();
   api.set({
-    fen: fenHistory[ply],
-    lastMove:
-      ply > 0
-        ? ([moves[ply - 1].slice(0, 2), moves[ply - 1].slice(2, 4)] as [
-            Key,
-            Key,
-          ])
-        : undefined,
+    fen: defined(fenHistory[ply]),
+    ...(ply > 0
+      ? {
+          lastMove: [
+            defined(moves[ply - 1]).slice(0, 2),
+            defined(moves[ply - 1]).slice(2, 4),
+          ] as [Key, Key],
+        }
+      : {}),
     movable: {
-      color: live && !gameOver ? playerColor : undefined,
+      ...(live && !gameOver ? { color: playerColor } : {}),
       dests: (live && !gameOver
         ? chessgroundDests(pos, { chess960: true })
         : new Map()) as Dests,
@@ -287,7 +289,7 @@ async function onTakeback(): Promise<void> {
     positionHistory.splice(targetPly + 1);
 
     // Restore position
-    const setup = parseFen(fenHistory[targetPly]).unwrap();
+    const setup = parseFen(defined(fenHistory[targetPly])).unwrap();
     pos = Chess.fromSetup(setup).unwrap();
     viewPly = fenHistory.length - 1;
 
@@ -398,7 +400,7 @@ function updateBoard(): void {
     fen: makeFen(pos.toSetup()),
     turnColor: pos.turn,
     movable: {
-      color: gameOver ? undefined : playerColor,
+      ...(gameOver ? {} : { color: playerColor }),
       dests: (gameOver
         ? new Map()
         : chessgroundDests(pos, { chess960: true })) as Dests,
@@ -577,7 +579,7 @@ function onPlayerMove(orig: string, dest: string): void {
   if (isPawn && to >> 3 === backRank) {
     // Show promotion picker — clock keeps running for tension
     showPromotionPicker(orig, dest, (role) => {
-      commitPlayerMove(orig, dest, PROMO_CHARS[role]);
+      commitPlayerMove(orig, dest, defined(PROMO_CHARS[role]));
     });
     return;
   }
