@@ -38,7 +38,6 @@ let trialIsNot = false;
 let ruleJustSwitched = false;
 let currentRemaining = DURATION;
 let timerRef: ReturnType<typeof createTimer> | null = null;
-let beatTimer: ReturnType<typeof setInterval> | null = null;
 let trialTimeout: ReturnType<typeof setTimeout> | null = null;
 let inputLocked = false;
 let gameOver = false;
@@ -215,17 +214,20 @@ function handleResponse(pressed: ButtonSide | null): void {
   // Update score display
   const scoreEl = game.querySelector(".score-display");
   if (scoreEl) scoreEl.textContent = `Score: ${String(state.score)}`;
+
+  // Advance to next trial after brief feedback delay
+  const feedbackMs = result.correct ? 250 : 450;
+  advanceTimeout = setTimeout(() => {
+    if (!gameOver) nextTrial();
+  }, feedbackMs);
 }
 
-/* ---------- beat loop ---------- */
+/* ---------- trial flow ---------- */
+
+let advanceTimeout: ReturnType<typeof setTimeout> | null = null;
 
 function nextTrial(): void {
   if (gameOver) return;
-
-  // If previous trial had no response, handle as timeout
-  if (currentTrial && !responded) {
-    handleResponse(null);
-  }
 
   const prevRule = state.rule;
   currentTrial = generateTrial(state);
@@ -241,46 +243,24 @@ function nextTrial(): void {
 
   renderPlaying();
 
-  // Set timeout for this beat — if no response by next beat, it's a miss
-  const interval = bpmToMs(state.bpm);
+  // Timeout: if no response within the beat window, count as miss
+  if (trialTimeout !== null) clearTimeout(trialTimeout);
   trialTimeout = setTimeout(() => {
     if (!responded && !gameOver) {
       handleResponse(null);
     }
-  }, interval);
-}
-
-function scheduleNextBeat(): void {
-  if (gameOver) return;
-  beatTimer = setTimeout(() => {
-    nextTrial();
-    scheduleNextBeat();
   }, bpmToMs(state.bpm));
 }
 
-function startBeatLoop(): void {
-  nextTrial();
-  scheduleNextBeat();
-}
-
-function stopBeatLoop(): void {
-  if (beatTimer !== null) {
-    clearTimeout(beatTimer);
-    beatTimer = null;
-  }
+function stopTrials(): void {
   if (trialTimeout !== null) {
     clearTimeout(trialTimeout);
     trialTimeout = null;
   }
-}
-
-function rescheduleAfterResponse(): void {
-  // Clear the current beat timer and schedule fresh from now
-  // so the player gets full beat duration for the next trial
-  if (beatTimer !== null) {
-    clearTimeout(beatTimer);
+  if (advanceTimeout !== null) {
+    clearTimeout(advanceTimeout);
+    advanceTimeout = null;
   }
-  scheduleNextBeat();
 }
 
 /* ---------- timer ring update ---------- */
@@ -354,7 +334,7 @@ function saveBest(key: string, score: number): void {
 
 function showResult(): void {
   gameOver = true;
-  stopBeatLoop();
+  stopTrials();
   sound.stopBgm();
 
   const finalScore = state.score;
@@ -408,7 +388,7 @@ function startGame(): void {
   responded = false;
 
   if (timerRef !== null) timerRef.stop();
-  stopBeatLoop();
+  stopTrials();
 
   timerRef = createTimer({
     seconds: DURATION,
@@ -421,7 +401,7 @@ function startGame(): void {
   });
 
   timerRef.start();
-  startBeatLoop();
+  nextTrial();
   sound.startBgm();
 }
 
@@ -433,10 +413,7 @@ game.addEventListener("click", (e) => {
 
   if (target.classList.contains("flux-btn")) {
     const side = target.dataset["side"] as ButtonSide | undefined;
-    if (side) {
-        handleResponse(side);
-      rescheduleAfterResponse();
-    }
+    if (side) handleResponse(side);
   } else if (target.id === "again-btn") {
     startGame();
   } else if (target.id === "back-btn") {
@@ -449,11 +426,9 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "ArrowLeft") {
     e.preventDefault();
     handleResponse("left");
-    rescheduleAfterResponse();
   } else if (e.key === "ArrowRight") {
     e.preventDefault();
     handleResponse("right");
-    rescheduleAfterResponse();
   }
 });
 
