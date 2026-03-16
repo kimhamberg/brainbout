@@ -52,14 +52,23 @@ const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
 /* ---------- render ---------- */
 
-function shapeClasses(trial: Trial): string {
+function shapeClasses(trial: Trial, sizeOverride?: string): string {
   const classes = ["shape"];
-  classes.push(`shape-${trial.size}`);
+  classes.push(`shape-${sizeOverride ?? trial.size}`);
   classes.push(`form-${trial.shape}`);
   classes.push(`color-${trial.color}`);
   classes.push(`fill-${trial.fill}`);
   if (trial.isGolden) classes.push("golden");
   return classes.join(" ");
+}
+
+function shapeHtml(trial: Trial): string {
+  if (trial.size === "dual") {
+    // Two small shapes side by side — clearly "not one big or small"
+    const inner = shapeClasses(trial, "small");
+    return `<div class="shape shape-dual"><div class="${inner}"></div><div class="${inner}"></div></div>`;
+  }
+  return `<div class="${shapeClasses(trial)}"></div>`;
 }
 
 function streakHtml(): string {
@@ -98,7 +107,7 @@ function renderPlaying(): void {
     <div class="${ruleCueClass}">${ruleText}</div>
     ${switchHtml}
     <div class="shape-stage">
-      <div class="${shapeClasses(currentTrial)}"></div>
+      ${shapeHtml(currentTrial)}
     </div>
     ${streakHtml()}
     <div class="flux-buttons">

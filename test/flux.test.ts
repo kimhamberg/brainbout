@@ -256,7 +256,7 @@ describe("generateTrial", () => {
       expect(sawNoGo).toBe(true);
     });
 
-    it("SIZE no-go: squished (distorted proportions)", () => {
+    it("SIZE no-go: dual (two shapes, neither big nor small)", () => {
       const state = createFluxState(1);
       state.trialCount = WARM_UP_TRIALS;
       state.noGoUnlocked = true;
@@ -266,7 +266,7 @@ describe("generateTrial", () => {
       for (let i = 0; i < 300; i++) {
         const trial = generateTrial(state);
         if (trial.isNoGo) {
-          expect(trial.size).toBe("squished");
+          expect(trial.size).toBe("dual");
           sawNoGo = true;
         }
       }

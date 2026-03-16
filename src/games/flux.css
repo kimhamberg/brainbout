@@ -375,21 +375,39 @@
   filter: drop-shadow(0 2px 4px rgb(0 0 0 / 0.25));
 }
 
-/* Size */
+/* Size — optically corrected so all shapes look equally big/small.
+ * Circle needs ~113% of square to appear equal (Bjango).
+ * Triangle needs ~130% due to low fill ratio (Zhang et al. 2024).
+ * Diamond (rotated square) sized so diagonal matches circle diameter.
+ * Pill inherits height, width set by aspect-ratio. */
 .shape-big {
-  width: 5rem;
-  height: 5rem;
+  width: 4.5rem;
+  height: 4.5rem;
 }
 
 .shape-small {
-  width: 3rem;
-  height: 3rem;
+  width: 2.5rem;
+  height: 2.5rem;
 }
 
-.shape-squished {
-  width: 5rem;
-  height: 5rem;
-  transform: scaleX(1.5) scaleY(0.55);
+/* Optical corrections per shape form (big) */
+.form-circle.shape-big { width: 5rem; height: 5rem; }          /* +11%: circle looks smaller */
+.form-triangle.shape-big { width: 5.8rem; height: 5.8rem; }    /* +29%: triangle has lowest fill */
+.form-diamond.shape-big { width: 3.8rem; height: 3.8rem; }     /* diagonal ≈ 5.4rem */
+.form-blob.shape-big { width: 5rem; height: 5rem; }            /* ≈ circle */
+
+/* Optical corrections per shape form (small) */
+.form-circle.shape-small { width: 2.8rem; height: 2.8rem; }
+.form-triangle.shape-small { width: 3.2rem; height: 3.2rem; }
+.form-diamond.shape-small { width: 2.1rem; height: 2.1rem; }
+.form-blob.shape-small { width: 2.8rem; height: 2.8rem; }
+
+/* No-go: dual — two small shapes side by side */
+.shape-dual {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Form */
@@ -416,17 +434,6 @@
   /* Rotated square — avoids clip-path so borders render correctly */
   transform: rotate(45deg);
   border-radius: 4px;
-}
-
-.form-diamond.shape-big {
-  /* Scale down so rotated square fits within the stage */
-  width: 3.5rem;
-  height: 3.5rem;
-}
-
-.form-diamond.shape-small {
-  width: 2.1rem;
-  height: 2.1rem;
 }
 
 .form-triangle {
