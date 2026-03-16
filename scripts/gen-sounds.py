@@ -137,11 +137,7 @@ CAPTURE_REF = {
     "t_kurtosis": _ref_range(6.74, 62.17),
 }
 
-# Key of G  ────────────────────────────────────────────────────────────
-# G2  = 98.00    G3 = 196.00   G4 = 392.00   G5 = 783.99
-# B2  = 123.47   B3 = 246.94   B4 = 493.88   B5 = 987.77
-# D3  = 146.83   D4 = 293.66   D5 = 587.33   D6 = 1174.66
-# Eb3 = 155.56   Eb4 = 311.13  F3 = 174.61   F4 = 349.23
+# Key of G — all pitches derived via note() from 12-TET A4 = 440 Hz
 
 
 # ── primitives ───────────────────────────────────────────────────────
@@ -266,6 +262,30 @@ def fadeout(samples: np.ndarray, dur: float = 0.008) -> np.ndarray:
 #   Zwislocki (1969) — Temporal summation of loudness (JASA 46, 431–441)
 #   Plomp & Levelt (1965) — Tonal consonance and critical bandwidth (JASA 38, 548–560)
 #   Moore (2012) — An Introduction to the Psychology of Hearing (6th ed.)
+
+# ── Musical pitch ──
+
+_SEMITONE = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
+
+
+def note(name: str) -> float:
+    """Convert a note name to frequency in Hz (A4 = 440 Hz, 12-TET).
+
+    Supports sharps (#) and flats (b).
+    Examples: note("G3") → 196.0, note("Bb3") → 233.08, note("F#3") → 185.0
+    """
+    letter = name[0].upper()
+    rest = name[1:]
+    accidental = 0
+    if rest.startswith("#"):
+        accidental = 1
+        rest = rest[1:]
+    elif rest.startswith("b"):
+        accidental = -1
+        rest = rest[1:]
+    midi = 12 * (int(rest) + 1) + _SEMITONE[letter] + accidental
+    return 440.0 * 2 ** ((midi - 69) / 12)
+
 
 # ── ISO 226:2003 equal loudness contour data (Table 1) ──
 # 29 standard frequencies from 20 Hz to 12.5 kHz.
@@ -977,8 +997,8 @@ def correct() -> np.ndarray:
     """
     d = 0.09
     k = decay_rate(d, target_db=-20)
-    a = warm(196.00, d, decay=k)
-    b = warm(246.94, d, decay=k)
+    a = warm(note("G3"), d, decay=k)
+    b = warm(note("B3"), d, decay=k)
     return np.concatenate([a, silence(0.02), b])
 
 
@@ -989,8 +1009,8 @@ def wrong() -> np.ndarray:
     """
     d = 0.11
     k = decay_rate(d, target_db=-30)
-    a = warm_tri(246.94, d, decay=k)
-    b = warm_tri(174.61, d, decay=k)
+    a = warm_tri(note("B3"), d, decay=k)
+    b = warm_tri(note("F3"), d, decay=k)
     return np.concatenate([a, silence(0.025), b])
 
 
@@ -1023,7 +1043,7 @@ def check() -> np.ndarray:
     Decay: −30 dB in 80 ms for crisp pips that don't blur together.
     """
     d = 0.08
-    pip = fm_bell(293.66, d, mod_ratio=1.41, mod_peak=3.5, decay=decay_rate(d, -30))
+    pip = fm_bell(note("D4"), d, mod_ratio=1.41, mod_peak=3.5, decay=decay_rate(d, -30))
     return np.concatenate([pip, silence(0.04), pip])
 
 
@@ -1035,7 +1055,7 @@ def victory() -> np.ndarray:
     Chord voice levels compensated by equal_loudness (ISO 226).
     """
     d, gap = 0.10, 0.035
-    arp_notes = [196.00, 246.94, 293.66, 392.00]
+    arp_notes = [note("G3"), note("B3"), note("D4"), note("G4")]
     parts: list[np.ndarray] = []
     for i, f in enumerate(arp_notes):
         # Progressively slower decay → building sustain
@@ -1046,14 +1066,14 @@ def victory() -> np.ndarray:
     cd = 0.45
     k_chord = decay_rate(cd, target_db=-20)
     # Balance chord voices by equal loudness (ISO 226:2003)
-    vol_g4 = equal_loudness(392.00)
-    vol_b4 = equal_loudness(493.88)
-    vol_d5 = equal_loudness(587.33)
+    vol_g4 = equal_loudness(note("G4"))
+    vol_b4 = equal_loudness(note("B4"))
+    vol_d5 = equal_loudness(note("D5"))
     # Normalize so root is 1.0
     chord = (
-        warm(392.00, cd, decay=k_chord)
-        + (vol_b4 / vol_g4) * warm(493.88, cd, decay=k_chord)
-        + (vol_d5 / vol_g4) * warm(587.33, cd, decay=k_chord)
+        warm(note("G4"), cd, decay=k_chord)
+        + (vol_b4 / vol_g4) * warm(note("B4"), cd, decay=k_chord)
+        + (vol_d5 / vol_g4) * warm(note("D5"), cd, decay=k_chord)
     )
     parts.append(chord)
     return np.concatenate(parts)
@@ -1067,7 +1087,7 @@ def defeat() -> np.ndarray:
     """
     d, gap = 0.14, 0.035
     k = decay_rate(d, target_db=-25)
-    freqs = [196.00, 155.56, 146.83]
+    freqs = [note("G3"), note("Eb3"), note("D3")]
     parts: list[np.ndarray] = []
     for i, f in enumerate(freqs):
         n = warm_tri(f, d, decay=k)
@@ -1084,8 +1104,8 @@ def draw() -> np.ndarray:
     """
     d = 0.15
     k = decay_rate(d, target_db=-20)
-    a = warm(196.00, d, decay=k)
-    b = warm(293.66, d, decay=k)
+    a = warm(note("G3"), d, decay=k)
+    b = warm(note("D4"), d, decay=k)
     return np.concatenate([a, silence(0.04), b])
 
 
@@ -1095,7 +1115,7 @@ def notify() -> np.ndarray:
     Longer duration with −25 dB decay for a clear, ringing bell tone.
     """
     d = 0.30
-    return fm_bell(392.00, d, mod_ratio=1.41, mod_peak=5.0, decay=decay_rate(d, -25))
+    return fm_bell(note("G4"), d, mod_ratio=1.41, mod_peak=5.0, decay=decay_rate(d, -25))
 
 
 # ── flux rhythm sounds ──────────────────────────────────────────────
@@ -1160,7 +1180,7 @@ def correct_burst() -> np.ndarray:
     Decay: −40 dB in 120 ms (fadeout handles the remaining tail).
     """
     dur = 0.12
-    return fadeout(fm_bell(392.00, dur, mod_ratio=1.41, mod_peak=5.0,
+    return fadeout(fm_bell(note("G4"), dur, mod_ratio=1.41, mod_peak=5.0,
                            decay=decay_rate(dur, target_db=-40)))
 
 
@@ -1193,9 +1213,11 @@ def nogo_dissolve() -> np.ndarray:
     dur = 0.25
     t = _t(dur)
     # G5 + D6 = perfect fifth, highly consonant
-    vol_g5 = equal_loudness(784)
-    vol_d6 = equal_loudness(1175)
-    osc = vol_g5 * sine(784, dur) + vol_d6 * sine(1175, dur)
+    # G5 + D6 = perfect fifth, highly consonant
+    g5, d6 = note("G5"), note("D6")
+    vol_g5 = equal_loudness(g5)
+    vol_d6 = equal_loudness(d6)
+    osc = vol_g5 * sine(g5, dur) + vol_d6 * sine(d6, dur)
     e = np.exp(-t * decay_rate(dur, target_db=-40))
     atk = int(SR * attack_time("tonal"))
     if atk > 0:
@@ -1246,12 +1268,12 @@ def golden_chime() -> np.ndarray:
     """
     d, gap = 0.08, 0.02
     k = decay_rate(d, target_db=-35)
-    freqs = [392.00, 493.88, 587.33]
+    freqs = [note("G4"), note("B4"), note("D5")]
     parts: list[np.ndarray] = []
     for i, f in enumerate(freqs):
-        note = fm_bell(f, d, mod_ratio=1.41, mod_peak=3.0, decay=k)
-        note *= temporal_loudness(d)
-        parts.append(note)
+        pip = fm_bell(f, d, mod_ratio=1.41, mod_peak=3.0, decay=k)
+        pip *= temporal_loudness(d)
+        parts.append(pip)
         if i < len(freqs) - 1:
             parts.append(silence(gap))
     return fadeout(np.concatenate(parts))
@@ -1279,19 +1301,19 @@ _BGM_BAR = _BGM_BEAT * 4  # ~1.875s
 _BGM_BARS = 40  # 40 bars = 75s at 128 BPM
 _BGM_DUR = _BGM_BAR * _BGM_BARS
 
-# G minor: G A Bb C D Eb F
-_GM_ROOT = [98.00, 77.78, 130.81, 146.83]  # G2, Eb2, C3, D3
+# G minor: Gm → Eb → Cm → D progression
+_GM_ROOT = [note("G2"), note("Eb2"), note("C3"), note("D3")]
 _GM_CHORD = [
-    (196.00, 233.08, 293.66),  # Gm: G3, Bb3, D4
-    (155.56, 196.00, 233.08),  # Eb: Eb3, G3, Bb3
-    (130.81, 155.56, 196.00),  # Cm: C3, Eb3, G3
-    (146.83, 185.00, 220.00),  # D:  D3, F#3, A3
+    (note("G3"), note("Bb3"), note("D4")),    # Gm
+    (note("Eb3"), note("G3"), note("Bb3")),   # Eb
+    (note("C3"), note("Eb3"), note("G3")),    # Cm
+    (note("D3"), note("F#3"), note("A3")),    # D
 ]
 _GM_ARP = [
-    [196.00, 233.08, 293.66, 392.00],  # Gm arp: G3, Bb3, D4, G4
-    [155.56, 196.00, 233.08, 311.13],  # Eb arp: Eb3, G3, Bb3, Eb4
-    [130.81, 155.56, 196.00, 261.63],  # Cm arp: C3, Eb3, G3, C4
-    [146.83, 185.00, 220.00, 293.66],  # D arp: D3, F#3, A3, D4
+    [note("G3"), note("Bb3"), note("D4"), note("G4")],    # Gm
+    [note("Eb3"), note("G3"), note("Bb3"), note("Eb4")],  # Eb
+    [note("C3"), note("Eb3"), note("G3"), note("C4")],    # Cm
+    [note("D3"), note("F#3"), note("A3"), note("D4")],    # D
 ]
 
 
@@ -1507,10 +1529,10 @@ def flux_bgm() -> np.ndarray:
             continue  # No bass in first 2 bars
         chord_idx = (bar // 2) % 4  # Change chord every 2 bars
         root = _GM_ROOT[chord_idx]
-        note = _bgm_bass(root, _BGM_BAR)
+        seg = _bgm_bass(root, _BGM_BAR)
         start = bar * bar_n
-        end = min(start + len(note), n)
-        bass_track[start:end] += note[: end - start]
+        end = min(start + len(seg), n)
+        bass_track[start:end] += seg[: end - start]
 
     # Sidechain ducking on bass
     sc = _sidechain_env(n, beat_n)
@@ -1526,10 +1548,10 @@ def flux_bgm() -> np.ndarray:
         chord = _GM_CHORD[chord_idx]
         # Volume increases through the track
         vol = 0.06 if bar < 8 else 0.10 if bar < 32 else 0.14
-        note = _bgm_pad(chord, _BGM_BAR, volume=vol)
+        seg = _bgm_pad(chord, _BGM_BAR, volume=vol)
         start = bar * bar_n
-        end = min(start + len(note), n)
-        pad_track[start:end] += note[: end - start]
+        end = min(start + len(seg), n)
+        pad_track[start:end] += seg[: end - start]
 
     # Low-pass the pad for warmth
     pad_track = lpf(pad_track, cutoff=4000)
@@ -1552,9 +1574,9 @@ def flux_bgm() -> np.ndarray:
             if bar >= 32:
                 freq *= 2
             note_dur = _BGM_BEAT / (2 if bar >= 32 else 1) * 0.8
-            note = _bgm_arp_note(freq, note_dur)
+            seg = _bgm_arp_note(freq, note_dur)
             pos = bar * bar_n + int(div * bar_n / divisions)
-            place(arp_track, note, pos)
+            place(arp_track, seg, pos)
 
     mix += arp_track
 
