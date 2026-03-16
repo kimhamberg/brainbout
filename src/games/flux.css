@@ -380,11 +380,14 @@
 
 /* ========== Shape (stimulus) ========== */
 
+.shape-stage {
+  animation: stimulus-enter var(--dur-200) cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
 .shape {
   position: relative;
   display: block;
   transition: transform var(--dur-150) ease;
-  animation: stimulus-enter var(--dur-200) cubic-bezier(0.34, 1.56, 0.64, 1);
   box-sizing: border-box;
   /* Subtle 3D depth on all shapes */
   filter: drop-shadow(0 2px 4px rgb(0 0 0 / 0.25));
@@ -428,11 +431,44 @@
 }
 
 .form-diamond {
-  clip-path: polygon(50% 2%, 98% 50%, 50% 98%, 2% 50%);
+  /* Rotated square — avoids clip-path so borders render correctly */
+  transform: rotate(45deg);
+  border-radius: 4px;
+}
+
+.form-diamond.shape-big {
+  /* Scale down so rotated square fits within the stage */
+  width: 3.5rem;
+  height: 3.5rem;
+}
+
+.form-diamond.shape-small {
+  width: 2.1rem;
+  height: 2.1rem;
 }
 
 .form-triangle {
+  /* Use clip-path but hollow/striped borders handled via drop-shadow */
   clip-path: polygon(50% 5%, 3% 95%, 97% 95%);
+}
+
+/* Drop-shadow border for clip-path shapes that can't use border */
+.form-triangle.fill-hollow {
+  border: none;
+  background: color-mix(in srgb, var(--shape-color) 25%, transparent);
+  filter: drop-shadow(0 0 0 var(--shape-color));
+  /* Layered drop-shadows to simulate a thick border */
+  filter:
+    drop-shadow(0 0 1px var(--shape-color))
+    drop-shadow(0 0 1px var(--shape-color))
+    drop-shadow(0 0 1px var(--shape-color))
+    drop-shadow(0 0 1px var(--shape-color));
+}
+
+.form-triangle.fill-striped {
+  filter:
+    drop-shadow(0 0 1px var(--shape-color))
+    drop-shadow(0 0 1px var(--shape-color));
 }
 
 .form-blob {
@@ -756,23 +792,23 @@
 
 /* ========== Juice classes ========== */
 
-.juice-correct-left .shape {
+.juice-correct-left .shape-stage {
   animation: burst-left 300ms ease forwards;
 }
 
-.juice-correct-right .shape {
+.juice-correct-right .shape-stage {
   animation: burst-right 300ms ease forwards;
 }
 
-.juice-wrong .shape {
+.juice-wrong .shape-stage {
   animation: crack-split 400ms ease forwards;
 }
 
-.juice-nogo-correct .shape {
+.juice-nogo-correct .shape-stage {
   animation: dissolve 400ms ease forwards;
 }
 
-.juice-nogo-fail .shape {
+.juice-nogo-fail .shape-stage {
   animation: explode 300ms ease forwards;
 }
 
