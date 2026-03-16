@@ -386,9 +386,10 @@
   height: 3rem;
 }
 
-.shape-medium {
-  width: 4rem;
-  height: 4rem;
+.shape-squished {
+  width: 5rem;
+  height: 5rem;
+  transform: scaleX(1.5) scaleY(0.55);
 }
 
 /* Form */
@@ -531,12 +532,10 @@
 
 .streak-blaze {
   color: var(--ctp-yellow);
-  font-size: 1.05em;
 }
 
 .streak-inferno {
   color: var(--ctp-yellow);
-  font-size: 1.1em;
 }
 
 /* ========== Buttons ========== */
