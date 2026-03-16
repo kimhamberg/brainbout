@@ -361,6 +361,7 @@ function saveBest(key: string, score: number): void {
 function showResult(): void {
   gameOver = true;
   stopBeatLoop();
+  sound.stopBgm();
 
   const finalScore = state.score;
   recordSessionScore("flux", finalScore);
@@ -427,6 +428,7 @@ function startGame(): void {
 
   timerRef.start();
   startBeatLoop();
+  sound.startBgm();
 }
 
 /* ---------- input ---------- */

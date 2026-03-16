@@ -935,6 +935,276 @@ def streak_up() -> np.ndarray:
     return osc * e * 0.5
 
 
+# ── flux background music ───────────────────────────────────────────
+
+_BGM_BPM = 128
+_BGM_BEAT = 60.0 / _BGM_BPM  # ~0.469s
+_BGM_BAR = _BGM_BEAT * 4  # ~1.875s
+_BGM_BARS = 40  # 40 bars = 75s at 128 BPM
+_BGM_DUR = _BGM_BAR * _BGM_BARS
+
+# G minor: G A Bb C D Eb F
+_GM_ROOT = [98.00, 77.78, 130.81, 146.83]  # G2, Eb2, C3, D3
+_GM_CHORD = [
+    (196.00, 233.08, 293.66),  # Gm: G3, Bb3, D4
+    (155.56, 196.00, 233.08),  # Eb: Eb3, G3, Bb3
+    (130.81, 155.56, 196.00),  # Cm: C3, Eb3, G3
+    (146.83, 185.00, 220.00),  # D:  D3, F#3, A3
+]
+_GM_ARP = [
+    [196.00, 233.08, 293.66, 392.00],  # Gm arp: G3, Bb3, D4, G4
+    [155.56, 196.00, 233.08, 311.13],  # Eb arp: Eb3, G3, Bb3, Eb4
+    [130.81, 155.56, 196.00, 261.63],  # Cm arp: C3, Eb3, G3, C4
+    [146.83, 185.00, 220.00, 293.66],  # D arp: D3, F#3, A3, D4
+]
+
+
+def _bgm_kick(dur: float) -> np.ndarray:
+    """EDM kick — sine pitch envelope 160→45 Hz, punchy."""
+    t = _t(dur)
+    freq = 45 + 115 * np.exp(-t * 40)
+    phase = 2 * np.pi * np.cumsum(freq) / SR
+    osc = np.sin(phase)
+    e = np.exp(-t * 12)
+    # Clip for subtle saturation
+    return np.tanh(osc * e * 1.8) * 0.7
+
+
+def _bgm_snare(dur: float) -> np.ndarray:
+    """Snare — noise burst + body sine."""
+    t = _t(dur)
+    noise = np.random.default_rng(123).standard_normal(len(t))
+    noise_env = np.exp(-t * 20)
+    body = np.sin(2 * np.pi * 200 * t) * np.exp(-t * 30)
+    return (noise * noise_env * 0.3 + body * 0.4) * 0.6
+
+
+def _bgm_hihat(dur: float, closed: bool = True) -> np.ndarray:
+    """Hi-hat — band-passed noise."""
+    t = _t(dur)
+    noise = np.random.default_rng(456).standard_normal(len(t))
+    decay = 60 if closed else 15
+    e = np.exp(-t * decay)
+    filtered = bpf(noise, 6000, min(16000, SR / 2 - 1), order=2)
+    return filtered * e * 0.15
+
+
+def _bgm_bass(freq: float, dur: float) -> np.ndarray:
+    """Sub bass — sine with subtle harmonics."""
+    t = _t(dur)
+    osc = np.sin(2 * np.pi * freq * t)
+    osc += 0.3 * np.sin(2 * np.pi * freq * 2 * t)
+    e = np.ones_like(t)
+    # Soft attack to avoid click
+    atk = min(int(SR * 0.01), len(e))
+    if atk > 0:
+        e[:atk] *= np.linspace(0, 1, atk)
+    # Soft release
+    rel = min(int(SR * 0.01), len(e))
+    if rel > 0:
+        e[-rel:] *= np.linspace(1, 0, rel)
+    return osc * e * 0.35
+
+
+def _bgm_pad(freqs: tuple[float, ...], dur: float, volume: float = 0.08) -> np.ndarray:
+    """Supersaw-style pad — detuned oscillator stack per note."""
+    t = _t(dur)
+    pad = np.zeros_like(t)
+    for f in freqs:
+        for detune in [0.997, 0.999, 1.0, 1.001, 1.003]:
+            pad += np.sin(2 * np.pi * f * detune * t)
+    pad /= max(np.max(np.abs(pad)), 1e-10)
+    # Slow attack/release for smooth transitions
+    atk = min(int(SR * 0.05), len(pad))
+    rel = min(int(SR * 0.05), len(pad))
+    if atk > 0:
+        pad[:atk] *= 0.5 * (1 - np.cos(np.pi * np.arange(atk) / atk))
+    if rel > 0:
+        pad[-rel:] *= 0.5 * (1 + np.cos(np.pi * np.arange(rel) / rel))
+    return pad * volume
+
+
+def _bgm_arp_note(freq: float, dur: float) -> np.ndarray:
+    """FM bell arp note — short, bright."""
+    t = _t(dur)
+    mod_freq = freq * 1.41
+    index = 3.0 * np.exp(-t * 20)
+    mod = index * np.sin(2 * np.pi * mod_freq * t)
+    carrier = np.sin(2 * np.pi * freq * t + mod)
+    e = np.exp(-t * 10)
+    return carrier * e * 0.2
+
+
+def _bgm_riser(dur: float) -> np.ndarray:
+    """Build-up riser — noise with rising filter."""
+    t = _t(dur)
+    noise = np.random.default_rng(789).standard_normal(len(t))
+    # Rising intensity
+    e = (t / dur) ** 2
+    # Simple rising tone
+    freq = 200 + 2000 * (t / dur) ** 2
+    tone = np.sin(2 * np.pi * np.cumsum(freq) / SR) * 0.15
+    return (noise * 0.08 + tone) * e
+
+
+def _sidechain_env(n_samples: int, beat_samples: int) -> np.ndarray:
+    """Sidechain compression envelope — ducks on each beat."""
+    e = np.ones(n_samples)
+    duck_len = min(int(beat_samples * 0.3), beat_samples)
+    duck = np.linspace(0.3, 1.0, duck_len)
+    for i in range(0, n_samples, beat_samples):
+        end = min(i + duck_len, n_samples)
+        actual = end - i
+        e[i:end] = duck[:actual]
+    return e
+
+
+def flux_bgm() -> np.ndarray:
+    """75-second electronic track for Flux gameplay.
+
+    128 BPM, G minor, 40 bars. Three-act structure matching session acts:
+    - Warmup (bars 1-8): kick + bass + pad intro, builds
+    - Flow (bars 9-32): full beat — kick, snare, hi-hat, bass, arp, pad
+    - Climax (bars 33-40): 16th hi-hats, doubled arp, riser, max energy
+    """
+    n = int(SR * _BGM_DUR)
+    beat_n = int(SR * _BGM_BEAT)
+    bar_n = int(SR * _BGM_BAR)
+
+    mix = np.zeros(n)
+
+    # Pre-generate one-shot drum samples (short, reusable)
+    kick_sample = _bgm_kick(0.25)
+    snare_sample = _bgm_snare(0.15)
+    hat_closed = _bgm_hihat(0.06, closed=True)
+    hat_open = _bgm_hihat(0.12, closed=False)
+
+    def place(target: np.ndarray, sample: np.ndarray, pos: int) -> None:
+        """Mix a sample into the target at the given position."""
+        end = min(pos + len(sample), len(target))
+        actual = end - pos
+        if actual > 0 and pos >= 0:
+            target[pos:end] += sample[:actual]
+
+    # ── Drum pattern ──
+    for bar in range(_BGM_BARS):
+        bar_start = bar * bar_n
+
+        # Kick: four-on-the-floor (all bars except 1-2 for intro feel)
+        if bar >= 2:
+            for beat in range(4):
+                place(mix, kick_sample, bar_start + beat * beat_n)
+        elif bar >= 0:
+            # Bars 0-1: kick on 1 and 3 only (half-time intro)
+            place(mix, kick_sample, bar_start)
+            place(mix, kick_sample, bar_start + 2 * beat_n)
+
+        # Snare on 2 and 4 (starts bar 4)
+        if bar >= 4:
+            place(mix, snare_sample, bar_start + 1 * beat_n)
+            place(mix, snare_sample, bar_start + 3 * beat_n)
+
+        # Hi-hat pattern
+        if bar >= 6 and bar < 32:
+            # 8th notes during flow
+            for eighth in range(8):
+                pos = bar_start + int(eighth * beat_n / 2)
+                place(mix, hat_closed, pos)
+        elif bar >= 32:
+            # 16th notes during climax
+            for sixteenth in range(16):
+                pos = bar_start + int(sixteenth * beat_n / 4)
+                sample = hat_open if sixteenth % 4 == 0 else hat_closed
+                place(mix, sample, pos)
+
+        # Snare roll build-up (bars 31-32, leading into climax)
+        if bar in (30, 31):
+            roll_divisions = 8 if bar == 30 else 16
+            for div in range(roll_divisions):
+                pos = bar_start + int(div * bar_n / roll_divisions)
+                vol = 0.3 + 0.7 * (div / roll_divisions)
+                place(mix, snare_sample * vol, pos)
+
+    # ── Bass line (one note per bar, following chord roots) ──
+    bass_track = np.zeros(n)
+    for bar in range(_BGM_BARS):
+        if bar < 2:
+            continue  # No bass in first 2 bars
+        chord_idx = (bar // 2) % 4  # Change chord every 2 bars
+        root = _GM_ROOT[chord_idx]
+        note = _bgm_bass(root, _BGM_BAR)
+        start = bar * bar_n
+        end = min(start + len(note), n)
+        bass_track[start:end] += note[: end - start]
+
+    # Sidechain ducking on bass
+    sc = _sidechain_env(n, beat_n)
+    bass_track *= sc
+    mix += bass_track
+
+    # ── Pad (starts bar 4, swells through flow) ──
+    pad_track = np.zeros(n)
+    for bar in range(_BGM_BARS):
+        if bar < 4:
+            continue
+        chord_idx = (bar // 2) % 4
+        chord = _GM_CHORD[chord_idx]
+        # Volume increases through the track
+        vol = 0.06 if bar < 8 else 0.10 if bar < 32 else 0.14
+        note = _bgm_pad(chord, _BGM_BAR, volume=vol)
+        start = bar * bar_n
+        end = min(start + len(note), n)
+        pad_track[start:end] += note[: end - start]
+
+    # Low-pass the pad for warmth
+    pad_track = lpf(pad_track, cutoff=4000)
+    pad_track *= sc  # Sidechain
+    mix += pad_track
+
+    # ── Arp (starts bar 8, 8th note arpeggios) ──
+    arp_track = np.zeros(n)
+    for bar in range(_BGM_BARS):
+        if bar < 8:
+            continue
+        chord_idx = (bar // 2) % 4
+        arp_notes = _GM_ARP[chord_idx]
+        # 8th note arp (16th in climax)
+        divisions = 16 if bar >= 32 else 8
+        for div in range(divisions):
+            note_idx = div % len(arp_notes)
+            freq = arp_notes[note_idx]
+            # Higher octave in climax
+            if bar >= 32:
+                freq *= 2
+            note_dur = _BGM_BEAT / (2 if bar >= 32 else 1) * 0.8
+            note = _bgm_arp_note(freq, note_dur)
+            pos = bar * bar_n + int(div * bar_n / divisions)
+            place(arp_track, note, pos)
+
+    mix += arp_track
+
+    # ── Riser (bars 29-32, building to climax) ──
+    riser_dur = _BGM_BAR * 4
+    riser = _bgm_riser(riser_dur)
+    riser_start = 28 * bar_n
+    riser_end = min(riser_start + len(riser), n)
+    mix[riser_start:riser_end] += riser[: riser_end - riser_start]
+
+    # ── Master ──
+    # Normalize
+    peak = np.max(np.abs(mix))
+    if peak > 0:
+        mix = mix / peak * 0.85
+
+    # Gentle fade-in (first 2 bars) and fade-out (last bar)
+    fade_in = min(2 * bar_n, n)
+    mix[:fade_in] *= np.linspace(0, 1, fade_in)
+    fade_out = min(bar_n, n)
+    mix[-fade_out:] *= np.linspace(1, 0, fade_out)
+
+    return mix
+
+
 # ── main ─────────────────────────────────────────────────────────────
 
 SOUNDS = {
@@ -957,6 +1227,7 @@ SOUNDS = {
     "switch-whoosh": switch_whoosh,
     "golden-chime": golden_chime,
     "streak-up": streak_up,
+    "flux-bgm": flux_bgm,
 }
 
 if __name__ == "__main__":

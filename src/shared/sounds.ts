@@ -137,3 +137,48 @@ export function playGoldenChime(): void {
 export function playStreakUp(): void {
   play("streak-up");
 }
+
+// Flux background music
+let bgmSource: AudioBufferSourceNode | null = null;
+
+export function startBgm(): void {
+  stopBgm();
+  const actx = getCtx();
+  preloadAll();
+
+  const buf = buffers.get("flux-bgm");
+  if (!buf) {
+    void fetchBuffer("flux-bgm").then((b) => {
+      if (bgmSource) return; // already started by retry
+      const src = actx.createBufferSource();
+      src.buffer = b;
+      const gain = actx.createGain();
+      gain.gain.value = 0.35;
+      src.connect(gain);
+      gain.connect(actx.destination);
+      src.start();
+      bgmSource = src;
+    });
+    return;
+  }
+
+  const src = actx.createBufferSource();
+  src.buffer = buf;
+  const gain = actx.createGain();
+  gain.gain.value = 0.35;
+  src.connect(gain);
+  gain.connect(actx.destination);
+  src.start();
+  bgmSource = src;
+}
+
+export function stopBgm(): void {
+  if (bgmSource) {
+    try {
+      bgmSource.stop();
+    } catch {
+      // already stopped
+    }
+    bgmSource = null;
+  }
+}
