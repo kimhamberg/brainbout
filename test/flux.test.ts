@@ -7,6 +7,8 @@ import {
   DURATION,
   STREAK_THRESHOLDS,
   GOLDEN_BASE_POINTS,
+  BPM_UP,
+  BPM_DOWN,
   createFluxState,
   generateTrial,
   evaluateResponse,
@@ -535,25 +537,34 @@ describe("updateAdaptation", () => {
     expect(state.peakStreak).toBe(8); // preserved
   });
 
-  it("increases BPM by ~5% after streak of 5", () => {
+  it("increases BPM by 1 per correct answer", () => {
     const state = createFluxState(1);
     state.bpm = 55;
-    for (let i = 0; i < 5; i++) updateAdaptation(state, true);
-    expect(state.bpm).toBe(58); // Math.round(55 * 1.05)
+    updateAdaptation(state, true);
+    expect(state.bpm).toBe(55 + BPM_UP);
+    updateAdaptation(state, true);
+    expect(state.bpm).toBe(55 + BPM_UP * 2);
   });
 
   it("does not exceed floor BPM", () => {
     const state = createFluxState(1);
-    state.bpm = 89; // close to floor of 90
-    for (let i = 0; i < 5; i++) updateAdaptation(state, true);
+    state.bpm = 90; // at floor
+    updateAdaptation(state, true);
     expect(state.bpm).toBe(90); // capped at floorBpm
   });
 
-  it("resets BPM to base on wrong", () => {
+  it("decreases BPM by 3 on wrong (not full reset)", () => {
     const state = createFluxState(1);
-    state.bpm = 75;
+    state.bpm = 70;
     updateAdaptation(state, false);
-    expect(state.bpm).toBe(55); // back to baseBpm
+    expect(state.bpm).toBe(70 - BPM_DOWN);
+  });
+
+  it("does not go below base BPM on wrong", () => {
+    const state = createFluxState(1);
+    state.bpm = 56; // just above base of 55
+    updateAdaptation(state, false);
+    expect(state.bpm).toBe(55); // clamped to baseBpm
   });
 });
 

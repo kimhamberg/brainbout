@@ -57,8 +57,8 @@ export interface ResponseResult {
 export const DURATION = 75;
 export const WARM_UP_TRIALS = 8;
 export const GOLDEN_BASE_POINTS = 5;
-export const BPM_INCREASE_PERCENT = 0.05;
-export const STREAK_TO_SPEED = 5;
+export const BPM_UP = 1; // BPM increase per correct answer
+export const BPM_DOWN = 3; // BPM decrease per wrong answer
 
 export const STREAK_THRESHOLDS = [
   { min: 15, multiplier: 5, label: "inferno" },
@@ -368,12 +368,9 @@ export function updateAdaptation(state: FluxState, correct: boolean): void {
     if (state.streak > state.peakStreak) {
       state.peakStreak = state.streak;
     }
-    if (state.streak % STREAK_TO_SPEED === 0) {
-      const newBpm = Math.round(state.bpm * (1 + BPM_INCREASE_PERCENT));
-      state.bpm = Math.min(p.floorBpm, newBpm);
-    }
+    state.bpm = Math.min(p.floorBpm, state.bpm + BPM_UP);
   } else {
     state.streak = 0;
-    state.bpm = p.baseBpm;
+    state.bpm = Math.max(p.baseBpm, state.bpm - BPM_DOWN);
   }
 }

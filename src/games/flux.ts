@@ -250,23 +250,22 @@ function nextTrial(): void {
   }, interval);
 }
 
-function startBeatLoop(): void {
-  // First trial immediately
-  nextTrial();
-
-  // Subsequent trials on beat
-  beatTimer = setInterval(() => {
-    if (gameOver) {
-      if (beatTimer !== null) clearInterval(beatTimer);
-      return;
-    }
+function scheduleNextBeat(): void {
+  if (gameOver) return;
+  beatTimer = setTimeout(() => {
     nextTrial();
+    scheduleNextBeat();
   }, bpmToMs(state.bpm));
+}
+
+function startBeatLoop(): void {
+  nextTrial();
+  scheduleNextBeat();
 }
 
 function stopBeatLoop(): void {
   if (beatTimer !== null) {
-    clearInterval(beatTimer);
+    clearTimeout(beatTimer);
     beatTimer = null;
   }
   if (trialTimeout !== null) {
@@ -275,18 +274,13 @@ function stopBeatLoop(): void {
   }
 }
 
-// Restart beat loop when BPM changes (after adaptation)
-function restartBeatIfNeeded(prevBpm: number): void {
-  if (state.bpm !== prevBpm && beatTimer !== null) {
-    clearInterval(beatTimer);
-    beatTimer = setInterval(() => {
-      if (gameOver) {
-        if (beatTimer !== null) clearInterval(beatTimer);
-        return;
-      }
-      nextTrial();
-    }, bpmToMs(state.bpm));
+function rescheduleAfterResponse(): void {
+  // Clear the current beat timer and schedule fresh from now
+  // so the player gets full beat duration for the next trial
+  if (beatTimer !== null) {
+    clearTimeout(beatTimer);
   }
+  scheduleNextBeat();
 }
 
 /* ---------- timer ring update ---------- */
@@ -440,9 +434,8 @@ game.addEventListener("click", (e) => {
   if (target.classList.contains("flux-btn")) {
     const side = target.dataset["side"] as ButtonSide | undefined;
     if (side) {
-      const prevBpm = state.bpm;
-      handleResponse(side);
-      restartBeatIfNeeded(prevBpm);
+        handleResponse(side);
+      rescheduleAfterResponse();
     }
   } else if (target.id === "again-btn") {
     startGame();
@@ -455,14 +448,12 @@ document.addEventListener("keydown", (e) => {
   if (gameOver || inputLocked) return;
   if (e.key === "ArrowLeft") {
     e.preventDefault();
-    const prevBpm = state.bpm;
     handleResponse("left");
-    restartBeatIfNeeded(prevBpm);
+    rescheduleAfterResponse();
   } else if (e.key === "ArrowRight") {
     e.preventDefault();
-    const prevBpm = state.bpm;
     handleResponse("right");
-    restartBeatIfNeeded(prevBpm);
+    rescheduleAfterResponse();
   }
 });
 
