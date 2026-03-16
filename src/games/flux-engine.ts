@@ -57,8 +57,18 @@ export interface ResponseResult {
 export const DURATION = 75;
 export const WARM_UP_TRIALS = 8;
 export const GOLDEN_BASE_POINTS = 5;
-export const BPM_UP = 1; // BPM increase per correct answer
-export const BPM_DOWN = 3; // BPM decrease per wrong answer
+
+// Wilson et al. (2019) "The Eighty Five Percent Rule" (Nature Communications):
+// Optimal error rate for binary classification learning is
+//   ER* = ½(1 − erf(1/√2)) ≈ 15.87%
+// Adaptive BPM converges when E[ΔBPM] = 0:
+//   accuracy × BPM_UP = (1 − accuracy) × BPM_DOWN
+// Solving: accuracy = BPM_DOWN / (BPM_UP + BPM_DOWN)
+// For accuracy = 1 − ER* ≈ 0.8413:
+//   BPM_DOWN / BPM_UP = (1 − ER*) / ER* ≈ 5.303
+const OPTIMAL_ERROR_RATE = 0.15866; // ½(1 − erf(1/√2))
+export const BPM_UP = 1;
+export const BPM_DOWN = (1 - OPTIMAL_ERROR_RATE) / OPTIMAL_ERROR_RATE; // ≈ 5.303
 
 export const STREAK_THRESHOLDS = [
   { min: 15, multiplier: 5, label: "inferno" },

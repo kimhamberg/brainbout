@@ -537,13 +537,13 @@ describe("updateAdaptation", () => {
     expect(state.peakStreak).toBe(8); // preserved
   });
 
-  it("increases BPM by 1 per correct answer", () => {
+  it("increases BPM by BPM_UP per correct answer", () => {
     const state = createFluxState(1);
     state.bpm = 55;
     updateAdaptation(state, true);
-    expect(state.bpm).toBe(55 + BPM_UP);
+    expect(state.bpm).toBeCloseTo(55 + BPM_UP, 5);
     updateAdaptation(state, true);
-    expect(state.bpm).toBe(55 + BPM_UP * 2);
+    expect(state.bpm).toBeCloseTo(55 + BPM_UP * 2, 5);
   });
 
   it("does not exceed floor BPM", () => {
@@ -553,18 +553,24 @@ describe("updateAdaptation", () => {
     expect(state.bpm).toBe(90); // capped at floorBpm
   });
 
-  it("decreases BPM by 3 on wrong (not full reset)", () => {
+  it("decreases BPM by BPM_DOWN (~5.3) on wrong", () => {
     const state = createFluxState(1);
     state.bpm = 70;
     updateAdaptation(state, false);
-    expect(state.bpm).toBe(70 - BPM_DOWN);
+    expect(state.bpm).toBeCloseTo(70 - BPM_DOWN, 5);
   });
 
   it("does not go below base BPM on wrong", () => {
     const state = createFluxState(1);
-    state.bpm = 56; // just above base of 55
+    state.bpm = 57; // slightly above base of 55
     updateAdaptation(state, false);
     expect(state.bpm).toBe(55); // clamped to baseBpm
+  });
+
+  it("converges to ~84.13% accuracy (Wilson et al. 2019)", () => {
+    // At equilibrium: accuracy = BPM_DOWN / (BPM_UP + BPM_DOWN)
+    const equilibrium = BPM_DOWN / (BPM_UP + BPM_DOWN);
+    expect(equilibrium).toBeCloseTo(1 - 0.15866, 4);
   });
 });
 
