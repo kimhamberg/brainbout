@@ -231,6 +231,22 @@ let advanceTimeout: ReturnType<typeof setTimeout> | null = null;
 function nextTrial(): void {
   if (gameOver) return;
 
+  // Clear stale juice classes so the new shape doesn't inherit exit animations
+  game.classList.remove(
+    "juice-correct-left",
+    "juice-correct-right",
+    "juice-wrong",
+    "juice-nogo-correct",
+    "juice-nogo-fail",
+    "dim-flash",
+  );
+
+  // Clear any pending advance from a previous trial
+  if (advanceTimeout !== null) {
+    clearTimeout(advanceTimeout);
+    advanceTimeout = null;
+  }
+
   const prevRule = state.rule;
   currentTrial = generateTrial(state);
   trialRule = state.rule;
