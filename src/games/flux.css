@@ -23,11 +23,11 @@
 @keyframes golden-shimmer {
   0%,
   100% {
-    box-shadow: 0 0 8px 2px var(--ctp-yellow);
+    box-shadow: 0 0 6px 2px rgb(255 255 255 / 0.3);
   }
 
   50% {
-    box-shadow: 0 0 16px 4px var(--ctp-yellow);
+    box-shadow: 0 0 12px 4px rgb(255 255 255 / 0.5);
   }
 }
 
@@ -415,19 +415,23 @@
   border-radius: 50%;
 }
 
+/* Pill (rounded rectangle, 2:1 aspect ratio).
+ * Area = h²(1 + π/4) ≈ 1.785h².
+ * For equal area to circle (πr²):
+ *   big:   circle 5rem → area 19.6rem² → pill h = √(19.6/1.785) = 3.3rem
+ *   small: circle 2.8rem → area 6.2rem² → pill h = √(6.2/1.785) = 1.9rem */
 .form-pill {
   border-radius: 9999px;
   width: auto;
-  min-width: 3rem;
   aspect-ratio: 2 / 1;
 }
 
 .form-pill.shape-big {
-  height: 5rem;
+  height: 3.3rem;
 }
 
 .form-pill.shape-small {
-  height: 3rem;
+  height: 1.9rem;
 }
 
 .form-diamond {
@@ -507,12 +511,14 @@
   border: 2px solid color-mix(in srgb, var(--shape-color) 50%, transparent);
 }
 
-/* Golden */
+/* Golden — neutral white glow so it doesn't conflict with color sorting.
+ * Yellow outline would add a warm signal to cool shapes, confusing the
+ * COLOR rule. White is chromatically neutral. */
 .golden {
   animation: golden-shimmer 1s ease infinite;
-  outline: 3px solid var(--ctp-yellow);
+  outline: 3px solid rgb(255 255 255 / 0.7);
   outline-offset: 4px;
-  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--ctp-yellow) 50%, transparent));
+  filter: drop-shadow(0 0 6px rgb(255 255 255 / 0.5));
 }
 
 /* ========== Streak display ========== */
