@@ -147,10 +147,14 @@ function spawnParticles(color: string): void {
 
 /* ---------- feedback ---------- */
 
-function showFeedback(correct: boolean, message: string): void {
+function showFeedback(correct: boolean, message: string, golden = false): void {
   const feedback = document.getElementById("feedback");
   if (feedback) {
-    feedback.classList.add(correct ? "correct" : "wrong");
+    if (correct && golden) {
+      feedback.classList.add("correct-golden");
+    } else {
+      feedback.classList.add(correct ? "correct" : "wrong");
+    }
     feedback.textContent = message;
   }
 }
@@ -207,7 +211,7 @@ function handleResponse(pressed: ButtonSide | null): void {
     } else {
       sound.playCorrectBurst();
     }
-    showFeedback(true, result.feedback || `+${String(result.totalPoints)}`);
+    showFeedback(true, result.feedback || `+${String(result.totalPoints)}`, result.isGolden === true);
     updateAdaptation(state, true);
     if (state.streak >= 3) sound.playStreakUp();
   } else {
