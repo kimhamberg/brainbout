@@ -18,7 +18,7 @@ A daily brain workout. Train your brain, not your scroll thumb.
 3 timed cognitive games in ~18 minutes. No accounts, no ads, no internet required. Progress tracked locally.
 
 - <img src="docs/icons/crown.svg" width="16" /> **Crown** — Chess960 rapid, 15+10 vs Stockfish
-- <img src="docs/icons/flux.svg" width="16" /> **Flux** — rhythm-driven shape sorting with inhibition (75s)
+- <img src="docs/icons/flux.svg" width="16" /> **Flux** — adaptive rule-switching with inhibition (60s)
 - <img src="docs/icons/book-open.svg" width="16" /> **Lex** — vocabulary with per-word mastery (120s)
 
 <p align="center"><img src="docs/screenshot.png" alt="Screenshot" width="280" /></p>
@@ -64,11 +64,11 @@ Runs ESLint (TypeScript), Stylelint (CSS), Ruff (Python), staticcheck + go vet (
 npm test
 ```
 
-156 tests across 11 files covering position generation, chess clock, cognitive games, engine parsing, timer, and progress tracking.
+158 tests across 11 files covering position generation, chess clock, cognitive games, engine parsing, timer, and progress tracking.
 
 ## Sound
 
-9 synthesised sounds generated with NumPy + SciPy + Pedalboard — modal wood synthesis for chess pieces, FM bells, additive warm tones.
+20 synthesised sounds generated with NumPy + SciPy + Pedalboard — modal wood synthesis for chess pieces, FM bells, additive warm tones.
 
 ```
 .venv/bin/python scripts/gen-sounds.py
