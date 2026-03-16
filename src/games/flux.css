@@ -284,10 +284,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 8rem;
-  height: 8rem;
+  width: 9rem;
+  height: 9rem;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--ctp-surface0) 50%, transparent);
+  background: color-mix(in srgb, var(--ctp-mantle) 60%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ctp-surface1) 30%, transparent);
   position: relative;
 }
 
@@ -391,18 +392,18 @@
 
 /* Size */
 .shape-big {
-  width: 4.5rem;
-  height: 4.5rem;
+  width: 5rem;
+  height: 5rem;
 }
 
 .shape-small {
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 3rem;
+  height: 3rem;
 }
 
 .shape-oscillating {
-  width: 3.5rem;
-  height: 3.5rem;
+  width: 4rem;
+  height: 4rem;
   animation: size-oscillate 600ms ease infinite;
 }
 
@@ -419,11 +420,11 @@
 }
 
 .form-pill.shape-big {
-  height: 4.5rem;
+  height: 5rem;
 }
 
 .form-pill.shape-small {
-  height: 2.25rem;
+  height: 3rem;
 }
 
 .form-diamond {
@@ -461,22 +462,24 @@
 
 /* Fill */
 .fill-solid {
-  background:
-    linear-gradient(135deg, color-mix(in srgb, white 15%, var(--shape-color)), var(--shape-color) 40%, color-mix(in srgb, black 10%, var(--shape-color)));
+  background: var(--shape-color);
+  box-shadow: inset 0 -3px 6px color-mix(in srgb, black 20%, transparent),
+              inset 0 2px 4px color-mix(in srgb, white 15%, transparent);
 }
 
 .fill-hollow {
-  background: transparent;
-  border: 4px solid var(--shape-color);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--shape-color) 30%, transparent);
+  background: color-mix(in srgb, var(--shape-color) 15%, transparent);
+  border: 5px solid var(--shape-color);
+  box-shadow: inset 0 0 8px color-mix(in srgb, var(--shape-color) 25%, transparent);
 }
 
 .fill-striped {
   background: repeating-linear-gradient(
     -45deg,
-    var(--shape-color) 0 4px,
-    color-mix(in srgb, var(--shape-color) 20%, transparent) 4px 10px
+    var(--shape-color) 0 5px,
+    color-mix(in srgb, var(--shape-color) 30%, var(--ctp-base)) 5px 12px
   );
+  border: 2px solid color-mix(in srgb, var(--shape-color) 50%, transparent);
 }
 
 /* Golden */
