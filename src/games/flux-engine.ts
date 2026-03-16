@@ -2,7 +2,7 @@ import { defined } from "../shared/assert";
 
 export type Rule = "color" | "shape" | "size" | "fill";
 export type ButtonSide = "left" | "right";
-export type ShapeColor = "red" | "peach" | "blue" | "lavender" | "yellow";
+export type ShapeColor = "red" | "peach" | "blue" | "lavender" | "green";
 export type ShapeForm = "circle" | "pill" | "diamond" | "triangle" | "blob";
 export type ShapeSize = "big" | "small" | "oscillating";
 export type ShapeFill = "solid" | "hollow" | "striped";
@@ -113,7 +113,7 @@ function generateNoGoTrial(rule: Rule): Trial {
 
   switch (rule) {
     case "color":
-      base.color = "yellow";
+      base.color = "green";
       break;
     case "shape":
       base.shape = "blob";

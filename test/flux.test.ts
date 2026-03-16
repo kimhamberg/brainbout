@@ -232,7 +232,7 @@ describe("generateTrial", () => {
       for (let i = 0; i < 300; i++) {
         const trial = generateTrial(state);
         if (trial.isNoGo) {
-          expect(trial.color).toBe("yellow");
+          expect(trial.color).toBe("green");
           sawNoGo = true;
         }
       }
@@ -459,14 +459,14 @@ describe("evaluateResponse", () => {
 
   describe("no-go trials", () => {
     it("withholding on no-go is correct", () => {
-      const trial = goTrial({ isNoGo: true, color: "yellow" });
+      const trial = goTrial({ isNoGo: true, color: "green" });
       const r = evaluateResponse(trial, "color", false, 0, null);
       expect(r.correct).toBe(true);
       expect(r.basePoints).toBe(1);
     });
 
     it("pressing on no-go is wrong", () => {
-      const trial = goTrial({ isNoGo: true, color: "yellow" });
+      const trial = goTrial({ isNoGo: true, color: "green" });
       const r = evaluateResponse(trial, "color", false, 0, "left");
       expect(r.correct).toBe(false);
       expect(r.noGoFail).toBe(true);
