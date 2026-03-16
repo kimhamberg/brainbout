@@ -845,7 +845,7 @@ def beat_tick() -> np.ndarray:
     t = _t(0.05)
     osc = 0.4 * sine(120, 0.05) + 0.2 * sine(240, 0.05)
     e = np.exp(-t * 80)
-    return osc * e
+    return fadeout(osc * e)
 
 
 def beat_tick_accent() -> np.ndarray:
@@ -853,7 +853,7 @@ def beat_tick_accent() -> np.ndarray:
     t = _t(0.05)
     osc = 0.4 * sine(120, 0.05) + 0.3 * sine(360, 0.05) + 0.15 * sine(600, 0.05)
     e = np.exp(-t * 80)
-    return osc * e
+    return fadeout(osc * e)
 
 
 def beat_tick_urgent() -> np.ndarray:
@@ -864,75 +864,80 @@ def beat_tick_urgent() -> np.ndarray:
     a = min(int(SR * 0.001), len(e))
     if a > 0:
         e[:a] *= 0.5 * (1 - np.cos(np.pi * np.arange(a) / a))
-    return osc * e
+    return fadeout(osc * e)
 
 
 def correct_burst() -> np.ndarray:
     """FM bell pop — punchy correct feedback."""
-    return fm_bell(392.00, 0.08, mod_ratio=1.41, mod_peak=5.0, decay=25)
+    return fadeout(fm_bell(392.00, 0.12, mod_ratio=1.41, mod_peak=5.0, decay=25))
 
 
 def wrong_crack() -> np.ndarray:
     """Noise burst + low thud — wrong answer."""
-    t = _t(0.12)
-    noise = pink_noise(0.12) * np.exp(-t * 30) * 0.4
-    thud = 0.6 * sine(80, 0.12) * np.exp(-t * 25)
-    return lpf(noise + thud, cutoff=3000)
+    dur = 0.18  # longer for clean decay
+    t = _t(dur)
+    noise = bpf(pink_noise(dur), 100, min(5000, SR / 2 - 1)) * np.exp(-t * 25) * 0.4
+    thud = 0.6 * sine(80, dur) * np.exp(-t * 20)
+    return fadeout(lpf(noise + thud, cutoff=3000))
 
 
 def nogo_dissolve() -> np.ndarray:
     """Airy chime — correct no-go withhold."""
-    t = _t(0.15)
-    osc = 0.5 * sine(784, 0.15) + 0.3 * sine(1175, 0.15)
-    e = np.exp(-t * 12)
+    dur = 0.25  # longer for clean decay
+    t = _t(dur)
+    osc = 0.5 * sine(784, dur) + 0.3 * sine(1175, dur)
+    e = np.exp(-t * 15)  # faster decay so amplitude is low at end
     a = min(int(SR * 0.02), len(e))
     if a > 0:
         e[:a] *= 0.5 * (1 - np.cos(np.pi * np.arange(a) / a))
-    return osc * e
+    return fadeout(osc * e)
 
 
 def nogo_fail() -> np.ndarray:
     """Low buzz — failed no-go inhibition."""
-    t = _t(0.10)
-    osc = sine(100, 0.10) + 0.33 * sine(300, 0.10) + 0.2 * sine(500, 0.10)
-    e = np.exp(-t * 20)
-    return lpf(osc * e, cutoff=800)
+    dur = 0.15  # longer for clean decay
+    t = _t(dur)
+    osc = sine(100, dur) + 0.33 * sine(300, dur) + 0.2 * sine(500, dur)
+    e = np.exp(-t * 22)
+    return fadeout(lpf(osc * e, cutoff=800))
 
 
 def switch_whoosh() -> np.ndarray:
     """Filtered noise sweep (high to low) — rule switch."""
-    t = _t(0.10)
-    n = pink_noise(0.10)
-    sweep_freq = 6000 * np.exp(-t * 30) + 200
+    dur = 0.18  # longer for clean sweep
+    t = _t(dur)
+    n = pink_noise(dur)
+    sweep_freq = 6000 * np.exp(-t * 20) + 200
     carrier = np.sin(2 * np.pi * np.cumsum(sweep_freq) / SR)
     result = n * 0.3 + carrier * 0.2
-    e = np.exp(-t * 15)
-    return lpf(result * e, cutoff=8000)
+    e = np.exp(-t * 18)
+    return fadeout(lpf(result * e, cutoff=8000))
 
 
 def golden_chime() -> np.ndarray:
     """Rising FM arpeggio (3 quick notes) — golden shape."""
-    d, gap = 0.05, 0.02
+    d, gap = 0.08, 0.02  # longer notes for cleaner decay
     notes = [
-        fm_bell(392.00, d, mod_ratio=1.41, mod_peak=3.0, decay=20),
-        fm_bell(493.88, d, mod_ratio=1.41, mod_peak=3.0, decay=20),
-        fm_bell(587.33, d, mod_ratio=1.41, mod_peak=3.0, decay=20),
+        fm_bell(392.00, d, mod_ratio=1.41, mod_peak=3.0, decay=25),
+        fm_bell(493.88, d, mod_ratio=1.41, mod_peak=3.0, decay=25),
+        fm_bell(587.33, d, mod_ratio=1.41, mod_peak=3.0, decay=25),
     ]
     parts: list[np.ndarray] = []
     for i, note in enumerate(notes):
         parts.append(note)
         if i < len(notes) - 1:
             parts.append(silence(gap))
-    return np.concatenate(parts)
+    return fadeout(np.concatenate(parts))
 
 
 def streak_up() -> np.ndarray:
     """Quick rising pitch pip — streak increment."""
-    t = _t(0.06)
-    freq = 400 + 600 * t / 0.06
+    dur = 0.10  # longer for clean decay
+    t = _t(dur)
+    freq = 400 + 600 * t / dur
     osc = np.sin(2 * np.pi * np.cumsum(freq) / SR)
-    e = np.exp(-t * 25)
-    return osc * e * 0.5
+    e = np.exp(-t * 30)
+    return fadeout(osc * e * 0.5)
 
 
 # ── flux background music ───────────────────────────────────────────
@@ -971,12 +976,13 @@ def _bgm_kick(dur: float) -> np.ndarray:
 
 
 def _bgm_snare(dur: float) -> np.ndarray:
-    """Snare — noise burst + body sine."""
+    """Snare — band-passed noise burst + body sine."""
     t = _t(dur)
     noise = np.random.default_rng(123).standard_normal(len(t))
+    noise = bpf(noise, 200, min(8000, SR / 2 - 1), order=2)
     noise_env = np.exp(-t * 20)
     body = np.sin(2 * np.pi * 200 * t) * np.exp(-t * 30)
-    return (noise * noise_env * 0.3 + body * 0.4) * 0.6
+    return fadeout((noise * noise_env * 0.3 + body * 0.4) * 0.6)
 
 
 def _bgm_hihat(dur: float, closed: bool = True) -> np.ndarray:
@@ -1036,12 +1042,14 @@ def _bgm_arp_note(freq: float, dur: float) -> np.ndarray:
 
 
 def _bgm_riser(dur: float) -> np.ndarray:
-    """Build-up riser — noise with rising filter."""
+    """Build-up riser — filtered noise with rising tone."""
     t = _t(dur)
     noise = np.random.default_rng(789).standard_normal(len(t))
-    # Rising intensity
+    # Band-pass the noise to remove harsh highs and rumble
+    noise = bpf(noise, 300, min(6000, SR / 2 - 1), order=2)
+    # Rising intensity (quadratic)
     e = (t / dur) ** 2
-    # Simple rising tone
+    # Rising tone
     freq = 200 + 2000 * (t / dur) ** 2
     tone = np.sin(2 * np.pi * np.cumsum(freq) / SR) * 0.15
     return (noise * 0.08 + tone) * e
@@ -1272,10 +1280,36 @@ if __name__ == "__main__":
             log.info("    %s %s: %.1f  [%.1f \u2013 %.1f]", mark, key, val, lo, hi)
 
     log.info("")
-    # Chess sounds use their optimized chains
+    # Chess sounds use their optimized chains; BGM bypasses MASTER entirely
     chess_chains = {"move": _MOVE_CHAIN, "capture": _CAPTURE_CHAIN}
+    bgm_chain = Pedalboard(
+        [
+            Compressor(threshold_db=-12, ratio=3.0, attack_ms=5.0, release_ms=60),
+            Limiter(threshold_db=-1.5, release_ms=80),
+            Gain(gain_db=1.5),
+        ],
+    )
     for name, fn in SOUNDS.items():
-        write(name, fn(), chain=chess_chains.get(name))
+        if name == "flux-bgm":
+            # BGM: no reverb, no global LPF — clean limiter only
+            samples = fn()
+            samples = fadeout(samples)
+            peak = np.max(np.abs(samples))
+            if peak > 0:
+                samples = samples / peak * _PRE_FX_HEADROOM
+            buf = samples.astype(np.float32).reshape(1, -1)
+            samples = bgm_chain(buf, SR).flatten().astype(np.float64)
+            peak = np.max(np.abs(samples))
+            if peak > 1.0:
+                samples /= peak
+            samples = fadeout(samples)
+            data = (samples * 32767).astype(np.int16)
+            path = OUT / f"{name}.wav"
+            wavfile.write(str(path), SR, data)
+            kb = path.stat().st_size / 1024
+            log.info("%s.wav  (%.2fs, %.0f KB)", name, len(data) / SR, kb)
+        else:
+            write(name, fn(), chain=chess_chains.get(name))
 
     total = sum((OUT / f"{n}.wav").stat().st_size for n in SOUNDS) / 1024
     log.info("\n  Total: %.0f KB", total)
