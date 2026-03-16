@@ -1122,50 +1122,52 @@ def notify() -> np.ndarray:
 
 
 def beat_tick() -> np.ndarray:
-    """Low wood thump — quiet rhythmic tick for the beat loop.
+    """Low wood thump — G2 root as rhythmic anchor.
 
-    120 Hz fundamental with one harmonic (natural 6 dB/oct rolloff).
-    Temporal loudness compensation: 50 ms sound perceived ~6 dB quieter
-    than 200 ms (Zwislocki 1969), so we boost amplitude.
+    G2 fundamental with natural harmonic rolloff.
+    Temporal loudness compensation (Zwislocki 1969): 50 ms needs boost.
     Decay: −50 dB in 50 ms for clean inaudibility.
     """
     dur = 0.05
     t = _t(dur)
+    f = note("G2")  # root of G minor — grounding
     vol = temporal_loudness(dur)
-    osc = vol * (sine(120, dur) + harmonic_amplitude(2) * sine(240, dur))
+    osc = vol * (sine(f, dur) + harmonic_amplitude(2) * sine(f * 2, dur))
     e = np.exp(-t * decay_rate(dur, target_db=-50))
     return fadeout(osc * e)
 
 
 def beat_tick_accent() -> np.ndarray:
-    """Brighter tick — accented beat with added harmonic.
+    """Brighter tick — G2 with Bb overtone colouring the minor tonality.
 
-    Same as beat_tick but adds 3rd harmonic for brightness.
+    Adds minor-third partial (Bb) for harmonic richness within the key.
     """
     dur = 0.05
     t = _t(dur)
+    f = note("G2")
     vol = temporal_loudness(dur)
     osc = vol * (
-        sine(120, dur)
-        + harmonic_amplitude(2) * sine(240, dur)
-        + harmonic_amplitude(3) * sine(360, dur)
+        sine(f, dur)
+        + harmonic_amplitude(2) * sine(f * 2, dur)
+        + harmonic_amplitude(3) * sine(note("Bb3"), dur)  # minor 3rd colour
     )
     e = np.exp(-t * decay_rate(dur, target_db=-50))
     return fadeout(osc * e)
 
 
 def beat_tick_urgent() -> np.ndarray:
-    """Sharper tick — climax urgency.
+    """Sharper tick — D3 (dominant) for climax urgency.
 
-    Higher fundamental (180 Hz) with harmonics. Percussive attack (2 ms).
+    The 5th degree creates forward momentum. Percussive attack (2 ms).
     """
     dur = 0.05
     t = _t(dur)
+    f = note("D3")  # dominant — tension, drives forward
     vol = temporal_loudness(dur)
     osc = vol * (
-        sine(180, dur)
-        + harmonic_amplitude(2) * sine(360, dur)
-        + harmonic_amplitude(3) * sine(540, dur)
+        sine(f, dur)
+        + harmonic_amplitude(2) * sine(f * 2, dur)
+        + harmonic_amplitude(3) * sine(f * 3, dur)
     )
     e = np.exp(-t * decay_rate(dur, target_db=-50))
     atk = int(SR * attack_time("percussive"))
@@ -1185,22 +1187,20 @@ def correct_burst() -> np.ndarray:
 
 
 def wrong_crack() -> np.ndarray:
-    """Noise burst + low thud — wrong answer.
+    """Noise burst + Eb2 thud — wrong answer.
 
+    Eb is the minor 6th in G minor — dark, ominous quality.
     Noise band-passed to 1 ERB around 1 kHz for focused impact.
-    Low thud at 80 Hz with equal-loudness boost.
-    Both decay to −40 dB.
     """
     dur = 0.18
     t = _t(dur)
     k = decay_rate(dur, target_db=-40)
-    # Noise: band-pass around 1 kHz, ±2 ERBs wide
     erb_1k = critical_bandwidth(1000)
     noise = bpf(pink_noise(dur), max(100, 1000 - 2 * erb_1k),
                 min(1000 + 2 * erb_1k, SR / 2 - 1)) * np.exp(-t * k)
-    # Low thud with equal-loudness compensation
-    thud_vol = equal_loudness(80) * 0.3
-    thud = thud_vol * sine(80, dur) * np.exp(-t * k)
+    f_thud = note("Eb2")  # b6 — dark, minor quality
+    thud_vol = equal_loudness(f_thud) * 0.3
+    thud = thud_vol * sine(f_thud, dur) * np.exp(-t * k)
     return fadeout(lpf(noise * 0.4 + thud, cutoff=1000 + 2 * erb_1k))
 
 
@@ -1226,38 +1226,43 @@ def nogo_dissolve() -> np.ndarray:
 
 
 def nogo_fail() -> np.ndarray:
-    """Low buzz — failed no-go inhibition.
+    """Low buzz on Eb2 — failed no-go inhibition.
 
-    Odd harmonics of 100 Hz (approximating square wave).
-    Filtered at ~1 ERB above fundamental for a focused, unpleasant buzz.
+    Eb (b6 in Gm) with odd harmonics approximating a square wave.
+    The minor-sixth root makes it feel unstable and warning-like.
+    Filtered at ~1 ERB above fundamental.
     """
     dur = 0.15
     t = _t(dur)
     k = decay_rate(dur, target_db=-40)
+    f = note("Eb2")  # b6 — tension, warning
     osc = (
-        sine(100, dur)
-        + harmonic_amplitude(3, rolloff_db_per_octave=3) * sine(300, dur)
-        + harmonic_amplitude(5, rolloff_db_per_octave=3) * sine(500, dur)
+        sine(f, dur)
+        + harmonic_amplitude(3, rolloff_db_per_octave=3) * sine(f * 3, dur)
+        + harmonic_amplitude(5, rolloff_db_per_octave=3) * sine(f * 5, dur)
     )
     e = np.exp(-t * k)
-    cutoff = 100 + critical_bandwidth(100)  # ~1 ERB above fundamental
+    cutoff = f + critical_bandwidth(f)
     return fadeout(lpf(osc * e, cutoff=cutoff))
 
 
 def switch_whoosh() -> np.ndarray:
-    """Filtered noise sweep (high → low) — rule switch.
+    """Filtered noise sweep — D6 down to G3 (dominant → root).
 
-    Pink noise modulated by a descending carrier. Decay to −35 dB.
+    The 5th-to-root descent mirrors harmonic resolution in G minor.
+    Decay to −35 dB.
     """
     dur = 0.18
     t = _t(dur)
     k = decay_rate(dur, target_db=-35)
+    f_top = note("D6")  # dominant — high energy start
+    f_bottom = note("G3")  # root — resolves down
     n = pink_noise(dur)
-    sweep_freq = 6000 * np.exp(-t * k) + 200
+    sweep_freq = f_bottom + (f_top - f_bottom) * np.exp(-t * k)
     carrier = np.sin(2 * np.pi * np.cumsum(sweep_freq) / SR)
     result = n * 0.3 + carrier * 0.2
     e = np.exp(-t * k)
-    return fadeout(lpf(result * e, cutoff=6000 + critical_bandwidth(6000)))
+    return fadeout(lpf(result * e, cutoff=f_top + critical_bandwidth(f_top)))
 
 
 def golden_chime() -> np.ndarray:
@@ -1280,14 +1285,16 @@ def golden_chime() -> np.ndarray:
 
 
 def streak_up() -> np.ndarray:
-    """Quick rising pitch pip — streak increment.
+    """Quick rising pitch pip — G4 to D5 (root to dominant).
 
-    400→1000 Hz sweep. Temporal loudness compensation for 100 ms duration.
-    Decay: −40 dB for clean tail.
+    Root→5th ascent is the most universally "upward" interval.
+    Temporal loudness compensation for 100 ms duration.
     """
     dur = 0.10
     t = _t(dur)
-    freq = 400 + 600 * t / dur
+    f_start = note("G4")  # root
+    f_end = note("D5")  # dominant — upward resolution
+    freq = f_start + (f_end - f_start) * t / dur
     osc = np.sin(2 * np.pi * np.cumsum(freq) / SR)
     e = np.exp(-t * decay_rate(dur, target_db=-40))
     return fadeout(osc * e * temporal_loudness(dur))
@@ -1318,33 +1325,36 @@ _GM_ARP = [
 
 
 def _bgm_kick(dur: float) -> np.ndarray:
-    """EDM kick — sine pitch envelope 160→45 Hz.
+    """EDM kick — pitch sweep from Eb3 body down to G1 sub.
 
-    Levels set by mix_level() at ~50 Hz (kick body), foreground role.
-    Decay: −30 dB for punchy but present tail.
+    Sweep stays in G minor: Eb3 (155 Hz) → G1 (49 Hz).
+    Foreground role in mix.
     """
     t = _t(dur)
-    freq = 45 + 115 * np.exp(-t * decay_rate(dur, target_db=-20))
+    f_top = note("Eb3")  # b6 — attack transient
+    f_body = note("G1")  # root — sub bass body
+    freq = f_body + (f_top - f_body) * np.exp(-t * decay_rate(dur, target_db=-20))
     phase = 2 * np.pi * np.cumsum(freq) / SR
     osc = np.sin(phase)
     e = np.exp(-t * decay_rate(dur, target_db=-30))
-    vol = mix_level(50, dur, role_db=0)  # foreground
+    vol = mix_level(f_body, dur, role_db=0)  # foreground
     return np.tanh(osc * e * 1.8) * vol
 
 
 def _bgm_snare(dur: float) -> np.ndarray:
-    """Snare — band-passed noise burst + body sine.
+    """Snare — band-passed noise + G3 body tone.
 
-    Noise band: 200 Hz–8 kHz (~ERB-aligned). Body at 200 Hz.
-    Mix role: mid (−3 dB).
+    Body on G3 (root) keeps snare harmonically anchored.
+    Noise band: G3–8 kHz.
     """
     t = _t(dur)
     k = decay_rate(dur, target_db=-35)
+    f_body = note("G3")  # root — snare body
     noise = np.random.default_rng(123).standard_normal(len(t))
-    noise = bpf(noise, 200, min(8000, SR / 2 - 1), order=2)
+    noise = bpf(noise, f_body, min(8000, SR / 2 - 1), order=2)
     noise_env = np.exp(-t * k)
-    body = np.sin(2 * np.pi * 200 * t) * np.exp(-t * k * 1.5)
-    vol = mix_level(200, dur, role_db=-3)  # mid
+    body = np.sin(2 * np.pi * f_body * t) * np.exp(-t * k * 1.5)
+    vol = mix_level(f_body, dur, role_db=-3)  # mid
     return fadeout((noise * noise_env * 0.3 + body * 0.4) * vol)
 
 
@@ -1425,22 +1435,25 @@ def _bgm_arp_note(freq: float, dur: float) -> np.ndarray:
 
 
 def _bgm_riser(dur: float) -> np.ndarray:
-    """Build-up riser — filtered noise with rising tone.
+    """Build-up riser — G3 rising to G5 (two octaves of root).
 
-    Noise band-passed to 300–6 kHz (>1 ERB at both ends for natural width).
-    Rising tone 200→2200 Hz with quadratic intensity.
-    Mix role: ambient (−12 dB rising to 0 dB).
+    Rising tone stays on the root note (G) across octaves for coherence.
+    Noise band-passed to D3–D6 (dominant frames the noise band).
     """
     t = _t(dur)
     noise = np.random.default_rng(789).standard_normal(len(t))
-    erb_lo = critical_bandwidth(300)
-    erb_hi = critical_bandwidth(6000)
-    noise = bpf(noise, max(20, 300 - erb_lo), min(6000 + erb_hi, SR / 2 - 1), order=2)
+    f_lo = note("D3")  # dominant — lower noise boundary
+    f_hi = note("D6")  # dominant — upper noise boundary
+    erb_lo = critical_bandwidth(f_lo)
+    erb_hi = critical_bandwidth(f_hi)
+    noise = bpf(noise, max(20, f_lo - erb_lo), min(f_hi + erb_hi, SR / 2 - 1), order=2)
     e = (t / dur) ** 2  # quadratic rise
-    freq = 200 + 2000 * (t / dur) ** 2
+    f_start = note("G3")  # root — start
+    f_end = note("G5")  # root two octaves up — target
+    freq = f_start + (f_end - f_start) * (t / dur) ** 2
     tone = np.sin(2 * np.pi * np.cumsum(freq) / SR)
-    vol_noise = mix_level(2000, dur, role_db=-12)
-    vol_tone = mix_level(1000, dur, role_db=-6)
+    vol_noise = mix_level(f_lo, dur, role_db=-12)
+    vol_tone = mix_level(f_start, dur, role_db=-6)
     return (noise * vol_noise + tone * vol_tone) * e
 
 
