@@ -97,7 +97,9 @@ function renderPlaying(): void {
     </div>
     <div class="${ruleCueClass}">${ruleText}</div>
     ${switchHtml}
-    <div class="${shapeClasses(currentTrial)}"></div>
+    <div class="shape-stage">
+      <div class="${shapeClasses(currentTrial)}"></div>
+    </div>
     ${streakHtml()}
     <div class="flux-buttons">
       <button class="flux-btn" data-side="left">
