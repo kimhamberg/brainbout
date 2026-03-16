@@ -20,17 +20,6 @@
   }
 }
 
-@keyframes size-oscillate {
-  0%,
-  100% {
-    transform: scale(0.6);
-  }
-
-  50% {
-    transform: scale(1.2);
-  }
-}
-
 @keyframes golden-shimmer {
   0%,
   100% {
@@ -200,13 +189,6 @@
   }
 
   @keyframes timer-pulse {
-    0%,
-    100% {
-      opacity: 1;
-    }
-  }
-
-  @keyframes size-oscillate {
     0%,
     100% {
       opacity: 1;
@@ -404,10 +386,9 @@
   height: 3rem;
 }
 
-.shape-oscillating {
+.shape-medium {
   width: 4rem;
   height: 4rem;
-  animation: size-oscillate 600ms ease infinite;
 }
 
 /* Form */
@@ -546,19 +527,16 @@
 
 .streak-flame {
   color: var(--ctp-red);
-  text-shadow: 0 0 8px var(--ctp-red);
 }
 
 .streak-blaze {
   color: var(--ctp-yellow);
-  text-shadow: 0 0 12px var(--ctp-red);
+  font-size: 1.05em;
 }
 
 .streak-inferno {
   color: var(--ctp-yellow);
-  text-shadow:
-    0 0 20px var(--ctp-yellow),
-    0 0 40px var(--ctp-red);
+  font-size: 1.1em;
 }
 
 /* ========== Buttons ========== */

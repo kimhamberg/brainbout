@@ -4,7 +4,7 @@ export type Rule = "color" | "shape" | "size" | "fill";
 export type ButtonSide = "left" | "right";
 export type ShapeColor = "red" | "peach" | "blue" | "lavender" | "green";
 export type ShapeForm = "circle" | "pill" | "diamond" | "triangle" | "blob";
-export type ShapeSize = "big" | "small" | "oscillating";
+export type ShapeSize = "big" | "small" | "medium";
 export type ShapeFill = "solid" | "hollow" | "striped";
 
 export interface Trial {
@@ -119,7 +119,7 @@ function generateNoGoTrial(rule: Rule): Trial {
       base.shape = "blob";
       break;
     case "size":
-      base.size = "oscillating";
+      base.size = "medium";
       break;
     case "fill":
       base.fill = "striped";
