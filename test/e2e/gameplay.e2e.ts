@@ -159,10 +159,9 @@ test.describe("Crown gameplay", () => {
     await expect(page.locator("#back-btn")).toBeVisible({ timeout: 3000 });
     await page.locator("#back-btn").click();
     await page.waitForURL(/^[^?]*\/(\?[^?#]*)?$/u, { timeout: 5000 });
-    // Hub loaded: 1 game just completed (crown shown as .done), 2 still
-    // playable as anchors.
-    await expect(page.locator(".game-card")).toHaveCount(3);
-    await expect(page.locator(".game-card.done")).toHaveCount(1);
+    // Hub loaded: every card is always replayable (no .done state, no greying).
+    await expect(page.locator("a.game-card")).toHaveCount(3);
+    await expect(page.locator(".game-card.done")).toHaveCount(0);
     expectClean(trap);
   });
 

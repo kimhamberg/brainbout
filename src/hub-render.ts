@@ -40,7 +40,6 @@ export const GAME_META: Record<GameId, GameMeta> = {
 
 export interface HubCardState {
   game: GameId;
-  done: boolean;
   stage: number;
   ready: Readiness;
   stat: string | null;
@@ -50,7 +49,6 @@ export interface HubState {
   streak: number;
   sessionsToday: number;
   totalSessions: number;
-  sessionJustCompleted: boolean;
   cards: HubCardState[];
 }
 
@@ -67,9 +65,6 @@ function renderStatsBar(streak: number, sessionsToday: number): string {
 }
 
 function renderRight(card: HubCardState): string {
-  if (card.done) {
-    return `<span class="done-badge">✓</span>`;
-  }
   let html = `<button class="stage-chip readiness-${card.ready}" data-game="${card.game}">Stage ${String(card.stage)}</button>`;
   if (card.ready === "green") {
     html += `<button class="advance-btn" data-game="${card.game}">Advance ▸</button>`;
@@ -82,7 +77,6 @@ function renderRight(card: HubCardState): string {
 
 function renderCard(card: HubCardState, index: number): string {
   const meta = GAME_META[card.game];
-  const cls = card.done ? "done" : "";
   const style = `--i:${String(index)};--accent:${meta.accent}`;
 
   const line1 =
@@ -94,10 +88,7 @@ function renderCard(card: HubCardState, index: number): string {
     card.stat === null ? "" : `<span class="game-stat">${card.stat}</span>`;
   const inner = `<div class="game-card-top">${line1}</div>${line2}${line3}`;
 
-  if (card.done) {
-    return `<div class="game-card ${cls}" style="${style}">${inner}</div>`;
-  }
-  return `<a href="${meta.url}" class="game-card ${cls}" style="${style}"><span class="game-play">Play</span>${inner}</a>`;
+  return `<a href="${meta.url}" class="game-card" style="${style}"><span class="game-play">Play</span>${inner}</a>`;
 }
 
 function renderFooter(totalSessions: number): string {
@@ -117,9 +108,6 @@ export function renderHubHtml(state: HubState): string {
     }
   }
   html += "</div>";
-  if (state.sessionJustCompleted) {
-    html += `<button class="new-session-btn">New Session</button>`;
-  }
   html += renderFooter(state.totalSessions);
   return html;
 }

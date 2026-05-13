@@ -98,7 +98,7 @@ describe("computeResultVm", () => {
   const base = {
     finalScore: 100,
     previousBest: 90,
-    duration: 60,
+    subtitle: "test subtitle",
     peakStreak: 7,
     peakStreakLabel: "hot",
     peakStreakMult: 2,
@@ -146,7 +146,7 @@ describe("renderResultHtml", () => {
   const base = computeResultVm({
     finalScore: 42,
     previousBest: 30,
-    duration: 60,
+    subtitle: "test subtitle",
     peakStreak: 7,
     peakStreakLabel: "hot",
     peakStreakMult: 2,
@@ -169,7 +169,7 @@ describe("renderResultHtml", () => {
     const vm = computeResultVm({
       finalScore: 20,
       previousBest: 100,
-      duration: 60,
+      subtitle: "test subtitle",
       peakStreak: 1,
       peakStreakLabel: "",
       peakStreakMult: 1,
@@ -183,7 +183,7 @@ describe("renderResultHtml", () => {
     const vm = computeResultVm({
       finalScore: 95,
       previousBest: 100,
-      duration: 60,
+      subtitle: "test subtitle",
       peakStreak: 0,
       peakStreakLabel: "",
       peakStreakMult: 1,
@@ -197,7 +197,7 @@ describe("renderResultHtml", () => {
     const vm = computeResultVm({
       finalScore: 5,
       previousBest: null,
-      duration: 60,
+      subtitle: "test subtitle",
       peakStreak: 2,
       peakStreakLabel: "",
       peakStreakMult: 1,

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "bun:test";
+import { afterAll, beforeEach, describe, expect, it } from "bun:test";
 import {
   BOX_INTERVALS,
   getDueWords,
@@ -10,9 +10,16 @@ import {
   maxTypos,
   recordAnswer,
 } from "../src/games/lex-srs";
+import { resetRng, setRng } from "../src/shared/rng";
 
+// Pin the SRS jitter to the midpoint (factor=1.0) so nextDue is deterministic.
 beforeEach(() => {
   localStorage.clear();
+  setRng(() => 0.5);
+});
+
+afterAll(() => {
+  resetRng();
 });
 
 describe("levenshtein", () => {

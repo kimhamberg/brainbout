@@ -12,7 +12,6 @@ import { GAMES, type GameId } from "../src/shared/progress";
 function makeCard(over: Partial<HubCardState> = {}): HubCardState {
   return {
     game: "crown",
-    done: false,
     stage: 1,
     ready: "grey",
     stat: null,
@@ -25,7 +24,6 @@ function makeState(over: Partial<HubState> = {}): HubState {
     streak: 0,
     sessionsToday: 0,
     totalSessions: 0,
-    sessionJustCompleted: false,
     cards: GAMES.map((g) => makeCard({ game: g })),
     ...over,
   };
@@ -162,18 +160,11 @@ describe("renderHubHtml: game cards", () => {
     expect(plays).toHaveLength(3);
   });
 
-  test("done card renders as div (no anchor, no Play), with done-badge ✓", () => {
-    const state = makeState({
-      cards: [
-        makeCard({ game: "crown", done: true }),
-        makeCard({ game: "flux" }),
-        makeCard({ game: "lex" }),
-      ],
-    });
-    const out = renderHubHtml(state);
-    expect(out).toContain(`<div class="game-card done"`);
-    expect(out).toContain(`<span class="done-badge">✓</span>`);
-    expect(out).not.toMatch(/<a [^>]*href="games\/crown\.html"/u);
+  test("every card is always an anchor (no game is ever greyed out)", () => {
+    const out = renderHubHtml(makeState());
+    expect(out).not.toContain("done-badge");
+    expect(out).not.toContain("game-card done");
+    expect(out.match(/<a [^>]*class="game-card"/gu) ?? []).toHaveLength(3);
   });
 
   test("Advance button appears only when ready === green", () => {
@@ -250,12 +241,12 @@ describe("renderHubHtml: footer + new-session", () => {
       "7 sessions completed",
     );
   });
-  test("New Session button only when sessionJustCompleted=true", () => {
-    expect(
-      renderHubHtml(makeState({ sessionJustCompleted: false })),
-    ).not.toContain("new-session-btn");
-    expect(renderHubHtml(makeState({ sessionJustCompleted: true }))).toContain(
-      '<button class="new-session-btn">New Session</button>',
+  test("no 'New Session' button is ever rendered (cards always replayable)", () => {
+    expect(renderHubHtml(makeState({ totalSessions: 0 }))).not.toContain(
+      "new-session-btn",
+    );
+    expect(renderHubHtml(makeState({ totalSessions: 50 }))).not.toContain(
+      "new-session-btn",
     );
   });
 });
@@ -301,7 +292,7 @@ describe("renderHubHtml: structural snapshot (3 fresh cards)", () => {
     // Stats bar, game list opens, three anchors, list closes, no footer/new-session
     expect(html.startsWith('<div class="hub-stats-bar">')).toBe(true);
     expect(html).toContain('<div class="game-list">');
-    expect(html.match(/<a [^>]*class="game-card "/gu) ?? []).toHaveLength(3);
+    expect(html.match(/<a [^>]*class="game-card"/gu) ?? []).toHaveLength(3);
     expect(html.endsWith("</div>")).toBe(true);
   });
 });

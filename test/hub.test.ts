@@ -257,13 +257,9 @@ describe("hub: card click triggers nav overlay + fallback", () => {
   });
 });
 
-describe("hub: completed-game URL param + session restore + all-done", () => {
+describe("hub: ?completed= bumps the session counter", () => {
   beforeEach(() => {
     resetEnv();
-    sessionStorage.setItem(
-      "brainbout:current-session",
-      JSON.stringify(["crown", "flux"]),
-    );
     window.location.search = "?completed=lex";
     init();
   });
@@ -272,21 +268,14 @@ describe("hub: completed-game URL param + session restore + all-done", () => {
     expect(window.location.search).toBe("");
   });
 
-  test("completeSession() fires (sessions counter bumped)", () => {
+  test("each game completion increments total-sessions", () => {
     expect(localStorage.getItem("brainbout:total-sessions")).toBe("1");
   });
 
-  test("sessionStorage is cleared", () => {
-    expect(sessionStorage.getItem("brainbout:current-session")).toBeNull();
-  });
-
-  test("New Session button is rendered", () => {
-    expect(document.querySelector(".new-session-btn")).not.toBeNull();
-  });
-
-  test("All 3 cards rendered in done state (no anchors)", () => {
-    expect(document.querySelectorAll("#hub .game-card.done")).toHaveLength(3);
-    expect(document.querySelectorAll("#hub a.game-card")).toHaveLength(0);
+  test("all 3 cards remain replayable anchors (no done state)", () => {
+    expect(document.querySelectorAll("#hub a.game-card")).toHaveLength(3);
+    expect(document.querySelectorAll("#hub .game-card.done")).toHaveLength(0);
+    expect(document.querySelector(".done-badge")).toBeNull();
   });
 
   test("footer shows total sessions completed", () => {
@@ -295,12 +284,8 @@ describe("hub: completed-game URL param + session restore + all-done", () => {
     );
   });
 
-  test("clicking New Session resets to play state", () => {
-    document
-      .querySelector<HTMLButtonElement>(".new-session-btn")
-      ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  test("no 'New Session' button is rendered", () => {
     expect(document.querySelector(".new-session-btn")).toBeNull();
-    expect(document.querySelectorAll("#hub a.game-card")).toHaveLength(3);
   });
 });
 
@@ -311,25 +296,12 @@ describe("hub: bogus ?completed= value is ignored", () => {
     init();
   });
 
-  test("session is empty; all 3 cards remain as anchors", () => {
+  test("counter is not bumped", () => {
+    expect(localStorage.getItem("brainbout:total-sessions")).toBeNull();
+  });
+
+  test("all 3 cards remain anchors", () => {
     expect(document.querySelectorAll("#hub a.game-card")).toHaveLength(3);
-    expect(document.querySelector(".new-session-btn")).toBeNull();
-  });
-});
-
-describe("hub: sessionStorage restore filters unknown game ids", () => {
-  beforeEach(() => {
-    resetEnv();
-    sessionStorage.setItem(
-      "brainbout:current-session",
-      JSON.stringify(["crown", "garbage"]),
-    );
-    init();
-  });
-
-  test("only valid games are restored", () => {
-    expect(document.querySelectorAll("#hub .game-card.done")).toHaveLength(1);
-    expect(document.querySelectorAll("#hub a.game-card")).toHaveLength(2);
   });
 });
 

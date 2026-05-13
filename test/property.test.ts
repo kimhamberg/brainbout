@@ -28,6 +28,7 @@ import {
   getMastery,
   getMasteryStreak,
   getWordState,
+  jitterInterval,
   levenshtein,
   maxTypos,
   recordAnswer,
@@ -344,8 +345,39 @@ describe("lex-srs.maxTypos properties", () => {
   });
 });
 
+describe("lex-srs.jitterInterval", () => {
+  it("never jitters box 0 (same-day re-exposure)", () => {
+    fc.assert(
+      fc.property(fc.double({ min: 0, max: 1, noNaN: true }), (r) => {
+        expect(jitterInterval(0, () => r)).toBe(0);
+      }),
+      cfg,
+    );
+  });
+  it("jittered interval is within ±25% of base, minimum 1 day", () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: 1, max: 365 }),
+        fc.double({ min: 0, max: 0.999_999, noNaN: true }),
+        (base, r) => {
+          const got = jitterInterval(base, () => r);
+          expect(got).toBeGreaterThanOrEqual(1);
+          expect(got).toBeGreaterThanOrEqual(Math.floor(base * 0.75));
+          expect(got).toBeLessThanOrEqual(Math.ceil(base * 1.25));
+        },
+      ),
+      cfg,
+    );
+  });
+});
+
 describe("lex-srs.recordAnswer + getWordState", () => {
-  beforeEach(() => localStorage.clear());
+  beforeEach(() => {
+    localStorage.clear();
+    // Pin SRS jitter to the midpoint (factor=1.0) for deterministic nextDue.
+    setRng(() => 0.5);
+  });
+  afterAll(resetRng);
 
   it("correct: advances box by 1", () => {
     recordAnswer("en", "cat", true, "2025-01-01");

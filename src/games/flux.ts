@@ -4,18 +4,15 @@ import { recordSessionScore } from "../shared/progress";
 import * as sound from "../shared/sounds";
 import { getStage, recordResult } from "../shared/stages";
 import { initTheme, wireToggle } from "../shared/theme";
-import { createTimer } from "../shared/timer";
 import {
   type ButtonSide,
   bpmToMs,
   createFluxState,
-  DURATION,
   evaluateResponse,
   type FluxState,
   generateTrial,
   getMultiplier,
   getRuleLabels,
-  getSessionAct,
   getStreakLabel,
   type Rule,
   type Trial,
@@ -50,8 +47,6 @@ let currentTrial: Trial | null = null;
 let trialRule: Rule = "color";
 let trialIsNot = false;
 let ruleJustSwitched = false;
-let currentRemaining = DURATION;
-let timerRef: ReturnType<typeof createTimer> | null = null;
 let trialTimeout: ReturnType<typeof setTimeout> | null = null;
 let inputLocked = false;
 let gameOver = false;
@@ -75,14 +70,14 @@ function renderPlaying(): void {
   }
 
   const [leftLabel, rightLabel] = getRuleLabels(trialRule, trialIsNot);
-  const act = getSessionAct(currentRemaining);
   const ruleText = trialIsNot
     ? `NOT ${trialRule.toUpperCase()}`
     : trialRule.toUpperCase();
   const ruleCueClass = trialIsNot ? "rule-cue not-active" : "rule-cue";
 
-  const offset = ringOffset(currentRemaining, DURATION);
-  const ringCls = computeRingClass(currentRemaining, act);
+  // Ring now visualises remaining HP (was: time remaining).
+  const offset = ringOffset(state.hp, state.maxHp);
+  const ringCls = computeRingClass(state.hp, state.hp <= 1 ? "climax" : "flow");
 
   const switchHtml = ruleJustSwitched ? `<div class="switch-ring"></div>` : "";
 
@@ -94,7 +89,7 @@ function renderPlaying(): void {
           stroke-dasharray="${String(RING_CIRCUMFERENCE)}"
           stroke-dashoffset="${String(offset)}" />
       </svg>
-      <div class="timer-text">${String(currentRemaining)}s</div>
+      <div class="timer-text">${String(state.hp)}♥</div>
     </div>
     <div class="${ruleCueClass}">${ruleText}</div>
     ${switchHtml}
@@ -234,14 +229,22 @@ function handleResponse(pressed: ButtonSide | null): void {
     }
     showFeedback(false, result.feedback);
     updateAdaptation(state, false);
+    state.hp = Math.max(0, state.hp - 1);
   }
 
   applyJuice(result.correct, pressed, currentTrial.isNoGo);
 
-  // Update score display
+  // Update score + HP display
   const scoreEl = game.querySelector(".score-display");
   if (scoreEl) {
     scoreEl.textContent = `Score: ${String(state.score)}`;
+  }
+  updateHpRing();
+
+  if (state.hp <= 0) {
+    gameOver = true;
+    showResult();
+    return;
   }
 
   // Advance to next trial after brief feedback delay
@@ -314,12 +317,9 @@ function stopTrials(): void {
   }
 }
 
-/* ---------- timer ring update ---------- */
+/* ---------- HP ring update ---------- */
 
-function updateTimerRing(remaining: number): void {
-  currentRemaining = remaining;
-  const act = getSessionAct(remaining);
-
+function updateHpRing(): void {
   const progress = game.querySelector<SVGCircleElement>(
     ".timer-ring .progress",
   );
@@ -327,27 +327,18 @@ function updateTimerRing(remaining: number): void {
   const ring = game.querySelector(".timer-ring");
 
   if (progress) {
-    const fraction = remaining / DURATION;
+    const fraction = state.hp / state.maxHp;
     const offset = RING_CIRCUMFERENCE * (1 - fraction);
     progress.setAttribute("stroke-dashoffset", String(offset));
   }
 
   if (text) {
-    text.textContent = `${String(remaining)}s`;
+    text.textContent = `${String(state.hp)}♥`;
   }
 
   if (ring) {
-    ring.classList.toggle("low", remaining <= 15 && act !== "climax");
-    ring.classList.toggle("climax", act === "climax");
-  }
-
-  // Beat tick sound based on act
-  if (act === "climax") {
-    sound.playBeatTickUrgent();
-  } else if (act === "flow") {
-    sound.playBeatTickAccent();
-  } else {
-    sound.playBeatTick();
+    ring.classList.toggle("low", state.hp <= 2);
+    ring.classList.toggle("climax", state.hp <= 1);
   }
 }
 
@@ -404,7 +395,7 @@ function showResult(): void {
   const vm = computeResultVm({
     finalScore,
     previousBest,
-    duration: DURATION,
+    subtitle: `points · survived ${String(totalTrials)} trial${totalTrials === 1 ? "" : "s"}`,
     peakStreak: state.peakStreak,
     peakStreakLabel: getStreakLabel(state.peakStreak),
     peakStreakMult: getMultiplier(state.peakStreak),
@@ -430,29 +421,13 @@ function startGame(): void {
   const stage = getStage("flux");
   state = createFluxState(stage);
   currentTrial = null;
-  currentRemaining = DURATION;
   inputLocked = false;
   gameOver = false;
   totalTrials = 0;
   correctTrials = 0;
   responded = false;
 
-  if (timerRef !== null) {
-    timerRef.stop();
-  }
   stopTrials();
-
-  timerRef = createTimer({
-    seconds: DURATION,
-    onTick: (remaining) => {
-      updateTimerRing(remaining);
-    },
-    onDone: () => {
-      showResult();
-    },
-  });
-
-  timerRef.start();
   nextTrial();
   sound.startBgm();
 }

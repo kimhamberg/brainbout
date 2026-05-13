@@ -58,7 +58,7 @@ export interface ResultViewModel {
   isNewBest: boolean;
   /** When set, shows "Only N from your best!" */
   nearMiss: false | { gap: number };
-  duration: number;
+  subtitle: string;
   peakStreak: number;
   peakStreakLabel: string;
   peakStreakMult: number;
@@ -69,7 +69,7 @@ export interface ResultViewModel {
 export function computeResultVm(input: {
   finalScore: number;
   previousBest: number | null;
-  duration: number;
+  subtitle: string;
   peakStreak: number;
   peakStreakLabel: string;
   peakStreakMult: number;
@@ -86,7 +86,7 @@ export function computeResultVm(input: {
     finalScore,
     isNewBest,
     nearMiss,
-    duration: input.duration,
+    subtitle: input.subtitle,
     peakStreak: input.peakStreak,
     peakStreakLabel: input.peakStreakLabel,
     peakStreakMult: input.peakStreakMult,
@@ -104,7 +104,7 @@ export function renderResultHtml(vm: ResultViewModel): string {
       <div class="final-score" data-target="${String(vm.finalScore)}">0</div>
       ${vm.isNewBest ? '<div class="new-best">NEW BEST</div>' : ""}
       ${vm.nearMiss ? `<div class="near-miss">Only ${String(vm.nearMiss.gap)} from your best!</div>` : ""}
-      <div class="result-label">points in ${String(vm.duration)} seconds</div>
+      <div class="result-label">${vm.subtitle}</div>
       <div class="peak-streak">Best streak: ${String(vm.peakStreak)}${streakSuffix}</div>
       <div class="accuracy">${String(vm.correctTrials)}/${String(vm.totalTrials)} correct</div>
       <div class="result-actions">

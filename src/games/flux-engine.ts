@@ -17,6 +17,8 @@ export interface Trial {
   isGolden: boolean;
 }
 
+export const MAX_HP = 5;
+
 export interface FluxState {
   score: number;
   streak: number;
@@ -30,6 +32,8 @@ export interface FluxState {
   noGoUnlocked: boolean;
   stage: number;
   unlockedRuleCount: number;
+  hp: number;
+  maxHp: number;
 }
 
 export interface StageParams {
@@ -205,6 +209,8 @@ export function createFluxState(stage: number): FluxState {
     noGoUnlocked: false,
     stage,
     unlockedRuleCount: 1,
+    hp: MAX_HP,
+    maxHp: MAX_HP,
   };
 }
 

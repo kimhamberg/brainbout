@@ -1,6 +1,23 @@
 import { defined } from "../shared/assert";
+import { rng } from "../shared/rng";
 
 export const BOX_INTERVALS = [0, 1, 3, 7, 14, 30];
+
+/**
+ * Jitter a Leitner interval by ±25 % so re-exposures aren't uniformly
+ * spaced. Cepeda et al. (2006): irregular spacing outperforms uniform.
+ * Box 0 (same-day "due now") is never jittered.
+ */
+export function jitterInterval(
+  baseDays: number,
+  random: () => number = rng,
+): number {
+  if (baseDays <= 0) {
+    return 0;
+  }
+  const factor = 0.75 + random() * 0.5; // [0.75, 1.25]
+  return Math.max(1, Math.round(baseDays * factor));
+}
 
 const PREFIX = "brainbout:lex";
 const MAX_MASTERY = 2;
@@ -49,7 +66,8 @@ export function recordAnswer(
   const state = getWordState(lang, word);
   if (correct) {
     const newBox = Math.min(state.box + 1, BOX_INTERVALS.length - 1);
-    const interval = defined(BOX_INTERVALS[newBox]);
+    const baseInterval = defined(BOX_INTERVALS[newBox]);
+    const interval = jitterInterval(baseInterval);
     const nextDue = addDays(today, interval);
     let newStreak = state.masteryStreak + 1;
     let newMastery = state.mastery;

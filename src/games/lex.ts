@@ -5,7 +5,6 @@ import { recordSessionScore, todayString } from "../shared/progress";
 import * as sound from "../shared/sounds";
 import { getStage, recordResult } from "../shared/stages";
 import { initTheme, wireToggle } from "../shared/theme";
-import { createTimer } from "../shared/timer";
 import {
   buildQueue,
   maxMasteryForStage,
@@ -29,7 +28,6 @@ interface DictEntry {
   example: string;
 }
 
-const DURATION = 120;
 const WRONG_PAUSE_MS = 1500;
 const NUM_CHOICES = 4;
 const NEW_WORD_RATIO = 0.3;
@@ -53,8 +51,6 @@ let currentEntry: DictEntry | null = null;
 let choices: string[] = [];
 let score = 0;
 let streak = 0;
-let currentRemaining = DURATION;
-let timerRef: ReturnType<typeof createTimer> | null = null;
 let roundStart = 0;
 let inputLocked = false;
 let gameOver = false;
@@ -235,7 +231,7 @@ function renderRound(): void {
       .join("");
 
     game.innerHTML = `
-      <div class="timer">${String(currentRemaining)}s</div>
+      <div class="timer">${String(totalAttempts + 1)}/${String(SESSION_SIZE)}</div>
       <div class="cue-type">Definition</div>
       <div class="cue-text">${currentEntry.definition}</div>
       ${exHtml}
@@ -253,7 +249,7 @@ function renderRound(): void {
         : "";
 
     game.innerHTML = `
-      <div class="timer">${String(currentRemaining)}s</div>
+      <div class="timer">${String(totalAttempts + 1)}/${String(SESSION_SIZE)}</div>
       <div class="cue-type">Definition</div>
       <div class="cue-text">${currentEntry.definition}</div>
       ${exHtml}
@@ -275,8 +271,13 @@ function nextRound(): void {
   if (gameOver) {
     return;
   }
+  // Session ends when the queue is exhausted (Anki-style "deck complete").
+  // Distributed practice + per-word SRS scheduling carries spacing across
+  // sessions (Cepeda et al. 2006); intervals carry jitter (irregular
+  // spacing > uniform).
   if (sessionQueue.length === 0) {
-    buildSessionQueue();
+    showResult();
+    return;
   }
   currentEntry = sessionQueue.shift() ?? defined(dict[0]);
   const distractors = pickDistractors(defined(currentEntry));
@@ -351,7 +352,7 @@ function showResult(): void {
   game.innerHTML = `
     <div class="result">
       <div class="final-score">${String(finalScore)}</div>
-      <div class="result-label">points in ${String(DURATION)} seconds</div>
+      <div class="result-label">points · ${String(totalCorrect)}/${String(totalAttempts)} correct across ${String(SESSION_SIZE)} words</div>
       <div class="result-actions">
         <button id="again-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>Play Again</button>
         <button id="back-btn" class="secondary"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Back to Hub</button>
@@ -365,35 +366,15 @@ function showResult(): void {
 async function startGame(): Promise<void> {
   score = 0;
   streak = 0;
-  currentRemaining = DURATION;
   inputLocked = false;
   gameOver = false;
   totalCorrect = 0;
   totalAttempts = 0;
 
-  if (timerRef) {
-    timerRef.stop();
-  }
-
   await loadDict();
   buildSessionQueue();
 
-  timerRef = createTimer({
-    seconds: DURATION,
-    onTick: (remaining) => {
-      currentRemaining = remaining;
-      const el = game.querySelector(".timer");
-      if (el) {
-        el.textContent = `${String(remaining)}s`;
-      }
-    },
-    onDone: () => {
-      showResult();
-    },
-  });
-
   nextRound();
-  timerRef.start();
 }
 
 game.addEventListener("click", (e) => {

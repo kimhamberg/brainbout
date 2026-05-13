@@ -49,12 +49,11 @@ function getGameStat(game: GameId): string | null {
   return lexStat();
 }
 
-function buildCards(session: Set<GameId>): HubCardState[] {
+function buildCards(): HubCardState[] {
   const cards: HubCardState[] = [];
   for (const game of GAMES) {
     cards.push({
       game,
-      done: session.has(game),
       stage: getStage(game),
       ready: readiness(game, GAME_META[game].threshold),
       stat: getGameStat(game),
@@ -73,42 +72,13 @@ export function init(): void {
   }
   const hub: HTMLElement = hubEl;
 
-  const session = new Set<GameId>();
-
+  // One session = one completed game. Bump counters when we land on the
+  // hub via ?completed=<game>; URL is cleaned so refresh doesn't double-count.
   const params = new URLSearchParams(window.location.search);
   const completedParam = params.get("completed");
-
-  const stored = sessionStorage.getItem("brainbout:current-session");
-  if (stored !== null) {
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(stored);
-    } catch {
-      parsed = [];
-    }
-    if (Array.isArray(parsed)) {
-      for (const g of parsed) {
-        if (typeof g === "string" && isKnownGame(g)) {
-          session.add(g);
-        }
-      }
-    }
-  }
-
   if (completedParam !== null && isKnownGame(completedParam)) {
-    session.add(completedParam);
-    sessionStorage.setItem(
-      "brainbout:current-session",
-      JSON.stringify([...session]),
-    );
-    window.history.replaceState({}, "", window.location.pathname);
-  }
-
-  let sessionJustCompleted = false;
-  if (session.size === GAMES.length) {
     completeSession();
-    sessionJustCompleted = true;
-    sessionStorage.removeItem("brainbout:current-session");
+    window.history.replaceState({}, "", window.location.pathname);
   }
 
   function buildState(): HubState {
@@ -116,8 +86,7 @@ export function init(): void {
       streak: getStreak(todayString()),
       sessionsToday: getSessionsToday(),
       totalSessions: getTotalSessions(),
-      sessionJustCompleted,
-      cards: buildCards(session),
+      cards: buildCards(),
     };
   }
 
@@ -154,22 +123,10 @@ export function init(): void {
     });
   }
 
-  function startNewSession(): void {
-    session.clear();
-    sessionStorage.removeItem("brainbout:current-session");
-    sessionJustCompleted = false;
-    render();
-  }
-
   render();
 
   hub.addEventListener("click", (e) => {
     const target = e.target as HTMLElement;
-
-    if (target.closest(".new-session-btn") !== null) {
-      startNewSession();
-      return;
-    }
 
     const stageChip = target.closest<HTMLButtonElement>(".stage-chip");
     if (stageChip !== null) {
