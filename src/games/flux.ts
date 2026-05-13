@@ -1,3 +1,4 @@
+import { BASE } from "../shared/base";
 import { mountAppIcon } from "../shared/icons";
 import { recordSessionScore } from "../shared/progress";
 import * as sound from "../shared/sounds";
@@ -472,7 +473,7 @@ game.addEventListener("click", (e) => {
   } else if (target.id === "again-btn") {
     startGame();
   } else if (target.id === "back-btn") {
-    window.location.href = "/index.html?completed=flux";
+    window.location.href = `${BASE}?completed=flux`;
   }
 });
 

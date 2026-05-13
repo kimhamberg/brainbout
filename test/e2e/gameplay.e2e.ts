@@ -149,6 +149,23 @@ test.describe("Crown gameplay", () => {
     expectClean(trap);
   });
 
+  test("'Back to Hub' from the result panel actually lands on the hub", async ({
+    page,
+  }) => {
+    const trap = attachErrorTrap(page);
+    await page.goto("/games/crown.html");
+    await expect(page.locator(".cg-wrap")).toBeVisible({ timeout: 15_000 });
+    await page.locator("#action-resign").click();
+    await expect(page.locator("#back-btn")).toBeVisible({ timeout: 3000 });
+    await page.locator("#back-btn").click();
+    await page.waitForURL(/^[^?]*\/(\?[^?#]*)?$/u, { timeout: 5000 });
+    // Hub loaded: 1 game just completed (crown shown as .done), 2 still
+    // playable as anchors.
+    await expect(page.locator(".game-card")).toHaveCount(3);
+    await expect(page.locator(".game-card.done")).toHaveCount(1);
+    expectClean(trap);
+  });
+
   test("Stockfish worker boots without errors (engine init smoke)", async ({
     page,
   }) => {

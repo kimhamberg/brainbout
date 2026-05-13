@@ -12,6 +12,7 @@ import { makeFen, parseFen } from "chessops/fen";
 import { makeSquare, parseSquare, parseUci } from "chessops/util";
 import { randomChess960 } from "../chess960";
 import { defined } from "../shared/assert";
+import { BASE } from "../shared/base";
 import { StockfishEngine } from "../shared/engine";
 import { mountAppIcon } from "../shared/icons";
 import { recordCheckmate, recordSessionScore } from "../shared/progress";
@@ -711,7 +712,7 @@ game.addEventListener("click", (e) => {
   if (btn?.id === "again-btn") {
     void main();
   } else if (btn?.id === "back-btn") {
-    window.location.href = "/index.html?completed=crown";
+    window.location.href = `${BASE}?completed=crown`;
   }
 });
 
