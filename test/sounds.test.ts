@@ -18,6 +18,8 @@ const calls = {
   decoded: 0,
   sourcesCreated: [] as FakeSource[],
   gainsCreated: [] as FakeGain[],
+  fetchedUrls: [] as string[],
+  destinationName: "" as string,
 };
 
 class FakeAudioContext {
@@ -31,7 +33,9 @@ class FakeAudioContext {
       buffer: null,
       started: false,
       stopped: false,
-      connect: () => {},
+      connect: (dest: unknown) => {
+        calls.destinationName = (dest as { name?: string }).name ?? "?";
+      },
       start: () => {
         src.started = true;
       },
@@ -54,10 +58,11 @@ class FakeAudioContext {
 
 (globalThis as { AudioContext: typeof AudioContext }).AudioContext =
   FakeAudioContext as unknown as typeof AudioContext;
-globalThis.fetch = (() =>
-  Promise.resolve(
-    new Response(new ArrayBuffer(1), { status: 200 }),
-  )) as unknown as typeof fetch;
+globalThis.fetch = ((input: RequestInfo | URL) => {
+  const url = typeof input === "string" ? input : (input as URL).toString();
+  calls.fetchedUrls.push(url);
+  return Promise.resolve(new Response(new ArrayBuffer(1), { status: 200 }));
+}) as unknown as typeof fetch;
 
 const sounds: typeof import("../src/shared/sounds") = await import(
   "../src/shared/sounds"
@@ -69,70 +74,91 @@ async function flush(): Promise<void> {
   }
 }
 
-describe("sounds: single-shot triggers (cold buffer path)", () => {
+/* Mapping enforced by sounds.ts: play* → "<base>sounds/<name>.wav" */
+const TRIGGER_FILE: ReadonlyArray<readonly [keyof typeof sounds, string]> = [
+  ["playCorrect", "correct"],
+  ["playWrong", "wrong"],
+  ["playMove", "move"],
+  ["playCapture", "capture"],
+  ["playCheck", "check"],
+  ["playVictory", "victory"],
+  ["playDefeat", "defeat"],
+  ["playDraw", "draw"],
+  ["playNotify", "notify"],
+  ["playBeatTick", "beat-tick"],
+  ["playBeatTickAccent", "beat-tick-accent"],
+  ["playBeatTickUrgent", "beat-tick-urgent"],
+  ["playCorrectBurst", "correct-burst"],
+  ["playWrongCrack", "wrong-crack"],
+  ["playNogoDissolve", "nogo-dissolve"],
+  ["playNogoFail", "nogo-fail"],
+  ["playSwitchWhoosh", "switch-whoosh"],
+  ["playGoldenChime", "golden-chime"],
+  ["playStreakUp", "streak-up"],
+];
+
+describe("sounds: cold-path triggers preloadAll for all 19 sounds + BGM", () => {
   beforeAll(async () => {
-    // First call exercises fetch + decode async chain
     sounds.playCorrect();
     await flush();
   });
 
-  test("first call triggers preloadAll: many fetches + decodes", () => {
-    expect(calls.decoded).toBeGreaterThan(10);
+  test("preload fetched exactly the 19 named sound files", () => {
+    const expected = new Set(
+      TRIGGER_FILE.map(([, name]) => `sounds/${name}.wav`),
+    );
+    const seen = new Set(
+      calls.fetchedUrls
+        .filter((u) => u.endsWith(".wav"))
+        .map((u) => {
+          const idx = u.indexOf("sounds/");
+          return idx === -1 ? u : u.slice(idx);
+        }),
+    );
+    for (const name of expected) {
+      expect(seen.has(name)).toBe(true);
+    }
   });
 
-  test("an async source was created and started for the cold-path call", () => {
+  test("at least one decodeAudioData call happened per fetched sound", () => {
+    expect(calls.decoded).toBeGreaterThanOrEqual(TRIGGER_FILE.length);
+  });
+
+  test("the cold-path source was connected and started", () => {
     expect(calls.sourcesCreated.some((s) => s.started)).toBe(true);
+    expect(calls.destinationName).toBe("destination");
   });
 });
 
-describe("sounds: every named trigger exists and is a no-throw void fn", () => {
-  for (const fn of [
-    "playCorrect",
-    "playWrong",
-    "playMove",
-    "playCapture",
-    "playCheck",
-    "playVictory",
-    "playDefeat",
-    "playDraw",
-    "playNotify",
-    "playBeatTick",
-    "playBeatTickAccent",
-    "playBeatTickUrgent",
-    "playCorrectBurst",
-    "playWrongCrack",
-    "playNogoDissolve",
-    "playNogoFail",
-    "playSwitchWhoosh",
-    "playGoldenChime",
-    "playStreakUp",
-  ] as const) {
-    test(`${fn}: hot path on cached buffer, no throw`, async () => {
-      // Buffer for each was preloaded by the cold-path call above;
-      // wait once more to be sure the decode promise resolved.
+describe("sounds: every trigger plays its own file", () => {
+  for (const [fnName, fileName] of TRIGGER_FILE) {
+    test(`${fnName} → sounds/${fileName}.wav`, async () => {
       await flush();
-      const before = calls.sourcesCreated.length;
-      (sounds[fn] as () => void)();
-      // For names whose buffer is cached this is synchronous; sources++
-      expect(calls.sourcesCreated.length).toBeGreaterThanOrEqual(before);
+      const sourcesBefore = calls.sourcesCreated.length;
+      (sounds[fnName] as () => void)();
+      // Hot path: the buffer is cached after the preload, so a synchronous
+      // BufferSource is created and started on this exact call.
+      expect(calls.sourcesCreated.length).toBeGreaterThan(sourcesBefore);
+      expect(calls.sourcesCreated.at(-1)?.started).toBe(true);
     });
   }
 });
 
 describe("sounds: BGM lifecycle (cold + hot)", () => {
-  test("first startBgm: schedules fetch, sets gain 0.35, starts a source", async () => {
+  test("first startBgm: schedules fetch of flux-bgm and sets gain to 0.35", async () => {
     const gainsBefore = calls.gainsCreated.length;
     sounds.startBgm();
     await flush();
     expect(calls.gainsCreated.length).toBeGreaterThan(gainsBefore);
     expect(calls.gainsCreated.at(-1)?.gain.value).toBe(0.35);
-    expect(calls.sourcesCreated.some((s) => s.started)).toBe(true);
+    expect(
+      calls.fetchedUrls.some((u) => u.endsWith("sounds/flux-bgm.wav")),
+    ).toBe(true);
   });
 
   test("second startBgm (warm buffer) starts a new source synchronously", async () => {
     const before = calls.sourcesCreated.length;
     sounds.startBgm();
-    // hot path is synchronous: no flush needed
     expect(calls.sourcesCreated.length).toBeGreaterThan(before);
     await flush();
   });
@@ -142,7 +168,7 @@ describe("sounds: BGM lifecycle (cold + hot)", () => {
     expect(calls.sourcesCreated.some((s) => s.stopped)).toBe(true);
   });
 
-  test("stopBgm is idempotent (no throw if called twice)", () => {
+  test("stopBgm is idempotent across repeated calls", () => {
     expect(() => {
       sounds.stopBgm();
       sounds.stopBgm();

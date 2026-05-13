@@ -433,6 +433,127 @@ describe("hub: badges + per-game stats", () => {
   });
 });
 
+describe("hub: singular vs plural game-stat wording", () => {
+  beforeEach(() => {
+    resetEnv();
+  });
+
+  test("crown: exactly 1 checkmate uses 'checkmate' (singular)", () => {
+    localStorage.setItem("brainbout:checkmates:600", "1");
+    init();
+    const stat = document.querySelector(
+      'a.game-card[href$="crown.html"] .game-stat',
+    )?.textContent;
+    expect(stat).toBe("1 checkmate at 600 Elo");
+  });
+
+  test("crown: 2+ checkmates uses 'checkmates' (plural)", () => {
+    localStorage.setItem("brainbout:checkmates:600", "2");
+    init();
+    const stat = document.querySelector(
+      'a.game-card[href$="crown.html"] .game-stat',
+    )?.textContent;
+    expect(stat).toBe("2 checkmates at 600 Elo");
+  });
+
+  test("lex: exactly 1 mastered uses 'word' (singular)", () => {
+    localStorage.setItem(
+      "brainbout:lex:no:apple",
+      JSON.stringify({ mastery: 2 }),
+    );
+    init();
+    const stat = document.querySelector(
+      'a.game-card[href$="lex.html"] .game-stat',
+    )?.textContent;
+    expect(stat).toBe("1 word mastered");
+  });
+});
+
+describe("hub: stage popover positioning + accent", () => {
+  beforeEach(() => {
+    resetEnv();
+    init();
+  });
+
+  test("popover style sets --accent to the game's accent", () => {
+    document
+      .querySelector<HTMLButtonElement>('.stage-chip[data-game="flux"]')
+      ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    const popover = document.querySelector<HTMLElement>(".stage-popover");
+    expect(popover).not.toBeNull();
+    expect(popover?.style.getPropertyValue("--accent")).toBe("var(--ctp-red)");
+  });
+
+  test("popover has top + right inline styles (positioned, not unset)", () => {
+    document
+      .querySelector<HTMLButtonElement>('.stage-chip[data-game="crown"]')
+      ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    const popover = document.querySelector<HTMLElement>(".stage-popover");
+    expect(popover?.style.top.endsWith("px")).toBe(true);
+    expect(popover?.style.right.endsWith("px")).toBe(true);
+  });
+});
+
+describe("hub: card click sets overlay accent + .app exiting", () => {
+  beforeEach(() => {
+    resetEnv();
+    init();
+    navCalls.length = 0;
+  });
+
+  test("after press delay, .app gains 'exiting' class", async () => {
+    document
+      .querySelector<HTMLAnchorElement>('a.game-card[href$="crown.html"]')
+      ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 120));
+    expect(document.querySelector(".app")?.classList.contains("exiting")).toBe(
+      true,
+    );
+  });
+
+  test("overlay carries --transition-color from the card's --accent", async () => {
+    document
+      .querySelector<HTMLAnchorElement>('a.game-card[href$="flux.html"]')
+      ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 120));
+    const overlay = document.querySelector<HTMLElement>(".page-transition");
+    expect(overlay?.style.getPropertyValue("--transition-color")).toBe(
+      "var(--ctp-red)",
+    );
+  });
+});
+
+describe("hub: advance/retreat with malformed data-game", () => {
+  beforeEach(() => {
+    resetEnv();
+    init();
+  });
+
+  test("advance button with empty data-game is a no-op (no stage change)", () => {
+    // Inject a counterfeit advance button with empty data-game and click it
+    const hub = document.querySelector("#hub");
+    const fake = document.createElement("button");
+    fake.className = "advance-btn";
+    fake.setAttribute("data-game", "");
+    hub?.appendChild(fake);
+    fake.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    // No stored stage update for any game
+    for (const g of ["crown", "flux", "lex"]) {
+      expect(localStorage.getItem(`brainbout:stage:${g}`)).toBeNull();
+    }
+  });
+
+  test("stage chip with unknown game id is a no-op (no popover)", () => {
+    const hub = document.querySelector("#hub");
+    const fake = document.createElement("button");
+    fake.className = "stage-chip";
+    fake.setAttribute("data-game", "notagame");
+    hub?.appendChild(fake);
+    fake.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(document.querySelector(".stage-popover")).toBeNull();
+  });
+});
+
 describe("hub: defensive click paths", () => {
   beforeEach(() => {
     resetEnv();

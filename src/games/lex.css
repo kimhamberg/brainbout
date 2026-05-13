@@ -272,3 +272,37 @@
   font-size: 0.875rem;
   color: var(--ctp-subtext0);
 }
+
+/* ========== Quit button (top-right) ========== */
+
+.quit-btn {
+  cursor: pointer;
+
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+
+  color: var(--ctp-text);
+
+  background: var(--ctp-surface0);
+  box-shadow: var(--ctp-shadow);
+
+  transition:
+    background-color var(--dur-150) ease,
+    transform var(--dur-150) ease;
+
+  &:hover {
+    transform: scale(1.05);
+    background: var(--ctp-surface1);
+  }
+}

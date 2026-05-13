@@ -239,6 +239,9 @@ function renderRound(): void {
       <div class="feedback" id="feedback"></div>
       <div class="score-display">Score: ${String(Math.floor(score))}</div>
       <div class="streak-display">${streakHtml}</div>
+      <button id="quit-btn" class="quit-btn" aria-label="End session">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
     `;
   } else {
     // Cloze mode (hinted or naked)
@@ -261,6 +264,9 @@ function renderRound(): void {
       <div class="feedback" id="feedback"></div>
       <div class="score-display">Score: ${String(Math.floor(score))}</div>
       <div class="streak-display">${streakHtml}</div>
+      <button id="quit-btn" class="quit-btn" aria-label="End session">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
     `;
 
     wireClozeEvents();
@@ -385,6 +391,10 @@ game.addEventListener("click", (e) => {
 
   if (target.classList.contains("choice-btn")) {
     handleChoice(target.dataset.word ?? "");
+  } else if (target.id === "quit-btn") {
+    if (!gameOver) {
+      showResult();
+    }
   } else if (target.id === "again-btn") {
     void startGame();
   } else if (target.id === "back-btn") {

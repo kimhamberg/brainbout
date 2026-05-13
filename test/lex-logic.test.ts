@@ -164,6 +164,46 @@ describe("pickDistractors", () => {
     const pool = [w("fab"), w("far"), w("for"), w("fox"), w("fun")];
     expect(pickDistractors(target, pool, pool, 2)).toHaveLength(2);
   });
+
+  test("length filter is inclusive at boundary (±3 exactly admits)", () => {
+    const target = w("abcd"); // length 4
+    // Length 1 (diff 3) and length 7 (diff 3): both should be admitted.
+    // Length 0 (diff 4) and length 8 (diff 4): both excluded.
+    const pool = [w("x"), w("vwxyzzz"), w(""), w("yzabcdefg")];
+    const picks = pickDistractors(target, pool, pool, 4);
+    expect(picks).toContain("x");
+    expect(picks).toContain("vwxyzzz");
+    expect(picks).not.toContain("");
+    expect(picks).not.toContain("yzabcdefg");
+  });
+
+  test("hardest-first ordering: most-overlap candidate appears before less-overlap", () => {
+    const target = w("abcde"); // len 5
+    // 'abcdf' shares 4 letters; 'bxyz_' shares 1 letter.
+    // 'bxyz_' has length 5 too so both pass the length filter.
+    const pool = [w("bxyzz"), w("abcdf")];
+    const picks = pickDistractors(target, pool, pool, 2);
+    expect(picks[0]).toBe("abcdf");
+    expect(picks[1]).toBe("bxyzz");
+  });
+
+  test("pos pool exhausted: falls back to allWords for remaining slots", () => {
+    const target = w("apple", "noun");
+    const posPool = [w("apply", "noun")]; // only 1 same-pos
+    const allWords = [
+      w("apply", "noun"),
+      w("grape", "verb"),
+      w("plumm", "verb"),
+    ];
+    const picks = pickDistractors(target, posPool, allWords, 3);
+    expect(picks).toHaveLength(3);
+    expect(picks[0]).toBe("apply"); // from posPool, hardest-first
+    expect(picks.slice(1).sort()).toEqual(["grape", "plumm"]);
+  });
+
+  test("count 0 yields empty array", () => {
+    expect(pickDistractors(w("x"), [w("a")], [w("a")], 0)).toEqual([]);
+  });
 });
 
 describe("buildQueue", () => {
@@ -207,5 +247,49 @@ describe("buildQueue", () => {
     const small = dict.slice(0, 5);
     const q = buildQueue(small, new Set(), new Set(), 30, 0.3, identity);
     expect(q.length).toBeLessThanOrEqual(5);
+  });
+
+  test("review count = round(sessionSize * (1 - newRatio)) when enough reviews", () => {
+    // 20 seen+due cards available, sessionSize=20, newRatio=0.3 → 14 reviews + 6 fresh
+    const seen = new Set(dict.slice(0, 20).map((d) => d.word));
+    const due = new Set(seen);
+    const q = buildQueue(dict, seen, due, 20, 0.3, identity);
+    const reviewCount = q.filter((d) => seen.has(d.word)).length;
+    expect(reviewCount).toBe(14);
+    expect(q.length).toBe(20);
+  });
+
+  test("review requires BOTH seen AND due (AND, not OR)", () => {
+    // 10 seen-not-due + 10 unseen-but-due-flagged + 30 fresh = no review picks
+    const seen = new Set(dict.slice(0, 10).map((d) => d.word));
+    const due = new Set(dict.slice(10, 20).map((d) => d.word));
+    const q = buildQueue(dict, seen, due, 20, 0.3, identity);
+    const reviewCount = q.filter(
+      (d) => seen.has(d.word) && due.has(d.word),
+    ).length;
+    expect(reviewCount).toBe(0);
+  });
+
+  test("seen-but-not-due words never enter the queue", () => {
+    const seen = new Set(dict.slice(0, 10).map((d) => d.word));
+    const due = new Set<string>();
+    const q = buildQueue(dict, seen, due, 30, 0.3, identity);
+    for (const e of q) {
+      expect(seen.has(e.word)).toBe(false);
+    }
+  });
+
+  test("newRatio=1 yields all-fresh queue (no review picks)", () => {
+    const seen = new Set(dict.slice(0, 20).map((d) => d.word));
+    const due = new Set(seen);
+    const q = buildQueue(dict, seen, due, 20, 1, identity);
+    expect(q.filter((d) => seen.has(d.word))).toHaveLength(0);
+  });
+
+  test("newRatio=0 yields all-review (when enough due-seen)", () => {
+    const seen = new Set(dict.slice(0, 20).map((d) => d.word));
+    const due = new Set(seen);
+    const q = buildQueue(dict, seen, due, 20, 0, identity);
+    expect(q.filter((d) => seen.has(d.word))).toHaveLength(20);
   });
 });

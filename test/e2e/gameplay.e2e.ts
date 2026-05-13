@@ -60,6 +60,19 @@ test.describe("Flux gameplay", () => {
     expectClean(trap);
   });
 
+  test("Quit button ends the session and reveals the result panel", async ({
+    page,
+  }) => {
+    const trap = attachErrorTrap(page);
+    await page.goto("/games/flux.html");
+    await expect(page.locator("#quit-btn")).toBeVisible();
+    await page.locator("#quit-btn").click();
+    await expect(page.locator(".result")).toBeVisible({ timeout: 2000 });
+    await expect(page.locator("#again-btn")).toBeVisible();
+    await expect(page.locator("#back-btn")).toBeVisible();
+    expectClean(trap);
+  });
+
   test("timer counts down within the first 2 seconds", async ({ page }) => {
     const trap = attachErrorTrap(page);
     await page.goto("/games/flux.html");
@@ -95,6 +108,21 @@ test.describe("Lex gameplay", () => {
     const choices = page.locator(".choice-btn");
     await expect(choices).toHaveCount(4);
     await expect(page.locator(".score-display")).toContainText(/Score:/u);
+    expectClean(trap);
+  });
+
+  test("Quit button ends the session and reveals the result panel", async ({
+    page,
+  }) => {
+    const trap = attachErrorTrap(page);
+    await page.goto("/games/lex.html");
+    await expect(page.locator(".choice-btn").first()).toBeVisible({
+      timeout: 15_000,
+    });
+    await page.locator("#quit-btn").click();
+    await expect(page.locator(".result")).toBeVisible({ timeout: 2000 });
+    await expect(page.locator("#again-btn")).toBeVisible();
+    await expect(page.locator("#back-btn")).toBeVisible();
     expectClean(trap);
   });
 
