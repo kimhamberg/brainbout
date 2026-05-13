@@ -7,6 +7,14 @@ import { getStage, recordResult } from "../shared/stages";
 import { initTheme, wireToggle } from "../shared/theme";
 import { createTimer } from "../shared/timer";
 import {
+  buildQueue,
+  maxMasteryForStage,
+  pickDistractors as pickDistractorsCore,
+  shuffleArray,
+  speedBonus,
+  streakMultiplier as streakMultiplierCore,
+} from "./lex-logic";
+import {
   getDueWords,
   getMastery,
   levenshtein,
@@ -26,16 +34,6 @@ const WRONG_PAUSE_MS = 1500;
 const NUM_CHOICES = 4;
 const NEW_WORD_RATIO = 0.3;
 const SESSION_SIZE = 30;
-
-function maxMasteryForStage(stage: number): number {
-  if (stage >= 3) {
-    return 2; // naked cloze
-  }
-  if (stage >= 2) {
-    return 1; // hinted cloze
-  }
-  return 0; // MCQ only
-}
 
 function getEl(id: string): HTMLElement {
   const el = document.getElementById(id);
@@ -63,36 +61,8 @@ let gameOver = false;
 let totalCorrect = 0;
 let totalAttempts = 0;
 
-function shuffleArray<T>(arr: T[]): T[] {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [defined(arr[j]), defined(arr[i])];
-  }
-  return arr;
-}
-
-function speedBonus(elapsedMs: number): number {
-  const sec = elapsedMs / 1000;
-  if (sec < 3) {
-    return 5;
-  }
-  if (sec < 6) {
-    return 3;
-  }
-  if (sec < 10) {
-    return 1;
-  }
-  return 0;
-}
-
 function streakMultiplier(): number {
-  if (streak >= 5) {
-    return 2;
-  }
-  if (streak >= 3) {
-    return 1.5;
-  }
-  return 1;
+  return streakMultiplierCore(streak);
 }
 
 async function loadDict(): Promise<void> {
@@ -116,50 +86,15 @@ async function loadDict(): Promise<void> {
   }
 }
 
-function commonLetters(a: string, b: string): number {
-  const freq = new Map<string, number>();
-  for (const ch of a.toLowerCase()) {
-    freq.set(ch, (freq.get(ch) ?? 0) + 1);
-  }
-  let shared = 0;
-  for (const ch of b.toLowerCase()) {
-    const count = freq.get(ch) ?? 0;
-    if (count > 0) {
-      shared++;
-      freq.set(ch, count - 1);
-    }
-  }
-  return shared;
-}
-
 function pickDistractors(entry: DictEntry): string[] {
-  // Same POS, similar length, sorted by most shared letters (hardest first)
-  const posPool = wordsByPos.get(entry.pos) ?? allWords;
-  const candidates = posPool.filter(
-    (w) => w !== entry.word && Math.abs(w.length - entry.word.length) <= 3,
+  const toPick = (w: string) => ({ word: w, length: w.length, pos: entry.pos });
+  const posPool = (wordsByPos.get(entry.pos) ?? allWords).map(toPick);
+  return pickDistractorsCore(
+    { word: entry.word, length: entry.word.length, pos: entry.pos },
+    posPool,
+    allWords.map(toPick),
+    NUM_CHOICES - 1,
   );
-
-  candidates.sort(
-    (a, b) => commonLetters(b, entry.word) - commonLetters(a, entry.word),
-  );
-
-  const picks = candidates.slice(0, NUM_CHOICES - 1);
-
-  // Fallback: any word with similar length
-  if (picks.length < NUM_CHOICES - 1) {
-    const used = new Set([entry.word, ...picks]);
-    for (const w of allWords) {
-      if (picks.length >= NUM_CHOICES - 1) {
-        break;
-      }
-      if (!used.has(w) && Math.abs(w.length - entry.word.length) <= 3) {
-        picks.push(w);
-        used.add(w);
-      }
-    }
-  }
-
-  return picks;
 }
 
 function getSeenWords(): Set<string> {
@@ -177,30 +112,15 @@ function getSeenWords(): Set<string> {
 function buildSessionQueue(): void {
   const today = todayString();
   const seen = getSeenWords();
-  const dueStrs = getDueWords(lang, allWords, today);
-  const dueSet = new Set(dueStrs);
-
-  const review = shuffleArray(
-    dict.filter((d) => seen.has(d.word) && dueSet.has(d.word)),
+  const due = new Set(getDueWords(lang, allWords, today));
+  sessionQueue = buildQueue(
+    dict,
+    seen,
+    due,
+    SESSION_SIZE,
+    NEW_WORD_RATIO,
+    shuffleArray,
   );
-  const fresh = shuffleArray(dict.filter((d) => !seen.has(d.word)));
-
-  const reviewCount = Math.min(
-    Math.round(SESSION_SIZE * (1 - NEW_WORD_RATIO)),
-    review.length,
-  );
-  const newCount = Math.min(SESSION_SIZE - reviewCount, fresh.length);
-
-  sessionQueue = shuffleArray([
-    ...review.slice(0, reviewCount),
-    ...fresh.slice(0, newCount),
-  ]);
-
-  if (sessionQueue.length < SESSION_SIZE) {
-    const used = new Set(sessionQueue.map((e) => e.word));
-    const filler = shuffleArray(dict.filter((d) => !used.has(d.word)));
-    sessionQueue.push(...filler.slice(0, SESSION_SIZE - sessionQueue.length));
-  }
 }
 
 function handleClozeSubmit(input: string): void {

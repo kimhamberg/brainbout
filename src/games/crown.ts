@@ -21,6 +21,15 @@ import { initTheme, wireToggle } from "../shared/theme";
 import { computeThinkTime, eloToNodes } from "../shared/think-time";
 
 import { type ChessClock, createClock, formatClock } from "./crown-clock";
+import {
+  acceptDraw,
+  acceptTakeback,
+  classifyGameEnd,
+  isThreefoldRepetition,
+  positionKey,
+  promotionPickerPosition,
+  stageToElo,
+} from "./crown-logic";
 
 // --- Game state ---
 
@@ -55,20 +64,8 @@ let takebackDeclined = false;
 
 // --- Repetition tracking ---
 
-function positionKey(): string {
-  // FEN without halfmove and fullmove counters
-  return makeFen(pos.toSetup()).split(" ").slice(0, 4).join(" ");
-}
-
-function isThreefoldRepetition(): boolean {
-  const key = positionKey();
-  let count = 0;
-  for (const k of positionHistory) {
-    if (k === key && ++count >= 3) {
-      return true;
-    }
-  }
-  return false;
+function currentPositionKey(): string {
+  return positionKey(makeFen(pos.toSetup()));
 }
 
 // --- History browsing ---
@@ -203,7 +200,7 @@ async function onDrawOffer(): Promise<void> {
 
   offerPending = false;
 
-  if (engineEval <= DRAW_THRESHOLD) {
+  if (acceptDraw(engineEval, DRAW_THRESHOLD)) {
     clock.stop();
     engineClock.stop();
     gameOver = true;
@@ -245,7 +242,7 @@ async function onTakeback(): Promise<void> {
 
   offerPending = false;
 
-  if (result.bestMove === playerMove) {
+  if (acceptTakeback(result.bestMove, playerMove ?? "")) {
     // Player made the best move — engine gains nothing, accept takeback
     showOfferResult("action-takeback", true);
 
@@ -289,14 +286,11 @@ function showPromotionPicker(
     return;
   }
 
-  const file = dest.charCodeAt(0) - 97; // 0-7
-  const rank = Number(dest[1]); // 1-8
-  const isWhite = playerColor === "white";
-  const squareSize = wrap.offsetWidth / 8;
-
-  // Position: file determines x, rank determines y (top or bottom)
-  const left = (isWhite ? file : 7 - file) * squareSize;
-  const top = isWhite ? (8 - rank) * squareSize : (rank - 1) * squareSize;
+  const { left, top, squareSize } = promotionPickerPosition(
+    dest,
+    playerColor,
+    wrap.offsetWidth,
+  );
 
   const overlay = document.createElement("div");
   overlay.className = "promo-overlay";
@@ -384,50 +378,22 @@ function updateBoard(): void {
 }
 
 function checkGameEnd(): boolean {
-  if (pos.isCheckmate()) {
-    const winner = pos.turn === "white" ? "black" : "white";
-    clock.stop();
-    engineClock.stop();
-    gameOver = true;
-    const result = winner === playerColor ? 1 : 0;
-    if (result === 1) {
-      recordCheckmate(engineElo);
-    }
-    finishGame(
-      result,
-      winner === playerColor ? "Checkmate — you win!" : "Checkmate — you lose",
-    );
-    return true;
+  const end = classifyGameEnd(
+    pos,
+    playerColor,
+    isThreefoldRepetition(positionHistory, currentPositionKey()),
+  );
+  if (!end) {
+    return false;
   }
-  if (pos.isStalemate()) {
-    clock.stop();
-    engineClock.stop();
-    gameOver = true;
-    finishGame(0.5, "Stalemate — draw");
-    return true;
+  clock.stop();
+  engineClock.stop();
+  gameOver = true;
+  if (end.kind === "checkmate" && end.result === 1) {
+    recordCheckmate(engineElo);
   }
-  if (pos.isInsufficientMaterial()) {
-    clock.stop();
-    engineClock.stop();
-    gameOver = true;
-    finishGame(0.5, "Insufficient material — draw");
-    return true;
-  }
-  if (pos.halfmoves >= 100) {
-    clock.stop();
-    engineClock.stop();
-    gameOver = true;
-    finishGame(0.5, "50-move rule — draw");
-    return true;
-  }
-  if (isThreefoldRepetition()) {
-    clock.stop();
-    engineClock.stop();
-    gameOver = true;
-    finishGame(0.5, "Threefold repetition — draw");
-    return true;
-  }
-  return false;
+  finishGame(end.result, end.message);
+  return true;
 }
 
 function dimClock(id: string, dim: boolean): void {
@@ -451,7 +417,7 @@ function onEngineMove(uci: string): void {
 
   pos.play(move);
   moves.push(uci);
-  positionHistory.push(positionKey());
+  positionHistory.push(currentPositionKey());
   fenHistory.push(makeFen(pos.toSetup()));
   viewPly = fenHistory.length - 1;
 
@@ -493,7 +459,7 @@ function commitPlayerMove(orig: string, dest: string, promoChar: string): void {
   const isCapture = pos.board.occupied.has(move.to);
   pos.play(move);
   moves.push(uci);
-  positionHistory.push(positionKey());
+  positionHistory.push(currentPositionKey());
   fenHistory.push(makeFen(pos.toSetup()));
   viewPly = fenHistory.length - 1;
 
@@ -695,14 +661,12 @@ async function main(): Promise<void> {
   startFen = fen;
   const setup = parseFen(fen).unwrap();
   pos = Chess.fromSetup(setup).unwrap();
-  positionHistory.push(positionKey());
+  positionHistory.push(currentPositionKey());
   fenHistory.push(makeFen(pos.toSetup()));
   viewPly = 0;
 
   // Stage-based Elo tiers
-  const stage = getStage("crown");
-  const eloByStage = [0, 600, 1200, 1600];
-  engineElo = eloByStage[stage] ?? 1200;
+  engineElo = stageToElo(getStage("crown"));
   baseNodes = eloToNodes(engineElo);
 
   clock = createClock({

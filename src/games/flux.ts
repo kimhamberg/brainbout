@@ -20,6 +20,16 @@ import {
   type Trial,
   updateAdaptation,
 } from "./flux-engine";
+import {
+  computeResultVm,
+  ringClass as computeRingClass,
+  RING_CIRCUMFERENCE,
+  RING_RADIUS,
+  renderResultHtml,
+  ringOffset,
+  shapeHtml,
+  streakBadgeHtml,
+} from "./flux-render";
 
 /* ---------- DOM ---------- */
 
@@ -48,41 +58,14 @@ let totalTrials = 0;
 let correctTrials = 0;
 let responded = false;
 
-/* ---------- timer ring constants ---------- */
-
-const RING_RADIUS = 40;
-const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
-
 /* ---------- render ---------- */
 
-function shapeClasses(trial: Trial, sizeOverride?: string): string {
-  const classes = ["shape"];
-  classes.push(`shape-${sizeOverride ?? trial.size}`);
-  classes.push(`form-${trial.shape}`);
-  classes.push(`color-${trial.color}`);
-  classes.push(`fill-${trial.fill}`);
-  if (trial.isGolden) {
-    classes.push("golden");
-  }
-  return classes.join(" ");
-}
-
-function shapeHtml(trial: Trial): string {
-  if (trial.size === "dual") {
-    // Two small shapes side by side — clearly "not one big or small"
-    const inner = shapeClasses(trial, "small");
-    return `<div class="shape shape-dual"><div class="${inner}"></div><div class="${inner}"></div></div>`;
-  }
-  return `<div class="${shapeClasses(trial)}"></div>`;
-}
-
 function streakHtml(): string {
-  if (state.streak < 3) {
-    return "";
-  }
-  const label = getStreakLabel(state.streak);
-  const mult = getMultiplier(state.streak);
-  return `<div class="streak-display streak-${label}">x${String(mult)} ${label}</div>`;
+  return streakBadgeHtml(
+    state.streak,
+    getMultiplier(state.streak),
+    getStreakLabel(state.streak),
+  );
 }
 
 function renderPlaying(): void {
@@ -97,19 +80,13 @@ function renderPlaying(): void {
     : trialRule.toUpperCase();
   const ruleCueClass = trialIsNot ? "rule-cue not-active" : "rule-cue";
 
-  const fraction = currentRemaining / DURATION;
-  const offset = RING_CIRCUMFERENCE * (1 - fraction);
-  const ringClass =
-    act === "climax"
-      ? "timer-ring climax"
-      : currentRemaining <= 15
-        ? "timer-ring low"
-        : "timer-ring";
+  const offset = ringOffset(currentRemaining, DURATION);
+  const ringCls = computeRingClass(currentRemaining, act);
 
   const switchHtml = ruleJustSwitched ? `<div class="switch-ring"></div>` : "";
 
   game.innerHTML = `
-    <div class="${ringClass}">
+    <div class="${ringCls}">
       <svg width="96" height="96" viewBox="0 0 96 96">
         <circle class="track" cx="48" cy="48" r="${String(RING_RADIUS)}" />
         <circle class="progress" cx="48" cy="48" r="${String(RING_RADIUS)}"
@@ -422,30 +399,21 @@ function showResult(): void {
   const accuracy = totalTrials > 0 ? correctTrials / totalTrials : 0;
   recordResult("flux", accuracy);
 
-  const best = getBest("flux");
-  const isNewBest = best === null || finalScore > best;
-  const nearMiss = !isNewBest && best !== null && finalScore >= best * 0.9;
-  const diff = best === null ? 0 : best - finalScore;
+  const previousBest = getBest("flux");
+  const vm = computeResultVm({
+    finalScore,
+    previousBest,
+    duration: DURATION,
+    peakStreak: state.peakStreak,
+    peakStreakLabel: getStreakLabel(state.peakStreak),
+    peakStreakMult: getMultiplier(state.peakStreak),
+    correctTrials,
+    totalTrials,
+  });
 
   saveBest("flux", finalScore);
 
-  const streakLabel = getStreakLabel(state.peakStreak);
-  const streakMult = getMultiplier(state.peakStreak);
-
-  game.innerHTML = `
-    <div class="result">
-      <div class="final-score" data-target="${String(finalScore)}">0</div>
-      ${isNewBest ? '<div class="new-best">NEW BEST</div>' : ""}
-      ${nearMiss ? `<div class="near-miss">Only ${String(diff)} from your best!</div>` : ""}
-      <div class="result-label">points in ${String(DURATION)} seconds</div>
-      <div class="peak-streak">Best streak: ${String(state.peakStreak)}${streakLabel ? ` (x${String(streakMult)} ${streakLabel})` : ""}</div>
-      <div class="accuracy">${String(correctTrials)}/${String(totalTrials)} correct</div>
-      <div class="result-actions">
-        <button id="again-btn">Play Again</button>
-        <button id="back-btn" class="secondary">Back to Hub</button>
-      </div>
-    </div>
-  `;
+  game.innerHTML = renderResultHtml(vm);
 
   const scoreEl = game.querySelector<HTMLElement>(".final-score");
   if (scoreEl) {
