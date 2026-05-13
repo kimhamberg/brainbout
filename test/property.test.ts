@@ -1423,6 +1423,11 @@ describe("rng module", () => {
 /* ====================================================================== */
 
 describe("property: hub init resists garbage state", () => {
+  // Each iteration mounts DOM + runs init(); cap at a sane budget regardless
+  // of FAST_CHECK_NUM_RUNS so the fuzz suite doesn't blow up to tens of
+  // minutes when other properties are pushed to 100k.
+  const hubCfg = { numRuns: Math.min(NUM_RUNS, 500) } as const;
+
   function seedDom(): void {
     document.body.innerHTML = `
       <div id="app" class="app">
@@ -1450,7 +1455,7 @@ describe("property: hub init resists garbage state", () => {
         sessionStorage.setItem("brainbout:current-session", junk);
         expect(() => init()).not.toThrow();
       }),
-      cfg,
+      hubCfg,
     );
   });
 
@@ -1462,7 +1467,7 @@ describe("property: hub init resists garbage state", () => {
         window.location.search = `?completed=${encodeURIComponent(junk)}`;
         expect(() => init()).not.toThrow();
       }),
-      cfg,
+      hubCfg,
     );
   });
 
@@ -1484,7 +1489,7 @@ describe("property: hub init resists garbage state", () => {
           expect(["Crown", "Flux", "Lex"]).toContain(el.textContent);
         }
       }),
-      cfg,
+      hubCfg,
     );
   });
 });
