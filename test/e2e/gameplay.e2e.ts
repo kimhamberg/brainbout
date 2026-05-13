@@ -98,7 +98,7 @@ test.describe("Lex gameplay", () => {
     expectClean(trap);
   });
 
-  test("clicking a choice button settles into either correct or wrong feedback", async ({
+  test("clicking a choice button immediately marks the correct answer", async ({
     page,
   }) => {
     const trap = attachErrorTrap(page);
@@ -107,17 +107,12 @@ test.describe("Lex gameplay", () => {
       timeout: 15_000,
     });
     await page.locator(".choice-btn").first().click();
-    // After click, a choice should be visually marked .correct or .wrong
-    await expect(page.locator(".choice-btn.correct, .choice-btn.wrong"))
-      .toHaveCount({ min: 1 } as never)
-      .catch(async () => {
-        // Fallback: at least one button got a state class within 1s
-        await page.waitForTimeout(1000);
-        const marked = await page
-          .locator(".choice-btn.correct, .choice-btn.wrong")
-          .count();
-        expect(marked).toBeGreaterThan(0);
-      });
+    // handleChoice synchronously adds .correct to the right answer's button
+    // (whether the user picked it or not), then schedules nextRound. Assert
+    // before that re-render can fire (~600ms on success, 1500ms on wrong).
+    await expect(page.locator(".choice-btn.correct").first()).toBeVisible({
+      timeout: 400,
+    });
     expectClean(trap);
   });
 });
