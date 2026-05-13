@@ -1,5 +1,4 @@
-
-import { describe, it, expect, beforeEach, afterEach, jest } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, jest } from "bun:test";
 
 // Set up the DOM before importing the module, since crown.ts
 // runs document.getElementById("game") at the top level on import.

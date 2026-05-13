@@ -1,5 +1,5 @@
+import { resolve } from "node:path";
 import { defineConfig } from "vite";
-import { resolve } from "path";
 
 export default defineConfig({
   build: {
@@ -7,10 +7,10 @@ export default defineConfig({
     cssMinify: "lightningcss",
     rollupOptions: {
       input: {
-        main: resolve(__dirname, "index.html"),
-        crown: resolve(__dirname, "games/crown.html"),
-        flux: resolve(__dirname, "games/flux.html"),
-        lex: resolve(__dirname, "games/lex.html"),
+        main: resolve(import.meta.dirname, "index.html"),
+        crown: resolve(import.meta.dirname, "games/crown.html"),
+        flux: resolve(import.meta.dirname, "games/flux.html"),
+        lex: resolve(import.meta.dirname, "games/lex.html"),
       },
     },
   },

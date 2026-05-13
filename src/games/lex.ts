@@ -1,16 +1,17 @@
+import { defined } from "../shared/assert";
+import { mountAppIcon } from "../shared/icons";
+import { recordSessionScore, todayString } from "../shared/progress";
+import * as sound from "../shared/sounds";
+import { getStage, recordResult } from "../shared/stages";
 import { initTheme, wireToggle } from "../shared/theme";
 import { createTimer } from "../shared/timer";
-import { recordSessionScore, todayString } from "../shared/progress";
 import {
   getDueWords,
-  recordAnswer,
   getMastery,
   levenshtein,
   maxTypos,
+  recordAnswer,
 } from "./lex-srs";
-import { getStage, recordResult } from "../shared/stages";
-import { defined } from "../shared/assert";
-import * as sound from "../shared/sounds";
 
 interface DictEntry {
   word: string;
@@ -26,16 +27,20 @@ const NEW_WORD_RATIO = 0.3;
 const SESSION_SIZE = 30;
 
 function maxMasteryForStage(stage: number): number {
-  if (stage >= 3) { return 2; // naked cloze
-}
-  if (stage >= 2) { return 1; // hinted cloze
-}
+  if (stage >= 3) {
+    return 2; // naked cloze
+  }
+  if (stage >= 2) {
+    return 1; // hinted cloze
+  }
   return 0; // MCQ only
 }
 
 function getEl(id: string): HTMLElement {
   const el = document.getElementById(id);
-  if (el === null) { throw new Error(`Missing #${id} element`); }
+  if (el === null) {
+    throw new Error(`Missing #${id} element`);
+  }
   return el;
 }
 const game = getEl("game");
@@ -67,15 +72,25 @@ function shuffleArray<T>(arr: T[]): T[] {
 
 function speedBonus(elapsedMs: number): number {
   const sec = elapsedMs / 1000;
-  if (sec < 3) { return 5; }
-  if (sec < 6) { return 3; }
-  if (sec < 10) { return 1; }
+  if (sec < 3) {
+    return 5;
+  }
+  if (sec < 6) {
+    return 3;
+  }
+  if (sec < 10) {
+    return 1;
+  }
   return 0;
 }
 
 function streakMultiplier(): number {
-  if (streak >= 5) { return 2; }
-  if (streak >= 3) { return 1.5; }
+  if (streak >= 5) {
+    return 2;
+  }
+  if (streak >= 3) {
+    return 1.5;
+  }
   return 1;
 }
 
@@ -134,7 +149,9 @@ function pickDistractors(entry: DictEntry): string[] {
   if (picks.length < NUM_CHOICES - 1) {
     const used = new Set([entry.word, ...picks]);
     for (const w of allWords) {
-      if (picks.length >= NUM_CHOICES - 1) { break; }
+      if (picks.length >= NUM_CHOICES - 1) {
+        break;
+      }
       if (!used.has(w) && Math.abs(w.length - entry.word.length) <= 3) {
         picks.push(w);
         used.add(w);
@@ -187,7 +204,9 @@ function buildSessionQueue(): void {
 }
 
 function handleClozeSubmit(input: string): void {
-  if (gameOver || inputLocked || !currentEntry) { return; }
+  if (gameOver || inputLocked || !currentEntry) {
+    return;
+  }
   inputLocked = true;
   totalAttempts++;
 
@@ -202,7 +221,9 @@ function handleClozeSubmit(input: string): void {
   const inputEl = document.querySelector(
     "#cloze-input",
   ) as HTMLInputElement | null;
-  if (inputEl) { inputEl.disabled = true; }
+  if (inputEl) {
+    inputEl.disabled = true;
+  }
 
   if (correct) {
     totalCorrect++;
@@ -213,7 +234,9 @@ function handleClozeSubmit(input: string): void {
     streak++;
     recordAnswer(lang, currentEntry.word, true, today);
     sound.playCorrect();
-    if (inputEl) { inputEl.classList.add("cloze-correct"); }
+    if (inputEl) {
+      inputEl.classList.add("cloze-correct");
+    }
     if (feedback) {
       feedback.classList.add("correct");
       feedback.textContent = `+${String(Math.floor(points))}`;
@@ -225,7 +248,9 @@ function handleClozeSubmit(input: string): void {
     streak = 0;
     recordAnswer(lang, currentEntry.word, false, today);
     sound.playWrong();
-    if (inputEl) { inputEl.classList.add("cloze-wrong"); }
+    if (inputEl) {
+      inputEl.classList.add("cloze-wrong");
+    }
     if (feedback) {
       feedback.classList.add("wrong");
       feedback.textContent = `Answer: ${currentEntry.word}`;
@@ -245,7 +270,9 @@ function wireClozeEvents(): void {
   const inputEl = document.querySelector(
     "#cloze-input",
   ) as HTMLInputElement | null;
-  if (!inputEl) { return; }
+  if (!inputEl) {
+    return;
+  }
 
   inputEl.focus();
   // Move cursor to end (for hinted cloze with pre-filled value)
@@ -261,7 +288,9 @@ function wireClozeEvents(): void {
 }
 
 function renderRound(): void {
-  if (!currentEntry) { return; }
+  if (!currentEntry) {
+    return;
+  }
 
   const stage = getStage("lex");
   const wordMastery = getMastery(lang, currentEntry.word);
@@ -323,7 +352,9 @@ function renderRound(): void {
 }
 
 function nextRound(): void {
-  if (gameOver) { return; }
+  if (gameOver) {
+    return;
+  }
   if (sessionQueue.length === 0) {
     buildSessionQueue();
   }
@@ -336,7 +367,9 @@ function nextRound(): void {
 }
 
 function handleChoice(chosen: string): void {
-  if (gameOver || inputLocked || !currentEntry) { return; }
+  if (gameOver || inputLocked || !currentEntry) {
+    return;
+  }
   inputLocked = true;
   totalAttempts++;
 
@@ -418,7 +451,9 @@ async function startGame(): Promise<void> {
   totalCorrect = 0;
   totalAttempts = 0;
 
-  if (timerRef) { timerRef.stop(); }
+  if (timerRef) {
+    timerRef.stop();
+  }
 
   await loadDict();
   buildSessionQueue();
@@ -428,7 +463,9 @@ async function startGame(): Promise<void> {
     onTick: (remaining) => {
       currentRemaining = remaining;
       const el = game.querySelector(".timer");
-      if (el) { el.textContent = `${String(remaining)}s`; }
+      if (el) {
+        el.textContent = `${String(remaining)}s`;
+      }
     },
     onDone: () => {
       showResult();
@@ -441,7 +478,9 @@ async function startGame(): Promise<void> {
 
 game.addEventListener("click", (e) => {
   const target = (e.target as HTMLElement).closest<HTMLElement>("button");
-  if (!target) { return; }
+  if (!target) {
+    return;
+  }
 
   if (target.classList.contains("choice-btn")) {
     handleChoice(target.dataset["word"] ?? "");
@@ -456,3 +495,4 @@ void startGame();
 
 initTheme();
 wireToggle();
+mountAppIcon("lex", "var(--ctp-blue)");

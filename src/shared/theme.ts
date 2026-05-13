@@ -2,7 +2,9 @@ type Theme = "latte" | "frappe";
 
 function detect(): Theme {
   const saved = localStorage.getItem("theme");
-  if (saved === "latte" || saved === "frappe") { return saved; }
+  if (saved === "latte" || saved === "frappe") {
+    return saved;
+  }
   return matchMedia("(prefers-color-scheme: light)").matches
     ? "latte"
     : "frappe";
@@ -39,8 +41,10 @@ function updateIcon(btn: HTMLElement): void {
 }
 
 export function wireToggle(): void {
-  const btn = document.getElementById("theme-btn");
-  if (!btn) { return; }
+  const btn = document.querySelector<HTMLElement>("#theme-btn");
+  if (!btn) {
+    return;
+  }
   btn.addEventListener("click", () => {
     toggleTheme();
     updateIcon(btn);

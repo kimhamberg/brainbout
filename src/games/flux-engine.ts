@@ -78,10 +78,46 @@ export const STREAK_THRESHOLDS = [
 ] as const;
 
 export const STAGE_PARAMS: StageParams[] = [
-  { baseBpm: 55, floorBpm: 90, rules: ["color", "shape", "size"], notAllowed: false, switchMin: 5, switchMax: 7, noGoRate: 0.10, goldenRate: 0.12 }, // placeholder index 0
-  { baseBpm: 55, floorBpm: 90, rules: ["color", "shape", "size"], notAllowed: false, switchMin: 5, switchMax: 7, noGoRate: 0.10, goldenRate: 0.12 },
-  { baseBpm: 70, floorBpm: 110, rules: ["color", "shape", "size", "fill"], notAllowed: false, switchMin: 4, switchMax: 6, noGoRate: 0.15, goldenRate: 0.10 },
-  { baseBpm: 90, floorBpm: 135, rules: ["color", "shape", "size", "fill"], notAllowed: true, switchMin: 3, switchMax: 5, noGoRate: 0.20, goldenRate: 0.08 },
+  {
+    baseBpm: 55,
+    floorBpm: 90,
+    rules: ["color", "shape", "size"],
+    notAllowed: false,
+    switchMin: 5,
+    switchMax: 7,
+    noGoRate: 0.1,
+    goldenRate: 0.12,
+  }, // placeholder index 0
+  {
+    baseBpm: 55,
+    floorBpm: 90,
+    rules: ["color", "shape", "size"],
+    notAllowed: false,
+    switchMin: 5,
+    switchMax: 7,
+    noGoRate: 0.1,
+    goldenRate: 0.12,
+  },
+  {
+    baseBpm: 70,
+    floorBpm: 110,
+    rules: ["color", "shape", "size", "fill"],
+    notAllowed: false,
+    switchMin: 4,
+    switchMax: 6,
+    noGoRate: 0.15,
+    goldenRate: 0.1,
+  },
+  {
+    baseBpm: 90,
+    floorBpm: 135,
+    rules: ["color", "shape", "size", "fill"],
+    notAllowed: true,
+    switchMin: 3,
+    switchMax: 5,
+    noGoRate: 0.2,
+    goldenRate: 0.08,
+  },
 ];
 
 /* ---------- helpers ---------- */
@@ -196,7 +232,8 @@ export function generateTrial(state: FluxState): Trial {
       const maxRules = sp.rules.length;
       if (
         state.unlockedRuleCount < maxRules &&
-        state.switchCount >= defined(UNLOCK_AT_SWITCH[state.unlockedRuleCount + 1])
+        state.switchCount >=
+          defined(UNLOCK_AT_SWITCH[state.unlockedRuleCount + 1])
       ) {
         state.unlockedRuleCount++;
       }
@@ -211,7 +248,7 @@ export function generateTrial(state: FluxState): Trial {
 
   // Determine if no-go (not during warm-up, must be unlocked)
   const isNoGo =
-    !(isWarmUp ||isGolden ) && // golden and no-go are mutually exclusive
+    !(isWarmUp || isGolden) && // golden and no-go are mutually exclusive
     state.noGoUnlocked &&
     Math.random() < defined(STAGE_PARAMS[state.stage]).noGoRate;
 
@@ -228,14 +265,18 @@ export function generateTrial(state: FluxState): Trial {
 
 export function getMultiplier(streak: number): number {
   for (const t of STREAK_THRESHOLDS) {
-    if (streak >= t.min) { return t.multiplier; }
+    if (streak >= t.min) {
+      return t.multiplier;
+    }
   }
   return 1;
 }
 
 export function getStreakLabel(streak: number): string {
   for (const t of STREAK_THRESHOLDS) {
-    if (streak >= t.min) { return t.label; }
+    if (streak >= t.min) {
+      return t.label;
+    }
   }
   return "";
 }
@@ -260,7 +301,9 @@ function getCorrectSide(trial: Trial, rule: Rule, isNot: boolean): ButtonSide {
       break;
   }
 
-  if (isNot) { leftMatch = !leftMatch; }
+  if (isNot) {
+    leftMatch = !leftMatch;
+  }
   return leftMatch ? "left" : "right";
 }
 
@@ -271,13 +314,27 @@ export function getRuleLabels(rule: Rule, isNot: boolean): [string, string] {
   let right: string;
 
   switch (rule) {
-    case "color": left = "Warm"; right = "Cool"; break;
-    case "shape": left = "Round"; right = "Angular"; break;
-    case "size": left = "Big"; right = "Small"; break;
-    case "fill": left = "Solid"; right = "Hollow"; break;
+    case "color":
+      left = "Warm";
+      right = "Cool";
+      break;
+    case "shape":
+      left = "Round";
+      right = "Angular";
+      break;
+    case "size":
+      left = "Big";
+      right = "Small";
+      break;
+    case "fill":
+      left = "Solid";
+      right = "Hollow";
+      break;
   }
 
-  if (isNot) { [left, right] = [right, left]; }
+  if (isNot) {
+    [left, right] = [right, left];
+  }
   return [left, right];
 }
 
@@ -356,8 +413,12 @@ export type SessionAct = "warmup" | "flow" | "climax";
 
 export function getSessionAct(remaining: number): SessionAct {
   const elapsed = DURATION - remaining;
-  if (elapsed < 15) { return "warmup"; }
-  if (remaining > 15) { return "flow"; }
+  if (elapsed < 15) {
+    return "warmup";
+  }
+  if (remaining > 15) {
+    return "flow";
+  }
   return "climax";
 }
 

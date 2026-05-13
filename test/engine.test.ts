@@ -1,8 +1,8 @@
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import {
+  computeEvalSwing,
   parseBestMove,
   parseInfoLine,
-  computeEvalSwing,
 } from "../src/shared/engine";
 
 describe("parseBestMove", () => {

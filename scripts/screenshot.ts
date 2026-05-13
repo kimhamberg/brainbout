@@ -29,7 +29,7 @@ async function main(): Promise<void> {
     localStorage.setItem("theme", "frappe");
     document.documentElement.dataset["theme"] = "frappe";
   });
-  await page.waitForSelector(".game-list", { timeout: 10_000 });
+  await page.locator(".game-list").waitFor({ timeout: 10_000 });
   // Let transitions settle
   await page.waitForTimeout(300);
 

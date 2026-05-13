@@ -20,5 +20,6 @@
     "outDir": "dist",
     "sourceMap": true
   },
-  "include": ["src", "test"]
+  "include": ["src", "test", "server", "scripts", "vite.config.ts"],
+  "exclude": ["server/embed.gen.ts"]
 }

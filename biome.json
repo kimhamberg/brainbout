@@ -10,6 +10,8 @@
       "src/**/*.ts",
       "test/**/*.ts",
       "scripts/**/*.ts",
+      "server/**/*.ts",
+      "!server/embed.gen.ts",
       "*.ts",
       "*.js",
       "*.json"
@@ -35,6 +37,7 @@
     }
   },
   "javascript": {
+    "globals": ["Bun"],
     "formatter": {
       "quoteStyle": "double",
       "semicolons": "always",
@@ -52,29 +55,62 @@
         "rules": {
           "complexity": {
             "useLiteralKeys": "off",
-            "useMaxParams": "off"
+            "useMaxParams": "off",
+            "noExcessiveCognitiveComplexity": "off",
+            "noExcessiveLinesPerFunction": "off",
+            "noVoid": "off"
           },
           "style": {
             "noMagicNumbers": "off",
             "noNonNullAssertion": "off",
-            "useNamingConvention": "off"
+            "useNamingConvention": "off",
+            "useConsistentMemberAccessibility": "off",
+            "useExportsLast": "off",
+            "noNestedTernary": "off",
+            "useDefaultSwitchClause": "off"
+          },
+          "performance": {
+            "useTopLevelRegex": "off",
+            "noNamespaceImport": "off",
+            "noAwaitInLoops": "off"
           },
           "nursery": {
             "noContinue": "off",
             "noIncrementDecrement": "off",
             "noTernary": "off",
             "useExplicitReturnType": "off",
-            "useExplicitType": "off"
+            "useExplicitType": "off",
+            "useNamedCaptureGroup": "off",
+            "useGlobalThis": "off",
+            "useDestructuring": "off",
+            "noExcessiveLinesPerFile": "off",
+            "useDomQuerySelector": "off",
+            "noPlaywrightWaitForTimeout": "off"
+          },
+          "security": {
+            "noSecrets": "off"
+          },
+          "suspicious": {
+            "noConsole": "off"
+          },
+          "correctness": {
+            "useQwikValidLexicalScope": "off"
           }
         }
       }
     },
     {
-      "includes": ["scripts/**"],
+      "includes": ["scripts/**", "server/**", "vite.config.ts", "test/**"],
       "linter": {
         "rules": {
           "correctness": {
             "noNodejsModules": "off"
+          },
+          "style": {
+            "noDefaultExport": "off"
+          },
+          "nursery": {
+            "noConditionalExpect": "off"
           }
         }
       }

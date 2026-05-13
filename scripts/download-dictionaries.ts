@@ -1,15 +1,15 @@
 import {
   createReadStream,
   createWriteStream,
-  writeFileSync,
   existsSync,
   mkdirSync,
+  writeFileSync,
 } from "node:fs";
-import { createInterface } from "node:readline";
 import { join } from "node:path";
-import { pipeline } from "node:stream/promises";
-import { Readable } from "node:stream";
 import process from "node:process";
+import { createInterface } from "node:readline";
+import { Readable } from "node:stream";
+import { pipeline } from "node:stream/promises";
 
 const ROOT = join(import.meta.dirname, "..");
 const PUBLIC_DIR = join(ROOT, "public");
@@ -61,7 +61,9 @@ const FORM_OF_GLOSS = [
 ];
 
 function isFormOf(sense: KaikkiSense): boolean {
-  if (sense.tags?.includes("form-of")) { return true; }
+  if (sense.tags?.includes("form-of")) {
+    return true;
+  }
   const gloss = sense.glosses?.[0] ?? "";
   return FORM_OF_GLOSS.some((p) => p.test(gloss));
 }
@@ -80,7 +82,7 @@ async function download(url: string, dest: string): Promise<void> {
     throw new Error(`Download failed: ${String(res.status)}`);
   }
   const nodeStream = Readable.fromWeb(
-    res.body as import("stream/web").ReadableStream,
+    res.body as unknown as import("stream/web").ReadableStream,
   );
   await pipeline(nodeStream, createWriteStream(dest));
 }
@@ -90,10 +92,6 @@ async function processJsonl(
   outputPath: string,
 ): Promise<void> {
   const results: DictEntry[] = [];
-  let total = 0;
-  let _noSenses = 0;
-  let _allFormOf = 0;
-  let _kept = 0;
 
   const rl = createInterface({
     input: createReadStream(inputPath, "utf-8"),
@@ -101,8 +99,9 @@ async function processJsonl(
   });
 
   for await (const line of rl) {
-    if (!line.trim()) { continue; }
-    total++;
+    if (!line.trim()) {
+      continue;
+    }
 
     let entry: KaikkiEntry;
     try {
@@ -111,7 +110,6 @@ async function processJsonl(
       continue;
     }
 
-    // Skip proper nouns, single-letter entries, symbols, and affixes
     if (
       [
         "name",
@@ -126,44 +124,43 @@ async function processJsonl(
       continue;
     }
 
-    // Skip hyphenated fragments (affixes not caught by POS)
     if (entry.word.startsWith("-") || entry.word.endsWith("-")) {
       continue;
     }
 
     const senses = entry.senses ?? [];
     if (senses.length === 0) {
-      _noSenses++;
       continue;
     }
 
+    let definition: string | undefined;
     let bestSense: KaikkiSense | null = null;
     for (const sense of senses) {
-      if (isFormOf(sense)) { continue; }
-      if (!(sense.glosses?.length > 0&& sense.glosses[0])) { continue; }
+      if (isFormOf(sense)) {
+        continue;
+      }
+      const gloss = sense.glosses?.[0];
+      if (!gloss) {
+        continue;
+      }
+      definition = gloss;
       bestSense = sense;
       break;
     }
 
-    if (!bestSense) {
-      _allFormOf++;
+    if (!(bestSense && definition)) {
       continue;
     }
 
-    const definition = bestSense.glosses?.[0];
-
-    // Skip definitions with Wiktionary editorial markers
     if (/\(to be confirmed\)|\(please verify\)/iu.test(definition)) {
       continue;
     }
 
     let example = "";
-    if (bestSense.examples?.length > 0) {
-      for (const ex of bestSense.examples) {
-        if (ex.text) {
-          example = maskWord(ex.text, entry.word);
-          break;
-        }
+    for (const ex of bestSense.examples ?? []) {
+      if (ex.text) {
+        example = maskWord(ex.text, entry.word);
+        break;
       }
     }
 
@@ -173,19 +170,15 @@ async function processJsonl(
       definition,
       example,
     });
-    _kept++;
-
-    if (total % 10_000 === 0) {
-    }
   }
 
-  const json = JSON.stringify(results);
-  writeFileSync(outputPath, `${json}\n`);
-  const _sizeMB = (Buffer.byteLength(json) / 1024 / 1024).toFixed(1);
+  writeFileSync(outputPath, `${JSON.stringify(results)}\n`);
 }
 
 async function main(): Promise<void> {
-  if (!existsSync(CACHE_DIR)) { mkdirSync(CACHE_DIR, { recursive: true }); }
+  if (!existsSync(CACHE_DIR)) {
+    mkdirSync(CACHE_DIR, { recursive: true });
+  }
 
   const langs = [
     {

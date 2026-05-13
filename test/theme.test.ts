@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { initTheme, toggleTheme } from "../src/shared/theme";
 
 describe("theme", () => {
@@ -14,11 +14,12 @@ describe("theme", () => {
     globalThis.matchMedia = originalMatchMedia;
   });
 
+  const noop = (): void => undefined;
   function stubMatchMedia(matches: boolean): void {
     globalThis.matchMedia = (() => ({
       matches,
-      addEventListener: () => {},
-      removeEventListener: () => {},
+      addEventListener: noop,
+      removeEventListener: noop,
     })) as unknown as typeof matchMedia;
   }
 

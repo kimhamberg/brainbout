@@ -107,7 +107,9 @@ export function getMasteredCount(lang: string): number {
       const raw = localStorage.getItem(k);
       if (raw !== null) {
         const parsed = JSON.parse(raw) as Partial<WordState>;
-        if ((parsed.mastery ?? 0) >= MAX_MASTERY) { count++; }
+        if ((parsed.mastery ?? 0) >= MAX_MASTERY) {
+          count++;
+        }
       }
     }
   }
@@ -115,8 +117,12 @@ export function getMasteredCount(lang: string): number {
 }
 
 export function maxTypos(wordLength: number): number {
-  if (wordLength <= 3) { return 0; }
-  if (wordLength <= 7) { return 1; }
+  if (wordLength <= 3) {
+    return 0;
+  }
+  if (wordLength <= 7) {
+    return 1;
+  }
   return 2;
 }
 
@@ -127,8 +133,12 @@ export function levenshtein(a: string, b: string): number {
     Array.from({ length: n + 1 }, () => 0),
   );
 
-  for (let i = 0; i <= m; i++) { defined(dp[i])[0] = i; }
-  for (let j = 0; j <= n; j++) { defined(dp[0])[j] = j; }
+  for (let i = 0; i <= m; i++) {
+    defined(dp[i])[0] = i;
+  }
+  for (let j = 0; j <= n; j++) {
+    defined(dp[0])[j] = j;
+  }
 
   for (let i = 1; i <= m; i++) {
     for (let j = 1; j <= n; j++) {

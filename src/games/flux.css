@@ -25,13 +25,13 @@
 @keyframes golden-shimmer {
   0%,
   100% {
-    outline-color: rgb(255 255 255 / 0.6);
     filter: drop-shadow(0 0 8px rgb(255 255 255 / 0.4));
+    outline-color: rgb(255 255 255 / 0.6);
   }
 
   50% {
-    outline-color: rgb(255 255 255 / 1);
     filter: drop-shadow(0 0 14px rgb(255 255 255 / 0.7));
+    outline-color: rgb(255 255 255 / 1);
   }
 }
 
@@ -217,21 +217,25 @@
       opacity: 0;
     }
   }
+
   @keyframes burst-right {
     to {
       opacity: 0;
     }
   }
+
   @keyframes crack-split {
     to {
       opacity: 0;
     }
   }
+
   @keyframes dissolve {
     to {
       opacity: 0;
     }
   }
+
   @keyframes explode {
     to {
       opacity: 0;
@@ -278,64 +282,72 @@
   flex-direction: column;
   gap: 0.75rem;
   align-items: center;
+
   padding-top: 0.5rem;
 }
 
 /* Focal zone — gives the shape a stage */
 .shape-stage {
+  position: relative;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 9rem;
-  height: 9rem;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--ctp-mantle) 60%, transparent);
+
+  width: 4rem;
+  height: 4rem;
   border: 1px solid color-mix(in srgb, var(--ctp-surface1) 30%, transparent);
-  position: relative;
+  border-radius: 50%;
+
+  background: color-mix(in srgb, var(--ctp-mantle) 60%, transparent);
+
+  animation: stimulus-enter var(--dur-200) cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* ========== Timer ring ========== */
 
 .timer-ring {
   position: relative;
-  width: 6rem;
-  height: 6rem;
-}
+  width: 4rem;
+  height: 4rem;
 
-.timer-ring svg {
+& svg {
   transform: rotate(-90deg);
 }
 
-.timer-ring circle {
+& circle {
   fill: none;
-  stroke-width: 4;
   stroke-linecap: round;
+  stroke-width: 4;
   transition: stroke var(--dur-250) ease;
 }
 
-.timer-ring .track {
+& .track {
   stroke: var(--ctp-surface1);
 }
 
-.timer-ring .progress {
+& .progress {
   stroke: var(--ctp-overlay0);
 }
 
-.timer-ring.low .progress {
+&.low .progress {
   stroke: var(--ctp-red);
 }
 
-.timer-ring.climax .progress {
+&.climax .progress {
   stroke: var(--ctp-red);
   animation: timer-pulse var(--dur-1000) ease infinite;
+}
 }
 
 .timer-text {
   position: absolute;
   inset: 0;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
   font-size: 1.25rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -350,21 +362,24 @@
   color: var(--ctp-subtext0);
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  transition: color var(--dur-250) ease;
-}
 
-.rule-cue.not-active {
+  transition: color var(--dur-250) ease;
+
+&.not-active {
+  padding: 0 0.5rem;
+  border-radius: 4px;
   color: var(--ctp-mauve);
   background: color-mix(in srgb, var(--ctp-mauve) 10%, transparent);
-  padding: 0.125rem 0.5rem;
-  border-radius: 4px;
+}
 }
 
 /* ========== Switch overlay ========== */
 
 .switch-label {
   pointer-events: none;
+
   position: absolute;
+
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--ctp-mauve);
@@ -372,27 +387,30 @@
 
 .switch-ring {
   pointer-events: none;
+
   position: absolute;
+
   width: 3rem;
   height: 3rem;
   border: 2px solid var(--ctp-mauve);
   border-radius: 50%;
+
   animation: switch-shockwave var(--dur-350) ease forwards;
 }
 
 /* ========== Shape (stimulus) ========== */
 
-.shape-stage {
-  animation: stimulus-enter var(--dur-200) cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
 .shape {
   position: relative;
+
   display: block;
-  transition: transform var(--dur-150) ease;
+
   box-sizing: border-box;
+
   /* Subtle 3D depth on all shapes */
   filter: drop-shadow(0 2px 4px rgb(0 0 0 / 0.25));
+
+  transition: transform var(--dur-150) ease;
 }
 
 /* Size — optically corrected so all shapes look equally big/small.
@@ -401,26 +419,36 @@
  * Diamond (rotated square) sized so diagonal matches circle diameter.
  * Pill inherits height, width set by aspect-ratio. */
 .shape-big {
-  width: 4.5rem;
-  height: 4.5rem;
+  width: 4rem;
+  height: 4rem;
 }
 
 .shape-small {
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 3rem;
+  height: 3rem;
 }
 
-/* Optical corrections per shape form (big) */
-.form-circle.shape-big { width: 5rem; height: 5rem; }          /* +11%: circle looks smaller */
-.form-triangle.shape-big { width: 5.8rem; height: 5.8rem; }    /* +29%: triangle has lowest fill */
-.form-diamond.shape-big { width: 3.8rem; height: 3.8rem; }     /* diagonal ≈ 5.4rem */
-.form-blob.shape-big { width: 5rem; height: 5rem; }            /* ≈ circle */
+/* Optical corrections per shape form (big) — +11% circle, +29% triangle, diamond diagonal ≈ 5.4rem, blob ≈ circle */
+.form-circle.shape-big,
+.form-triangle.shape-big,
+.form-diamond.shape-big,
+.form-blob.shape-big {
+  width: 4rem;
+  height: 4rem;
+}
 
 /* Optical corrections per shape form (small) */
-.form-circle.shape-small { width: 2.8rem; height: 2.8rem; }
-.form-triangle.shape-small { width: 3.2rem; height: 3.2rem; }
-.form-diamond.shape-small { width: 2.1rem; height: 2.1rem; }
-.form-blob.shape-small { width: 2.8rem; height: 2.8rem; }
+.form-circle.shape-small,
+.form-triangle.shape-small,
+.form-blob.shape-small {
+  width: 3rem;
+  height: 3rem;
+}
+
+.form-diamond.shape-small {
+  width: 1.5rem;
+  height: 1.5rem;
+}
 
 /* No-go: dual — two small shapes side by side */
 .shape-dual {
@@ -441,17 +469,17 @@
  *   big:   circle 5rem → area 19.6rem² → pill h = √(19.6/1.785) = 3.3rem
  *   small: circle 2.8rem → area 6.2rem² → pill h = √(6.2/1.785) = 1.9rem */
 .form-pill {
-  border-radius: 9999px;
-  width: auto;
   aspect-ratio: 2 / 1;
+  width: auto;
+  border-radius: 9999px;
+
+&.shape-big {
+  height: 3.5rem;
 }
 
-.form-pill.shape-big {
-  height: 3.3rem;
+&.shape-small {
+  height: 1.5rem;
 }
-
-.form-pill.shape-small {
-  height: 1.9rem;
 }
 
 .form-diamond {
@@ -470,6 +498,7 @@
   border: none;
   background: color-mix(in srgb, var(--shape-color) 25%, transparent);
   filter: drop-shadow(0 0 0 var(--shape-color));
+
   /* Layered drop-shadows to simulate a thick border */
   filter:
     drop-shadow(0 0 1px var(--shape-color))
@@ -512,23 +541,23 @@
 /* Fill */
 .fill-solid {
   background: var(--shape-color);
-  box-shadow: inset 0 -3px 6px color-mix(in srgb, black 20%, transparent),
-              inset 0 2px 4px color-mix(in srgb, white 15%, transparent);
+  box-shadow: inset 0 -3px 6px color-mix(in srgb, #000 20%, transparent),
+              inset 0 2px 4px color-mix(in srgb, #fff 15%, transparent);
 }
 
 .fill-hollow {
+  border: 4px solid var(--shape-color);
   background: color-mix(in srgb, var(--shape-color) 15%, transparent);
-  border: 5px solid var(--shape-color);
   box-shadow: inset 0 0 8px color-mix(in srgb, var(--shape-color) 25%, transparent);
 }
 
 .fill-striped {
+  border: 2px solid color-mix(in srgb, var(--shape-color) 50%, transparent);
   background: repeating-linear-gradient(
     -45deg,
     var(--shape-color) 0 5px,
     color-mix(in srgb, var(--shape-color) 30%, var(--ctp-base)) 5px 12px
   );
-  border: 2px solid color-mix(in srgb, var(--shape-color) 50%, transparent);
 }
 
 /* Golden — scaled up + bright neutral border + pulse.
@@ -536,9 +565,11 @@
  * Scale boost (1.15×) makes it immediately noticeable. */
 .golden {
   transform: scale(1.15);
+
+  filter: drop-shadow(0 0 10px rgb(255 255 255 / 0.6));
   outline: 4px solid rgb(255 255 255 / 0.85);
   outline-offset: 5px;
-  filter: drop-shadow(0 0 10px rgb(255 255 255 / 0.6));
+
   animation: golden-shimmer 800ms ease infinite;
 }
 
@@ -546,11 +577,14 @@
 
 .streak-display {
   display: flex;
-  align-items: center;
   gap: 0.25rem;
-  height: 2rem;
+  align-items: center;
+
+  height: 1.5rem;
+
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+
   transition:
     color var(--dur-150) ease,
     text-shadow var(--dur-150) ease;
@@ -578,23 +612,28 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.75rem;
+
   width: 100%;
-  max-width: 340px;
+  max-width: 320px;
   padding: 0 0.5rem;
 }
 
 .flux-btn {
   cursor: pointer;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem 1.25rem;
+
+  padding: 1rem;
   border: 2px solid var(--ctp-surface2);
   border-radius: 12px;
+
   background: var(--ctp-surface0);
   box-shadow:
     var(--ctp-shadow),
-    inset 0 1px 0 color-mix(in srgb, white 5%, transparent);
+    inset 0 1px 0 color-mix(in srgb, #fff 5%, transparent);
+
   transition:
     border-color var(--dur-150) ease,
     background-color var(--dur-150) ease,
@@ -606,7 +645,7 @@
     border-color: var(--game-accent, var(--ctp-red));
     box-shadow:
       var(--ctp-shadow-lg),
-      inset 0 1px 0 color-mix(in srgb, white 5%, transparent);
+      inset 0 1px 0 color-mix(in srgb, #fff 5%, transparent);
   }
 
   &:active {
@@ -621,10 +660,11 @@
 }
 
 .btn-label {
-  font-size: 1.1rem;
+  font-size: 1.125rem;
   font-weight: 700;
-  letter-spacing: 0.02em;
   color: var(--ctp-text);
+  letter-spacing: 0.025em;
+
   transition: color var(--dur-150) ease;
 }
 
@@ -640,9 +680,9 @@
   }
 
   &.correct-golden {
+    font-size: 1.5rem;
+    font-weight: 700;
     color: var(--ctp-text);
-    font-size: 1.4rem;
-    font-weight: 800;
     letter-spacing: 0.05em;
   }
 
@@ -656,12 +696,15 @@
 .score-display {
   padding: 0.25rem 0.75rem;
   border-radius: 6px;
+
   font-size: 1rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: var(--ctp-text);
+
   background: var(--ctp-surface0);
   box-shadow: var(--ctp-shadow);
+
   transition:
     color var(--dur-250) ease,
     background-color var(--dur-250) ease;
@@ -675,10 +718,12 @@
 
   & .final-score {
     margin-bottom: 0.5rem;
+
     font-size: 2.5rem;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     color: var(--ctp-green);
+
     animation: fade-in-up var(--dur-350) ease both;
   }
 
@@ -687,7 +732,8 @@
     font-weight: 700;
     color: var(--ctp-yellow);
     text-transform: uppercase;
-    letter-spacing: 0.15em;
+    letter-spacing: 0.1em;
+
     animation: fade-in-up var(--dur-350) ease var(--dur-100) both;
   }
 
@@ -705,15 +751,17 @@
 
   & .peak-streak {
     margin-top: 0.5rem;
+
     font-size: 0.875rem;
     font-weight: 600;
     color: var(--ctp-subtext0);
+
     animation: fade-in-up var(--dur-350) ease var(--dur-150) both;
   }
 
   & .accuracy {
     font-size: 0.875rem;
-    color: var(--ctp-subtext1);
+    color: var(--ctp-subtext0);
     animation: fade-in-up var(--dur-350) ease var(--dur-150) both;
   }
 
@@ -726,18 +774,23 @@
 
   & button {
     cursor: pointer;
+
     display: inline-flex;
     gap: 0.5rem;
     align-items: center;
+
     margin-top: 1rem;
     padding: 0.75rem 2rem;
     border: 2px solid transparent;
     border-radius: 6px;
+
     font-size: 1rem;
     font-weight: 600;
     color: var(--ctp-mantle);
+
     background: var(--game-accent, var(--ctp-red));
     box-shadow: var(--ctp-shadow);
+
     transition:
       box-shadow var(--dur-150) ease,
       transform var(--dur-100) ease;
@@ -781,31 +834,33 @@
 }
 
 .particle {
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
   will-change: transform, opacity;
-}
 
-.particle:nth-child(1) {
+  position: absolute;
+
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+
+&:nth-child(1) {
   animation: particle-1 400ms ease forwards;
 }
 
-.particle:nth-child(2) {
+&:nth-child(2) {
   animation: particle-2 400ms ease forwards;
 }
 
-.particle:nth-child(3) {
+&:nth-child(3) {
   animation: particle-3 400ms ease forwards;
 }
 
-.particle:nth-child(4) {
+&:nth-child(4) {
   animation: particle-4 400ms ease forwards;
 }
 
-.particle:nth-child(5) {
+&:nth-child(5) {
   animation: particle-5 400ms ease forwards;
+}
 }
 
 /* ========== Juice classes ========== */

@@ -5,21 +5,24 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:server": "bun run build && bun server/build.ts",
+    "build:linux": "bun run build && bun server/build.ts brainbout-linux-amd64",
+    "build:windows": "bun run build && bun server/build.ts brainbout-windows-amd64.exe",
+    "build:android": "bun run build && rm -rf android/app/src/main/assets && mkdir -p android/app/src/main/assets && cp -r dist/. android/app/src/main/assets/ && cd android && ./gradlew assembleDebug",
     "preview": "vite preview",
     "test": "bun test",
     "test:watch": "bun test --watch",
-    "lint": "biome lint src/ test/ scripts/",
+    "check": "biome check",
+    "check:fix": "biome check --write",
+    "lint": "bunx tsc --noEmit && bun run check && bun run lint:css && bun run lint:html && bun run lint:kt",
     "lint:css": "stylelint \"src/**/*.css\"",
-    "format": "biome format --write .",
-    "format:check": "biome format .",
+    "lint:html": "superhtml check index.html games/*.html",
+    "lint:kt": "ktlint \"android/**/*.kt\"",
+    "clean": "rm -rf dist brainbout brainbout-linux-amd64 brainbout-windows-amd64.exe brainbout.apk",
     "screenshot": "bun scripts/screenshot.ts",
-    "readme": "bun scripts/readme-stats.ts",
-    "download:dict": "bun scripts/download-dictionaries.ts"
+    "download:dict": "bun scripts/download-dictionaries.ts",
+    "gen:icons": "bun scripts/gen-icons.ts"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
     "@lichess-org/chessground": "^10.0.2",
     "chessops": "^0.15.0",
@@ -28,7 +31,6 @@
   "devDependencies": {
     "@biomejs/biome": "^2.4.15",
     "@happy-dom/global-registrator": "^20.9.0",
-    "@playwright/test": "^1.58.2",
     "bun-types": "^1.3.14",
     "lefthook": "^2.1.6",
     "lightningcss": "^1.32.0",
@@ -45,5 +47,6 @@
     "stylelint-value-no-unknown-custom-properties": "^6.1.1",
     "typescript": "^5.9.3",
     "vite": "^7.3.1"
-  }
+  },
+  "license": "GPL-3.0"
 }

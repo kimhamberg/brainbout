@@ -1,13 +1,12 @@
-
-import { describe, it, expect, beforeEach } from "bun:test";
+import { beforeEach, describe, expect, it } from "bun:test";
 import {
-  getStage,
-  getHistory,
-  recordResult,
   advance,
-  retreat,
-  readiness,
+  getHistory,
+  getStage,
   MAX_STAGE,
+  readiness,
+  recordResult,
+  retreat,
 } from "../src/shared/stages";
 
 beforeEach(() => {
@@ -78,7 +77,9 @@ describe("readiness", () => {
   });
 
   it("returns green when threshold met over 5 sessions", () => {
-    for (let i = 0; i < 5; i++) { recordResult("flux", 0.85); }
+    for (let i = 0; i < 5; i++) {
+      recordResult("flux", 0.85);
+    }
     expect(readiness("flux", 0.8)).toBe("green");
   });
 
@@ -95,7 +96,9 @@ describe("readiness", () => {
   it("returns grey at max stage", () => {
     advance("flux");
     advance("flux");
-    for (let i = 0; i < 5; i++) { recordResult("flux", 0.95); }
+    for (let i = 0; i < 5; i++) {
+      recordResult("flux", 0.95);
+    }
     expect(readiness("flux", 0.8)).toBe("grey");
   });
 });

@@ -1,17 +1,16 @@
-
-import { describe, it, expect, beforeEach } from "bun:test";
+import { beforeEach, describe, expect, it } from "bun:test";
 import {
-  GAMES,
-  recordSessionScore,
   completeSession,
+  GAMES,
   getBest,
-  getTodayBest,
-  getSessionsToday,
-  getTotalSessions,
-  getStreak,
-  todayString,
-  recordCheckmate,
   getCheckmates,
+  getSessionsToday,
+  getStreak,
+  getTodayBest,
+  getTotalSessions,
+  recordCheckmate,
+  recordSessionScore,
+  todayString,
 } from "../src/shared/progress";
 
 beforeEach(() => {

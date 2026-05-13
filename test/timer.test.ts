@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, jest } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, jest } from "bun:test";
 import { createTimer } from "../src/shared/timer";
 
 beforeEach(() => {

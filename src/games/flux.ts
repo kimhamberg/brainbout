@@ -1,30 +1,33 @@
+import { mountAppIcon } from "../shared/icons";
+import { recordSessionScore } from "../shared/progress";
+import * as sound from "../shared/sounds";
+import { getStage, recordResult } from "../shared/stages";
 import { initTheme, wireToggle } from "../shared/theme";
 import { createTimer } from "../shared/timer";
-import { recordSessionScore } from "../shared/progress";
-import { getStage, recordResult } from "../shared/stages";
-import * as sound from "../shared/sounds";
 import {
-  type FluxState,
-  type Trial,
-  type Rule,
   type ButtonSide,
-  DURATION,
-  createFluxState,
-  generateTrial,
-  evaluateResponse,
-  updateAdaptation,
   bpmToMs,
+  createFluxState,
+  DURATION,
+  evaluateResponse,
+  type FluxState,
+  generateTrial,
   getMultiplier,
-  getStreakLabel,
   getRuleLabels,
   getSessionAct,
+  getStreakLabel,
+  type Rule,
+  type Trial,
+  updateAdaptation,
 } from "./flux-engine";
 
 /* ---------- DOM ---------- */
 
 function getEl(id: string): HTMLElement {
   const el = document.getElementById(id);
-  if (el === null) { throw new Error(`Missing #${id} element`); }
+  if (el === null) {
+    throw new Error(`Missing #${id} element`);
+  }
   return el;
 }
 const game = getEl("game");
@@ -58,7 +61,9 @@ function shapeClasses(trial: Trial, sizeOverride?: string): string {
   classes.push(`form-${trial.shape}`);
   classes.push(`color-${trial.color}`);
   classes.push(`fill-${trial.fill}`);
-  if (trial.isGolden) { classes.push("golden"); }
+  if (trial.isGolden) {
+    classes.push("golden");
+  }
   return classes.join(" ");
 }
 
@@ -72,27 +77,36 @@ function shapeHtml(trial: Trial): string {
 }
 
 function streakHtml(): string {
-  if (state.streak < 3) { return ""; }
+  if (state.streak < 3) {
+    return "";
+  }
   const label = getStreakLabel(state.streak);
   const mult = getMultiplier(state.streak);
   return `<div class="streak-display streak-${label}">x${String(mult)} ${label}</div>`;
 }
 
 function renderPlaying(): void {
-  if (!currentTrial) { return; }
+  if (!currentTrial) {
+    return;
+  }
 
   const [leftLabel, rightLabel] = getRuleLabels(trialRule, trialIsNot);
   const act = getSessionAct(currentRemaining);
-  const ruleText = trialIsNot ? `NOT ${trialRule.toUpperCase()}` : trialRule.toUpperCase();
+  const ruleText = trialIsNot
+    ? `NOT ${trialRule.toUpperCase()}`
+    : trialRule.toUpperCase();
   const ruleCueClass = trialIsNot ? "rule-cue not-active" : "rule-cue";
 
   const fraction = currentRemaining / DURATION;
   const offset = RING_CIRCUMFERENCE * (1 - fraction);
-  const ringClass = act === "climax" ? "timer-ring climax" : currentRemaining <= 15 ? "timer-ring low" : "timer-ring";
+  const ringClass =
+    act === "climax"
+      ? "timer-ring climax"
+      : currentRemaining <= 15
+        ? "timer-ring low"
+        : "timer-ring";
 
-  const switchHtml = ruleJustSwitched
-    ? `<div class="switch-ring"></div>`
-    : "";
+  const switchHtml = ruleJustSwitched ? `<div class="switch-ring"></div>` : "";
 
   game.innerHTML = `
     <div class="${ringClass}">
@@ -159,7 +173,11 @@ function showFeedback(correct: boolean, message: string, golden = false): void {
   }
 }
 
-function applyJuice(correct: boolean, side: ButtonSide | null, isNoGo: boolean): void {
+function applyJuice(
+  correct: boolean,
+  side: ButtonSide | null,
+  isNoGo: boolean,
+): void {
   if (isNoGo) {
     if (correct) {
       game.classList.add("juice-nogo-correct");
@@ -167,7 +185,9 @@ function applyJuice(correct: boolean, side: ButtonSide | null, isNoGo: boolean):
       game.classList.add("juice-nogo-fail");
     }
   } else if (correct && side) {
-    game.classList.add(side === "left" ? "juice-correct-left" : "juice-correct-right");
+    game.classList.add(
+      side === "left" ? "juice-correct-left" : "juice-correct-right",
+    );
     spawnParticles("var(--ctp-green)");
   } else {
     game.classList.add("juice-wrong");
@@ -189,7 +209,9 @@ function applyJuice(correct: boolean, side: ButtonSide | null, isNoGo: boolean):
 /* ---------- response handling ---------- */
 
 function handleResponse(pressed: ButtonSide | null): void {
-  if (gameOver || inputLocked || !currentTrial) { return; }
+  if (gameOver || inputLocked || !currentTrial) {
+    return;
+  }
   inputLocked = true;
   responded = true;
 
@@ -198,7 +220,13 @@ function handleResponse(pressed: ButtonSide | null): void {
     trialTimeout = null;
   }
 
-  const result = evaluateResponse(currentTrial, trialRule, trialIsNot, state.streak, pressed);
+  const result = evaluateResponse(
+    currentTrial,
+    trialRule,
+    trialIsNot,
+    state.streak,
+    pressed,
+  );
   state.score += result.totalPoints;
   totalTrials++;
 
@@ -211,9 +239,15 @@ function handleResponse(pressed: ButtonSide | null): void {
     } else {
       sound.playCorrectBurst();
     }
-    showFeedback(true, result.feedback || `+${String(result.totalPoints)}`, result.isGolden === true);
+    showFeedback(
+      true,
+      result.feedback || `+${String(result.totalPoints)}`,
+      result.isGolden === true,
+    );
     updateAdaptation(state, true);
-    if (state.streak >= 3) { sound.playStreakUp(); }
+    if (state.streak >= 3) {
+      sound.playStreakUp();
+    }
   } else {
     if (result.noGoFail) {
       sound.playNogoFail();
@@ -228,12 +262,16 @@ function handleResponse(pressed: ButtonSide | null): void {
 
   // Update score display
   const scoreEl = game.querySelector(".score-display");
-  if (scoreEl) { scoreEl.textContent = `Score: ${String(state.score)}`; }
+  if (scoreEl) {
+    scoreEl.textContent = `Score: ${String(state.score)}`;
+  }
 
   // Advance to next trial after brief feedback delay
   const feedbackMs = result.correct ? 250 : 450;
   advanceTimeout = setTimeout(() => {
-    if (!gameOver) { nextTrial(); }
+    if (!gameOver) {
+      nextTrial();
+    }
   }, feedbackMs);
 }
 
@@ -242,7 +280,9 @@ function handleResponse(pressed: ButtonSide | null): void {
 let advanceTimeout: ReturnType<typeof setTimeout> | null = null;
 
 function nextTrial(): void {
-  if (gameOver) { return; }
+  if (gameOver) {
+    return;
+  }
 
   // Clear stale juice classes so the new shape doesn't inherit exit animations
   game.classList.remove(
@@ -275,7 +315,9 @@ function nextTrial(): void {
   renderPlaying();
 
   // Timeout: if no response within the beat window, count as miss
-  if (trialTimeout !== null) { clearTimeout(trialTimeout); }
+  if (trialTimeout !== null) {
+    clearTimeout(trialTimeout);
+  }
   trialTimeout = setTimeout(() => {
     if (!(responded || gameOver)) {
       handleResponse(null);
@@ -300,7 +342,9 @@ function updateTimerRing(remaining: number): void {
   currentRemaining = remaining;
   const act = getSessionAct(remaining);
 
-  const progress = game.querySelector<SVGCircleElement>(".timer-ring .progress");
+  const progress = game.querySelector<SVGCircleElement>(
+    ".timer-ring .progress",
+  );
   const text = game.querySelector(".timer-text");
   const ring = game.querySelector(".timer-ring");
 
@@ -343,7 +387,9 @@ function animateCountUp(el: HTMLElement, target: number): void {
     } else {
       // Add pulse to Play Again button
       const btn = game.querySelector("#again-btn");
-      if (btn) { btn.classList.add("pulse"); }
+      if (btn) {
+        btn.classList.add("pulse");
+      }
     }
   }
   requestAnimationFrame(frame);
@@ -351,7 +397,9 @@ function animateCountUp(el: HTMLElement, target: number): void {
 
 function getBest(key: string): number | null {
   const val = localStorage.getItem(`brainbout:${key}:best`);
-  if (val === null) { return null; }
+  if (val === null) {
+    return null;
+  }
   const n = Number.parseInt(val, 10);
   return Number.isNaN(n) ? null : n;
 }
@@ -400,7 +448,9 @@ function showResult(): void {
   `;
 
   const scoreEl = game.querySelector<HTMLElement>(".final-score");
-  if (scoreEl) { animateCountUp(scoreEl, finalScore); }
+  if (scoreEl) {
+    animateCountUp(scoreEl, finalScore);
+  }
 
   sound.playVictory();
 }
@@ -418,7 +468,9 @@ function startGame(): void {
   correctTrials = 0;
   responded = false;
 
-  if (timerRef !== null) { timerRef.stop(); }
+  if (timerRef !== null) {
+    timerRef.stop();
+  }
   stopTrials();
 
   timerRef = createTimer({
@@ -440,11 +492,15 @@ function startGame(): void {
 
 game.addEventListener("click", (e) => {
   const target = (e.target as HTMLElement).closest<HTMLElement>("button");
-  if (!target) { return; }
+  if (!target) {
+    return;
+  }
 
   if (target.classList.contains("flux-btn")) {
     const side = target.dataset["side"] as ButtonSide | undefined;
-    if (side) { handleResponse(side); }
+    if (side) {
+      handleResponse(side);
+    }
   } else if (target.id === "again-btn") {
     startGame();
   } else if (target.id === "back-btn") {
@@ -453,7 +509,9 @@ game.addEventListener("click", (e) => {
 });
 
 document.addEventListener("keydown", (e) => {
-  if (gameOver || inputLocked) { return; }
+  if (gameOver || inputLocked) {
+    return;
+  }
   if (e.key === "ArrowLeft") {
     e.preventDefault();
     handleResponse("left");
@@ -468,3 +526,4 @@ document.addEventListener("keydown", (e) => {
 startGame();
 initTheme();
 wireToggle();
+mountAppIcon("flux", "var(--ctp-red)");

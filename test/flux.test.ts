@@ -1,24 +1,23 @@
-
-import { describe, it, expect } from "bun:test";
-import { defined } from "../src/shared/assert";
-import {
-  STAGE_PARAMS,
-  WARM_UP_TRIALS,
-  DURATION,
-  STREAK_THRESHOLDS,
-  GOLDEN_BASE_POINTS,
-  BPM_UP,
-  BPM_DOWN,
-  createFluxState,
-  generateTrial,
-  evaluateResponse,
-  getMultiplier,
-  updateAdaptation,
-  bpmToMs,
-  getSessionAct,
-  type ButtonSide,
-} from "../src/games/flux-engine";
+import { describe, expect, it } from "bun:test";
 import type { ShapeColor, ShapeForm, Trial } from "../src/games/flux-engine";
+import {
+  BPM_DOWN,
+  BPM_UP,
+  type ButtonSide,
+  bpmToMs,
+  createFluxState,
+  DURATION,
+  evaluateResponse,
+  GOLDEN_BASE_POINTS,
+  generateTrial,
+  getMultiplier,
+  getSessionAct,
+  STAGE_PARAMS,
+  STREAK_THRESHOLDS,
+  updateAdaptation,
+  WARM_UP_TRIALS,
+} from "../src/games/flux-engine";
+import { defined } from "../src/shared/assert";
 
 describe("constants", () => {
   it("DURATION is 75 seconds", () => {
@@ -42,7 +41,7 @@ describe("STAGE_PARAMS", () => {
     expect(p.rules).toEqual(["color", "shape", "size"]);
     expect(p.switchMin).toBe(5);
     expect(p.switchMax).toBe(7);
-    expect(p.noGoRate).toBe(0.10);
+    expect(p.noGoRate).toBe(0.1);
     expect(p.goldenRate).toBe(0.12);
   });
 
@@ -54,7 +53,7 @@ describe("STAGE_PARAMS", () => {
     expect(p.switchMin).toBe(4);
     expect(p.switchMax).toBe(6);
     expect(p.noGoRate).toBe(0.15);
-    expect(p.goldenRate).toBe(0.10);
+    expect(p.goldenRate).toBe(0.1);
   });
 
   it("stage 3: baseBpm 90, adds not variants", () => {
@@ -65,7 +64,7 @@ describe("STAGE_PARAMS", () => {
     expect(p.notAllowed).toBe(true);
     expect(p.switchMin).toBe(3);
     expect(p.switchMax).toBe(5);
-    expect(p.noGoRate).toBe(0.20);
+    expect(p.noGoRate).toBe(0.2);
     expect(p.goldenRate).toBe(0.08);
   });
 });
@@ -372,28 +371,58 @@ describe("evaluateResponse", () => {
 
   describe("COLOR rule", () => {
     it("warm (red) → left is correct", () => {
-      const r = evaluateResponse(goTrial({ color: "red" }), "color", false, 0, "left");
+      const r = evaluateResponse(
+        goTrial({ color: "red" }),
+        "color",
+        false,
+        0,
+        "left",
+      );
       expect(r.correct).toBe(true);
       expect(r.basePoints).toBe(1);
     });
 
     it("warm (peach) → left is correct", () => {
-      const r = evaluateResponse(goTrial({ color: "peach" }), "color", false, 0, "left");
+      const r = evaluateResponse(
+        goTrial({ color: "peach" }),
+        "color",
+        false,
+        0,
+        "left",
+      );
       expect(r.correct).toBe(true);
     });
 
     it("cool (blue) → right is correct", () => {
-      const r = evaluateResponse(goTrial({ color: "blue" }), "color", false, 0, "right");
+      const r = evaluateResponse(
+        goTrial({ color: "blue" }),
+        "color",
+        false,
+        0,
+        "right",
+      );
       expect(r.correct).toBe(true);
     });
 
     it("cool (lavender) → right is correct", () => {
-      const r = evaluateResponse(goTrial({ color: "lavender" }), "color", false, 0, "right");
+      const r = evaluateResponse(
+        goTrial({ color: "lavender" }),
+        "color",
+        false,
+        0,
+        "right",
+      );
       expect(r.correct).toBe(true);
     });
 
     it("warm → right is wrong", () => {
-      const r = evaluateResponse(goTrial({ color: "red" }), "color", false, 0, "right");
+      const r = evaluateResponse(
+        goTrial({ color: "red" }),
+        "color",
+        false,
+        0,
+        "right",
+      );
       expect(r.correct).toBe(false);
       expect(r.basePoints).toBe(-1);
     });
@@ -401,58 +430,118 @@ describe("evaluateResponse", () => {
 
   describe("SHAPE rule", () => {
     it("round (circle) → left is correct", () => {
-      const r = evaluateResponse(goTrial({ shape: "circle" }), "shape", false, 0, "left");
+      const r = evaluateResponse(
+        goTrial({ shape: "circle" }),
+        "shape",
+        false,
+        0,
+        "left",
+      );
       expect(r.correct).toBe(true);
     });
 
     it("round (pill) → left is correct", () => {
-      const r = evaluateResponse(goTrial({ shape: "pill" }), "shape", false, 0, "left");
+      const r = evaluateResponse(
+        goTrial({ shape: "pill" }),
+        "shape",
+        false,
+        0,
+        "left",
+      );
       expect(r.correct).toBe(true);
     });
 
     it("angular (diamond) → right is correct", () => {
-      const r = evaluateResponse(goTrial({ shape: "diamond" }), "shape", false, 0, "right");
+      const r = evaluateResponse(
+        goTrial({ shape: "diamond" }),
+        "shape",
+        false,
+        0,
+        "right",
+      );
       expect(r.correct).toBe(true);
     });
 
     it("angular (triangle) → right is correct", () => {
-      const r = evaluateResponse(goTrial({ shape: "triangle" }), "shape", false, 0, "right");
+      const r = evaluateResponse(
+        goTrial({ shape: "triangle" }),
+        "shape",
+        false,
+        0,
+        "right",
+      );
       expect(r.correct).toBe(true);
     });
   });
 
   describe("SIZE rule", () => {
     it("big → left is correct", () => {
-      const r = evaluateResponse(goTrial({ size: "big" }), "size", false, 0, "left");
+      const r = evaluateResponse(
+        goTrial({ size: "big" }),
+        "size",
+        false,
+        0,
+        "left",
+      );
       expect(r.correct).toBe(true);
     });
 
     it("small → right is correct", () => {
-      const r = evaluateResponse(goTrial({ size: "small" }), "size", false, 0, "right");
+      const r = evaluateResponse(
+        goTrial({ size: "small" }),
+        "size",
+        false,
+        0,
+        "right",
+      );
       expect(r.correct).toBe(true);
     });
   });
 
   describe("FILL rule", () => {
     it("solid → left is correct", () => {
-      const r = evaluateResponse(goTrial({ fill: "solid" }), "fill", false, 0, "left");
+      const r = evaluateResponse(
+        goTrial({ fill: "solid" }),
+        "fill",
+        false,
+        0,
+        "left",
+      );
       expect(r.correct).toBe(true);
     });
 
     it("hollow → right is correct", () => {
-      const r = evaluateResponse(goTrial({ fill: "hollow" }), "fill", false, 0, "right");
+      const r = evaluateResponse(
+        goTrial({ fill: "hollow" }),
+        "fill",
+        false,
+        0,
+        "right",
+      );
       expect(r.correct).toBe(true);
     });
   });
 
   describe("NOT rule", () => {
     it("NOT COLOR: warm → right (inverted)", () => {
-      const r = evaluateResponse(goTrial({ color: "red" }), "color", true, 0, "right");
+      const r = evaluateResponse(
+        goTrial({ color: "red" }),
+        "color",
+        true,
+        0,
+        "right",
+      );
       expect(r.correct).toBe(true);
     });
 
     it("NOT COLOR: cool → left (inverted)", () => {
-      const r = evaluateResponse(goTrial({ color: "blue" }), "color", true, 0, "left");
+      const r = evaluateResponse(
+        goTrial({ color: "blue" }),
+        "color",
+        true,
+        0,
+        "left",
+      );
       expect(r.correct).toBe(true);
     });
   });
@@ -491,7 +580,13 @@ describe("evaluateResponse", () => {
 
   describe("multiplier", () => {
     it("applies streak multiplier to base points", () => {
-      const r = evaluateResponse(goTrial({ color: "red" }), "color", false, 5, "left"); // streak 5 = x2
+      const r = evaluateResponse(
+        goTrial({ color: "red" }),
+        "color",
+        false,
+        5,
+        "left",
+      ); // streak 5 = x2
       expect(r.totalPoints).toBe(2); // 1 * 2
     });
   });
@@ -531,7 +626,9 @@ describe("updateAdaptation", () => {
 
   it("tracks peakStreak", () => {
     const state = createFluxState(1);
-    for (let i = 0; i < 8; i++) { updateAdaptation(state, true); }
+    for (let i = 0; i < 8; i++) {
+      updateAdaptation(state, true);
+    }
     expect(state.peakStreak).toBe(8);
     updateAdaptation(state, false);
     expect(state.peakStreak).toBe(8); // preserved
@@ -607,11 +704,23 @@ describe("full session simulation", () => {
       const pressed: ButtonSide | null = trial.isNoGo
         ? null
         : (() => {
-            const leftResult = evaluateResponse(trial, rule, isNot, state.streak, "left");
+            const leftResult = evaluateResponse(
+              trial,
+              rule,
+              isNot,
+              state.streak,
+              "left",
+            );
             return (leftResult.correct ? "left" : "right") as ButtonSide;
           })();
 
-      const result = evaluateResponse(trial, rule, isNot, state.streak, pressed);
+      const result = evaluateResponse(
+        trial,
+        rule,
+        isNot,
+        state.streak,
+        pressed,
+      );
       expect(result.correct).toBe(true);
       score += result.totalPoints;
       updateAdaptation(state, true);

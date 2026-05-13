@@ -5,19 +5,20 @@ import "../shared/board-theme.css";
 
 import { Chessground } from "@lichess-org/chessground";
 import type { Api } from "@lichess-org/chessground/api";
-import type { Key, Dests } from "@lichess-org/chessground/types";
+import type { Dests, Key } from "@lichess-org/chessground/types";
 import { Chess } from "chessops/chess";
-import { parseFen, makeFen } from "chessops/fen";
-import { parseUci, makeSquare, parseSquare } from "chessops/util";
 import { chessgroundDests } from "chessops/compat";
+import { makeFen, parseFen } from "chessops/fen";
+import { makeSquare, parseSquare, parseUci } from "chessops/util";
 import { randomChess960 } from "../chess960";
+import { defined } from "../shared/assert";
 import { StockfishEngine } from "../shared/engine";
-import { computeThinkTime, eloToNodes } from "../shared/think-time";
-import { recordSessionScore, recordCheckmate } from "../shared/progress";
+import { mountAppIcon } from "../shared/icons";
+import { recordCheckmate, recordSessionScore } from "../shared/progress";
+import * as sound from "../shared/sounds";
 import { getStage, recordResult } from "../shared/stages";
 import { initTheme, wireToggle } from "../shared/theme";
-import * as sound from "../shared/sounds";
-import { defined } from "../shared/assert";
+import { computeThinkTime, eloToNodes } from "../shared/think-time";
 
 // --- Chess clock ---
 
@@ -86,7 +87,9 @@ const INITIAL_MS = 15 * 60 * 1000;
 const INCREMENT_MS = 10 * 1000;
 function getEl(id: string): HTMLElement {
   const el = document.getElementById(id);
-  if (el === null) { throw new Error(`Missing #${id} element`); }
+  if (el === null) {
+    throw new Error(`Missing #${id} element`);
+  }
   return el;
 }
 const game = getEl("game");
@@ -120,7 +123,9 @@ function isThreefoldRepetition(): boolean {
   const key = positionKey();
   let count = 0;
   for (const k of positionHistory) {
-    if (k === key && ++count >= 3) { return true; }
+    if (k === key && ++count >= 3) {
+      return true;
+    }
   }
   return false;
 }
@@ -132,7 +137,9 @@ function isLive(): boolean {
 }
 
 function showPly(ply: number): void {
-  if (!api || ply < 0 || ply >= fenHistory.length) { return; }
+  if (!api || ply < 0 || ply >= fenHistory.length) {
+    return;
+  }
   viewPly = ply;
   const live = isLive();
   api.set({
@@ -159,8 +166,12 @@ function showPly(ply: number): void {
 function updateNavButtons(): void {
   const prev = document.querySelector("#hist-prev") as HTMLButtonElement | null;
   const next = document.querySelector("#hist-next") as HTMLButtonElement | null;
-  if (prev) { prev.disabled = viewPly === 0; }
-  if (next) { next.disabled = isLive(); }
+  if (prev) {
+    prev.disabled = viewPly === 0;
+  }
+  if (next) {
+    next.disabled = isLive();
+  }
 }
 
 // --- Game actions (draw, takeback, resign) ---
@@ -182,19 +193,27 @@ function updateActionButtons(): void {
   const resign = document.querySelector(
     "#action-resign",
   ) as HTMLButtonElement | null;
-  if (draw) { draw.disabled = !isPlayerTurn() || offerPending || drawDeclined; }
+  if (draw) {
+    draw.disabled = !isPlayerTurn() || offerPending || drawDeclined;
+  }
   if (take) {
     take.disabled =
       !isPlayerTurn() || offerPending || takebackDeclined || moves.length < 2;
   }
-  if (resign) { resign.disabled = gameOver || offerPending; }
+  if (resign) {
+    resign.disabled = gameOver || offerPending;
+  }
 }
 
 function showOfferResult(btnId: string, accepted: boolean): void {
   const btn = document.getElementById(btnId);
-  if (!btn) { return; }
+  if (!btn) {
+    return;
+  }
   const label = btn.querySelector(".action-label");
-  if (!label) { return; }
+  if (!label) {
+    return;
+  }
   const original = label.textContent;
   label.textContent = accepted ? "Accepted" : "Declined";
   btn.classList.add(accepted ? "accepted" : "declined");
@@ -205,7 +224,9 @@ function showOfferResult(btnId: string, accepted: boolean): void {
 }
 
 function onResign(): void {
-  if (gameOver || offerPending) { return; }
+  if (gameOver || offerPending) {
+    return;
+  }
   clock.stop();
   engineClock.stop();
   gameOver = true;
@@ -213,7 +234,9 @@ function onResign(): void {
 }
 
 async function onDrawOffer(): Promise<void> {
-  if (!isPlayerTurn() || offerPending || drawDeclined) { return; }
+  if (!isPlayerTurn() || offerPending || drawDeclined) {
+    return;
+  }
   offerPending = true;
   updateActionButtons();
 
@@ -321,7 +344,9 @@ function showPromotionPicker(
   callback: (role: string) => void,
 ): void {
   const wrap = game.querySelector<HTMLElement>(".cg-wrap");
-  if (!wrap) { return; }
+  if (!wrap) {
+    return;
+  }
 
   const file = dest.charCodeAt(0) - 97; // 0-7
   const rank = Number(dest[1]); // 1-8
@@ -391,13 +416,19 @@ function finishGame(result: number, message: string): void {
     </div>
   `;
 
-  if (result === 1) { sound.playVictory(); }
-  else if (result === 0) { sound.playDefeat(); }
-  else { sound.playDraw(); }
+  if (result === 1) {
+    sound.playVictory();
+  } else if (result === 0) {
+    sound.playDefeat();
+  } else {
+    sound.playDraw();
+  }
 }
 
 function updateBoard(): void {
-  if (!api) { return; }
+  if (!api) {
+    return;
+  }
   api.set({
     fen: makeFen(pos.toSetup()),
     turnColor: pos.turn,
@@ -418,7 +449,9 @@ function checkGameEnd(): boolean {
     engineClock.stop();
     gameOver = true;
     const result = winner === playerColor ? 1 : 0;
-    if (result === 1) { recordCheckmate(engineElo); }
+    if (result === 1) {
+      recordCheckmate(engineElo);
+    }
     finishGame(
       result,
       winner === playerColor ? "Checkmate — you win!" : "Checkmate — you lose",
@@ -461,10 +494,14 @@ function dimClock(id: string, dim: boolean): void {
 }
 
 function onEngineMove(uci: string): void {
-  if (gameOver) { return; }
+  if (gameOver) {
+    return;
+  }
 
   const move = parseUci(uci);
-  if (!move) { return; }
+  if (!move) {
+    return;
+  }
 
   const from = "from" in move ? makeSquare(move.from) : makeSquare(move.to);
   const to = makeSquare(move.to);
@@ -477,15 +514,24 @@ function onEngineMove(uci: string): void {
   fenHistory.push(makeFen(pos.toSetup()));
   viewPly = fenHistory.length - 1;
 
-  if (wasLive && api) { api.move(from as Key, to as Key); }
+  if (wasLive && api) {
+    api.move(from as Key, to as Key);
+  }
   updateBoard();
   updateNavButtons();
 
-  if (isCapture) { sound.playCapture(); }
-  else { sound.playMove(); }
-  if (pos.isCheck()) { sound.playCheck(); }
+  if (isCapture) {
+    sound.playCapture();
+  } else {
+    sound.playMove();
+  }
+  if (pos.isCheck()) {
+    sound.playCheck();
+  }
 
-  if (checkGameEnd()) { return; }
+  if (checkGameEnd()) {
+    return;
+  }
 
   drawDeclined = false;
   takebackDeclined = false;
@@ -493,14 +539,15 @@ function onEngineMove(uci: string): void {
 
   clock.start();
 
-  // Execute queued premove
-  if (api?.playPremove() === true) {  }
+  api?.playPremove();
 }
 
 function commitPlayerMove(orig: string, dest: string, promoChar: string): void {
   const uci = orig + dest + promoChar;
   const move = parseUci(uci);
-  if (!(move && pos.isLegal(move))) { return; }
+  if (!(move && pos.isLegal(move))) {
+    return;
+  }
 
   const isCapture = pos.board.occupied.has(move.to);
   pos.play(move);
@@ -515,11 +562,18 @@ function commitPlayerMove(orig: string, dest: string, promoChar: string): void {
   updateNavButtons();
   updateActionButtons();
 
-  if (isCapture) { sound.playCapture(); }
-  else { sound.playMove(); }
-  if (pos.isCheck()) { sound.playCheck(); }
+  if (isCapture) {
+    sound.playCapture();
+  } else {
+    sound.playMove();
+  }
+  if (pos.isCheck()) {
+    sound.playCheck();
+  }
 
-  if (checkGameEnd()) { return; }
+  if (checkGameEnd()) {
+    return;
+  }
 
   // Switch clocks: player stops (already stopped above), engine starts
   dimClock("player-clock", true);
@@ -569,16 +623,20 @@ function commitPlayerMove(orig: string, dest: string, promoChar: string): void {
 }
 
 function onPlayerMove(orig: string, dest: string): void {
-  if (gameOver || !isLive()) { return; }
+  if (gameOver || !isLive()) {
+    return;
+  }
 
   // Detect promotion: pawn reaching the back rank
   const from = parseSquare(orig);
   const to = parseSquare(dest);
-  if (from === undefined || to === undefined) { return; }
+  if (from === undefined || to === undefined) {
+    return;
+  }
   const isPawn = pos.board.pawn.has(from);
   const backRank = pos.turn === "white" ? 7 : 0;
 
-  if (isPawn && to >> 3 === backRank) {
+  if (isPawn && Math.floor(to / 8) === backRank) {
     // Show promotion picker — clock keeps running for tension
     showPromotionPicker(orig, dest, (role) => {
       commitPlayerMove(orig, dest, defined(PROMO_CHARS[role]));
@@ -629,7 +687,9 @@ function renderGame(): void {
   `;
 
   const boardEl = game.querySelector<HTMLElement>(".crown-board");
-  if (!boardEl) { return; }
+  if (!boardEl) {
+    return;
+  }
 
   api = Chessground(boardEl, {
     fen: makeFen(pos.toSetup()),
@@ -650,10 +710,14 @@ function renderGame(): void {
   });
 
   document.querySelector("#hist-prev")?.addEventListener("click", () => {
-    if (viewPly > 0) { showPly(viewPly - 1); }
+    if (viewPly > 0) {
+      showPly(viewPly - 1);
+    }
   });
   document.querySelector("#hist-next")?.addEventListener("click", () => {
-    if (!isLive()) { showPly(viewPly + 1); }
+    if (!isLive()) {
+      showPly(viewPly + 1);
+    }
   });
   document.querySelector("#action-takeback")?.addEventListener("click", () => {
     void onTakeback();
@@ -665,7 +729,9 @@ function renderGame(): void {
 }
 
 function onHistoryKey(e: KeyboardEvent): void {
-  if (gameOver) { return; }
+  if (gameOver) {
+    return;
+  }
   if (e.key === "ArrowLeft" && viewPly > 0) {
     e.preventDefault();
     showPly(viewPly - 1);
@@ -750,3 +816,4 @@ void main();
 
 initTheme();
 wireToggle();
+mountAppIcon("crown", "var(--ctp-green)");

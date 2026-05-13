@@ -1,18 +1,19 @@
-import { initTheme, wireToggle } from "./shared/theme";
+import { getMasteredCount } from "./games/lex-srs";
 import { defined } from "./shared/assert";
+import { GAME_ICONS, mountHubIcon } from "./shared/icons";
 import {
+  completeSession,
   GAMES,
   type GameId,
-  todayString,
-  getStreak,
-  getSessionsToday,
-  getTotalSessions,
   getBest,
   getCheckmates,
-  completeSession,
+  getSessionsToday,
+  getStreak,
+  getTotalSessions,
+  todayString,
 } from "./shared/progress";
-import { getStage, readiness, advance, retreat } from "./shared/stages";
-import { getMasteredCount } from "./games/lex-srs";
+import { advance, getStage, readiness, retreat } from "./shared/stages";
+import { initTheme, wireToggle } from "./shared/theme";
 
 const GAME_LABELS: Record<string, string> = {
   crown: "Crown",
@@ -24,12 +25,6 @@ const GAME_URLS: Record<string, string> = {
   crown: "games/crown.html",
   flux: "games/flux.html",
   lex: "games/lex.html",
-};
-
-const GAME_ICONS: Record<string, string> = {
-  crown: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"/><path d="M5 21h14"/></svg>`,
-  flux: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3.7 7.8 12 12l8.3-4.2M3.7 16.2 12 12l8.3 4.2"/></svg>`,
-  lex: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>`,
 };
 
 const GAME_ACCENTS: Record<string, string> = {
@@ -91,7 +86,9 @@ const completedParam = params.get("completed");
 const stored = sessionStorage.getItem("brainbout:current-session");
 if (stored !== null) {
   for (const g of JSON.parse(stored) as string[]) {
-    if ((GAMES as readonly string[]).includes(g)) { session.add(g as GameId); }
+    if ((GAMES as readonly string[]).includes(g)) {
+      session.add(g as GameId);
+    }
   }
 }
 
@@ -122,7 +119,9 @@ if (session.size === GAMES.length) {
 
 function render(): void {
   const hub = document.querySelector("#hub");
-  if (!hub) { return; }
+  if (!hub) {
+    return;
+  }
 
   const today = todayString();
   const streak = getStreak(today);
@@ -209,7 +208,9 @@ function showStagePopover(chip: HTMLElement, game: string): void {
 
   const stage = getStage(game);
   const descriptions = STAGE_DESCRIPTIONS[game];
-  if (!descriptions) { return; }
+  if (!descriptions) {
+    return;
+  }
 
   const popover = document.createElement("div");
   popover.className = "stage-popover";
@@ -225,7 +226,9 @@ function showStagePopover(chip: HTMLElement, game: string): void {
   // Position relative to the chip
   const rect = chip.getBoundingClientRect();
   const hub = document.querySelector("#hub");
-  if (!hub) { return; }
+  if (!hub) {
+    return;
+  }
   const hubRect = hub.getBoundingClientRect();
 
   popover.style.top = `${String(rect.bottom - hubRect.top + 4)}px`;
@@ -299,11 +302,15 @@ document.querySelector("#hub")?.addEventListener("click", (e) => {
   }
 
   const card = target.closest<HTMLAnchorElement>("a.game-card");
-  if (!card) { return; }
+  if (!card) {
+    return;
+  }
 
   e.preventDefault();
   const href = card.getAttribute("href");
-  if (href === null || href === "") { return; }
+  if (href === null || href === "") {
+    return;
+  }
 
   // Tactile press feedback on the card
   card.classList.add("pressed");
@@ -326,3 +333,4 @@ document.querySelector("#hub")?.addEventListener("click", (e) => {
 
 initTheme();
 wireToggle();
+mountHubIcon();

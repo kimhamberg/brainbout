@@ -9,12 +9,14 @@ function getCtx(): AudioContext {
   return ctx;
 }
 
-async function fetchBuffer(name: string): Promise<AudioBuffer> {
+function fetchBuffer(name: string): Promise<AudioBuffer> {
   const inflight = loading.get(name);
-  if (inflight) { return inflight; }
+  if (inflight) {
+    return inflight;
+  }
   const promise = fetch(`${BASE}${name}.wav`)
-    .then(async (r) => r.arrayBuffer())
-    .then(async (data) => getCtx().decodeAudioData(data))
+    .then((r) => r.arrayBuffer())
+    .then((data) => getCtx().decodeAudioData(data))
     .then((buf) => {
       buffers.set(name, buf);
       return buf;
@@ -47,9 +49,13 @@ const ALL = [
 
 let preloaded = false;
 function preloadAll(): void {
-  if (preloaded) { return; }
+  if (preloaded) {
+    return;
+  }
   preloaded = true;
-  for (const n of ALL) { void fetchBuffer(n); }
+  for (const n of ALL) {
+    void fetchBuffer(n);
+  }
 }
 
 function play(name: string): void {
@@ -149,8 +155,9 @@ export function startBgm(): void {
   const buf = buffers.get("flux-bgm");
   if (!buf) {
     void fetchBuffer("flux-bgm").then((b) => {
-      if (bgmSource) { return; // already started by retry
-}
+      if (bgmSource) {
+        return; // already started by retry
+      }
       const src = actx.createBufferSource();
       src.buffer = b;
       const gain = actx.createGain();

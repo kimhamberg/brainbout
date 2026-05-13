@@ -1,17 +1,7 @@
-name: Update screenshot and README
+name: Update screenshot
 
 on:
   workflow_dispatch:
-  push:
-    branches: [master]
-    paths:
-      - "src/**"
-      - "index.html"
-      - "games/**"
-      - "test/**"
-      - "scripts/screenshot.ts"
-      - "scripts/readme-stats.ts"
-      - "README.md.tpl"
 
 jobs:
   screenshot:
@@ -26,14 +16,12 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bunx playwright install --with-deps chromium
       - run: bun run screenshot
-      - run: bun run readme
-      - run: bunx biome format --write README.md
 
-      - name: Push screenshot and README if changed
+      - name: Push screenshot if changed
         run: |
-          git diff --quiet docs/screenshot.png README.md && echo "No changes" && exit 0
+          git diff --quiet docs/screenshot.png && echo "No changes" && exit 0
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/screenshot.png README.md
-          git commit -m "docs: auto-update screenshot and README [skip ci]"
+          git add docs/screenshot.png
+          git commit -m "docs: update screenshot [skip ci]"
           git push origin master

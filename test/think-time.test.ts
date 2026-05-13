@@ -1,4 +1,4 @@
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { computeThinkTime, eloToNodes } from "../src/shared/think-time";
 
 describe("eloToNodes", () => {

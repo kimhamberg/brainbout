@@ -1,7 +1,5 @@
 node_modules/
-.venv/
 dist/
-server/web/
 *.local
 *.apk
 .claude/

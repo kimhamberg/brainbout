@@ -20,10 +20,14 @@ export function computeEvalSwing(prev: EngineInfo, curr: EngineInfo): number {
 
 export function parseInfoLine(line: string): EngineInfo | null {
   const depthMatch = /^info\s.*?\bdepth\s+(\d+)/u.exec(line);
-  if (!depthMatch) { return null; }
+  if (!depthMatch) {
+    return null;
+  }
 
   const scoreMatch = /score\s+(cp|mate)\s+(-?\d+)/u.exec(line);
-  if (!scoreMatch) { return null; }
+  if (!scoreMatch) {
+    return null;
+  }
 
   const pvMatch = /\bpv\s+(.+)$/u.exec(line);
   const pv = pvMatch ? defined(pvMatch[1]).trim().split(/\s+/u) : [];
@@ -51,7 +55,7 @@ export class StockfishEngine {
     return this.ready;
   }
 
-  public async init(elo = 1500): Promise<void> {
+  public init(elo = 1500): Promise<void> {
     const base = import.meta.env.BASE_URL;
     return new Promise((resolve) => {
       this.worker = new Worker(`${base}stockfish/stockfish-18-lite-single.js`);
@@ -91,8 +95,7 @@ export class StockfishEngine {
     const movesStr = moves.length > 0 ? ` moves ${moves.join(" ")}` : "";
     this.send(`position fen ${startFen}${movesStr}`);
     const nodes = options?.nodes ?? 0;
-    const searchCmd =
-      nodes > 0 ? `go nodes ${nodes}` : "go depth 8";
+    const searchCmd = nodes > 0 ? `go nodes ${nodes}` : "go depth 8";
     this.send(searchCmd);
   }
 
@@ -101,7 +104,7 @@ export class StockfishEngine {
     this.send("isready");
   }
 
-  public async evalPosition(
+  public evalPosition(
     fen: string,
     movesArr: string[],
     nodes: number,
@@ -137,7 +140,9 @@ export class StockfishEngine {
   }
 
   public getEvalSwing(): number {
-    if (this.infoLines.length < 2) { return 0; }
+    if (this.infoLines.length < 2) {
+      return 0;
+    }
     const prev = defined(this.infoLines.at(-2));
     const curr = defined(this.infoLines.at(-1));
     return computeEvalSwing(prev, curr);

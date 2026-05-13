@@ -1,5 +1,5 @@
 // test/chess960.test.ts
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { chess960Backrank, chess960Fen } from "../src/chess960";
 import { defined } from "../src/shared/assert";
 
@@ -32,10 +32,12 @@ describe("chess960Backrank", () => {
   it("always has exactly one king between two rooks", () => {
     for (let id = 0; id < 960; id++) {
       const rank = chess960Backrank(id);
-      const rookIndices = rank.reduce<number[]>(
-        (acc, p, i) => (p === "R" ? [...acc, i] : acc),
-        [],
-      );
+      const rookIndices: number[] = [];
+      rank.forEach((p, i) => {
+        if (p === "R") {
+          rookIndices.push(i);
+        }
+      });
       const kingIndex = rank.indexOf("K");
       expect(rookIndices).toHaveLength(2);
       expect(kingIndex).toBeGreaterThan(defined(rookIndices[0]));
@@ -46,12 +48,16 @@ describe("chess960Backrank", () => {
   it("always has bishops on opposite-colored squares", () => {
     for (let id = 0; id < 960; id++) {
       const rank = chess960Backrank(id);
-      const bishopIndices = rank.reduce<number[]>(
-        (acc, p, i) => (p === "B" ? [...acc, i] : acc),
-        [],
-      );
+      const bishopIndices: number[] = [];
+      rank.forEach((p, i) => {
+        if (p === "B") {
+          bishopIndices.push(i);
+        }
+      });
       expect(bishopIndices).toHaveLength(2);
-      expect(defined(bishopIndices[0]) % 2).not.toBe(defined(bishopIndices[1]) % 2);
+      expect(defined(bishopIndices[0]) % 2).not.toBe(
+        defined(bishopIndices[1]) % 2,
+      );
     }
   });
 

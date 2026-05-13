@@ -7,93 +7,33 @@ on:
     branches: [master, main]
 
 jobs:
-  lint-ts:
-    name: TypeScript lint & format
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Install external linters
+        run: |
+          sudo curl -fsSL https://github.com/kristoff-it/superhtml/releases/latest/download/superhtml-x86_64-linux -o /usr/local/bin/superhtml
+          sudo chmod +x /usr/local/bin/superhtml
+          curl -fsSL https://github.com/tamasfe/taplo/releases/latest/download/taplo-linux-x86_64.gz | gunzip | sudo tee /usr/local/bin/taplo > /dev/null
+          sudo chmod +x /usr/local/bin/taplo
+          sudo curl -sSL https://github.com/pinterest/ktlint/releases/latest/download/ktlint -o /usr/local/bin/ktlint
+          sudo chmod +x /usr/local/bin/ktlint
       - run: bun install --frozen-lockfile
       - run: bunx tsc --noEmit
-      - run: bun run lint
+      - run: bun run check
       - run: bun run lint:css
-      - run: bun run format:check
-
-  lint-go:
-    name: Go lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version: "1.24"
-      - run: mkdir -p server/web && touch server/web/index.html
-      - uses: golangci/golangci-lint-action@v6
-        with:
-          version: latest
-          working-directory: server
-
-  lint-py:
-    name: Python lint & typecheck
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
-      - run: uv run ruff check
-      - run: uv run ruff format --check
-      - run: uv run ty check
-
-  lint-kt:
-    name: Kotlin lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: |
-          curl -sSL https://github.com/pinterest/ktlint/releases/latest/download/ktlint -o /usr/local/bin/ktlint
-          chmod +x /usr/local/bin/ktlint
-      - run: ktlint "android/**/*.kt"
-      - run: |
-          curl -sSL https://github.com/detekt/detekt/releases/download/v1.23.8/detekt-cli-1.23.8-all.jar -o /tmp/detekt.jar
-      - run: java -jar /tmp/detekt.jar --input android/ --all-rules
-
-  lint-html:
-    name: HTML lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: |
-          curl -sSL https://github.com/kristoff-it/superhtml/releases/latest/download/superhtml-x86_64-linux -o /usr/local/bin/superhtml
-          chmod +x /usr/local/bin/superhtml
       - run: superhtml check index.html games/*.html
-
-  lint-actions:
-    name: GitHub Actions lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: docker://rhysd/actionlint:latest
-
-  lint-toml:
-    name: TOML lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: |
-          curl -fsSL https://github.com/tamasfe/taplo/releases/latest/download/taplo-linux-x86_64.gz | gunzip > /usr/local/bin/taplo
-          chmod +x /usr/local/bin/taplo
       - run: taplo lint
       - run: taplo fmt --check
-
-  lint-makefile:
-    name: Makefile lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version: "1.24"
-      - run: go install github.com/mrtazz/checkmake/cmd/checkmake@latest
-      - run: checkmake Makefile
+      - run: ktlint "android/**/*.kt"
+      - uses: docker://rhysd/actionlint:latest
 
   test:
     name: Tests

@@ -1,15 +1,14 @@
-
-import { describe, it, expect, beforeEach } from "bun:test";
+import { beforeEach, describe, expect, it } from "bun:test";
 import {
-  getWordState,
-  recordAnswer,
-  getDueWords,
-  levenshtein,
-  maxTypos,
   BOX_INTERVALS,
+  getDueWords,
+  getMasteredCount,
   getMastery,
   getMasteryStreak,
-  getMasteredCount,
+  getWordState,
+  levenshtein,
+  maxTypos,
+  recordAnswer,
 } from "../src/games/lex-srs";
 
 beforeEach(() => {
@@ -152,8 +151,12 @@ describe("getMasteredCount", () => {
   it("counts words at max mastery", () => {
     const today = "2026-03-05";
     // 6 correct answers = mastery 2 (3 for mastery 1, 3 more for mastery 2)
-    for (let i = 0; i < 6; i++) { recordAnswer("no", "hund", true, today); }
-    for (let i = 0; i < 6; i++) { recordAnswer("no", "katt", true, today); }
+    for (let i = 0; i < 6; i++) {
+      recordAnswer("no", "hund", true, today);
+    }
+    for (let i = 0; i < 6; i++) {
+      recordAnswer("no", "katt", true, today);
+    }
     recordAnswer("no", "bil", true, today); // only 1 correct, not mastered
     expect(getMasteredCount("no")).toBe(2);
   });
