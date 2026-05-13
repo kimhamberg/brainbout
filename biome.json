@@ -110,7 +110,8 @@
             "noDefaultExport": "off"
           },
           "nursery": {
-            "noConditionalExpect": "off"
+            "noConditionalExpect": "off",
+            "useExpect": "off"
           }
         }
       }

@@ -1,0 +1,35 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "testRunner": "command",
+  "commandRunner": { "command": "bun test" },
+  "coverageAnalysis": "off",
+  "mutate": [
+    "src/chess960.ts",
+    "src/games/flux-engine.ts",
+    "src/games/lex-srs.ts",
+    "src/shared/assert.ts",
+    "src/shared/progress.ts",
+    "src/shared/stages.ts",
+    "src/shared/think-time.ts",
+    "src/shared/timer.ts"
+  ],
+  "ignorePatterns": [
+    "/dist",
+    "/public/sounds",
+    "/public/stockfish",
+    "/android",
+    "/docs",
+    "/games",
+    "/ref-sounds",
+    "/.dict-cache",
+    "/coverage",
+    "/reports"
+  ],
+  "checkers": ["typescript"],
+  "tsconfigFile": "tsconfig.json",
+  "thresholds": { "high": 90, "low": 70, "break": 70 },
+  "concurrency": 4,
+  "timeoutMS": 30000,
+  "reporters": ["progress", "clear-text", "html"],
+  "htmlReporter": { "fileName": "reports/mutation/index.html" }
+}

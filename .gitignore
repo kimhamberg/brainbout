@@ -1,5 +1,8 @@
 node_modules/
 dist/
+coverage/
+reports/
+.stryker-tmp/
 *.local
 *.apk
 .claude/

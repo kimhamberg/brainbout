@@ -1,2 +1,14 @@
 [test]
 preload = ["./test/setup.ts"]
+coverageReporter = ["text", "lcov"]
+coverageThreshold = { lines = 1.0, functions = 1.0, statements = 1.0 }
+coveragePathIgnorePatterns = [
+  "src/hub.ts",
+  "src/games/crown.ts",
+  "src/games/flux.ts",
+  "src/games/lex.ts",
+  "src/shared/engine.ts",
+  "src/shared/sounds.ts",
+  "src/shared/theme.ts",
+  "src/shared/icons.ts",
+]
