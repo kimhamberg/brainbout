@@ -9,6 +9,8 @@ reports/
 .worktrees/
 ref-sounds/
 .dict-cache/
+playwright-report/
+test-results/
 
 /brainbout
 /brainbout-linux-amd64

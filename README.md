@@ -57,10 +57,13 @@ Runs Biome (TS/JS/JSON), Stylelint (CSS), ktlint (Kotlin), SuperHTML (HTML), act
 ## Tests
 
 ```
-bun test
+bun test            # unit + happy-dom DOM tests
+bun run test:e2e    # Playwright nav/UI smoke (Chromium + reduced-motion)
+bun run test:fuzz   # fast-check at 100k runs
+bun run test:mutation  # Stryker mutation testing
 ```
 
-Covers position generation, chess clock, cognitive games, engine parsing, timer, and progress tracking.
+Unit tests cover position generation, chess clock, cognitive games, engine parsing, timer, progress tracking, and hub render. E2E covers hub → game navigation, deep links, theme persistence, back-nav, and asserts zero console errors / failed requests.
 
 ## Sound
 

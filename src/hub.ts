@@ -321,9 +321,15 @@ document.querySelector("#hub")?.addEventListener("click", (e) => {
     overlay.style.setProperty("--transition-color", accent);
     document.body.appendChild(overlay);
 
-    overlay.addEventListener("animationend", () => {
+    let navigated = false;
+    const go = (): void => {
+      if (navigated) return;
+      navigated = true;
       window.location.href = href;
-    });
+    };
+    overlay.addEventListener("animationend", go);
+    // Fallback: navigate even if animationend never fires (reduced motion, hidden tab)
+    setTimeout(go, 600);
   }, 80);
 });
 
