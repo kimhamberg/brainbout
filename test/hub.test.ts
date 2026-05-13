@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { init } from "../src/hub";
 
 function seedDom(): void {
@@ -113,10 +113,65 @@ describe("hub: stage popover", () => {
   });
 });
 
+/**
+ * `window.location.href` recording setter. happy-dom's real setter triggers
+ * BrowserFrame.openPage which both no-ops navigation and trips on pending
+ * fallback timers from previous tests. We install the override once for the
+ * whole describe block and reset only the recorded calls between tests.
+ */
+/**
+ * Recording wrapper around `window.location.href`. happy-dom's default
+ * implementation no-ops cross-origin nav but its internal URL parser still
+ * reads href as a base, so the wrapper delegates get/set to the original.
+ * The set call is captured first; the original is invoked best-effort so
+ * happy-dom can keep its own internal state consistent.
+ */
+const navCalls: string[] = [];
+{
+  const proto = Object.getPrototypeOf(window.location);
+  const orig = Object.getOwnPropertyDescriptor(proto, "href");
+  if (!orig?.set || !orig.get) {
+    throw new Error("happy-dom location.href descriptor missing accessors");
+  }
+  const origSet = orig.set;
+  const origGet = orig.get;
+  Object.defineProperty(window.location, "href", {
+    configurable: true,
+    set(v: string) {
+      navCalls.push(String(v));
+      try {
+        origSet.call(window.location, v);
+      } catch {
+        // happy-dom's openPage throws for cross-origin / unparseable URLs.
+        // We've already recorded the attempt; swallow.
+      }
+    },
+    get() {
+      return origGet.call(window.location);
+    },
+  });
+}
+
 describe("hub: card click triggers nav overlay + fallback", () => {
+  // Track every setTimeout scheduled during a test so afterEach can cancel
+  // any that haven't fired (press 80ms, fallback 600ms). Avoids per-test
+  // 750ms drains that bloat mutation runtime.
+  const tracked = new Set<ReturnType<typeof setTimeout>>();
+  const realSetTimeout = globalThis.setTimeout;
   beforeEach(() => {
+    globalThis.setTimeout = ((fn: () => void, ms?: number) => {
+      const id = realSetTimeout(fn, ms);
+      tracked.add(id);
+      return id;
+    }) as typeof setTimeout;
     resetEnv();
     init();
+    navCalls.length = 0;
+  });
+  afterEach(() => {
+    for (const id of tracked) clearTimeout(id);
+    tracked.clear();
+    globalThis.setTimeout = realSetTimeout;
   });
 
   test("anchor click is prevent-defaulted and marks card pressed", () => {
@@ -134,7 +189,6 @@ describe("hub: card click triggers nav overlay + fallback", () => {
       'a.game-card[href$="flux.html"]',
     );
     card?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    // Wait for the 80ms inner setTimeout to fire
     await new Promise((r) => setTimeout(r, 120));
     expect(document.querySelector(".page-transition")).not.toBeNull();
     expect(document.querySelector(".app")?.classList.contains("exiting")).toBe(
@@ -142,30 +196,64 @@ describe("hub: card click triggers nav overlay + fallback", () => {
     );
   });
 
-  test("animationend fires → nav callback runs (location set)", async () => {
+  test("animationend → navigates to the card's exact href, once", async () => {
     const card = document.querySelector<HTMLAnchorElement>(
       'a.game-card[href$="lex.html"]',
     );
     card?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await new Promise((r) => setTimeout(r, 120));
     const overlay = document.querySelector<HTMLElement>(".page-transition");
-    expect(overlay).not.toBeNull();
     overlay?.dispatchEvent(new Event("animationend", { bubbles: true }));
-    // Setting href in happy-dom no-ops back to about:blank but the callback executed
-    // (covers the go() closure body).
-    expect(true).toBe(true);
+    expect(navCalls).toEqual(["games/lex.html"]);
   });
 
-  test("fallback timeout fires nav even without animationend", async () => {
+  test("fallback timer navigates when animationend never fires, once", async () => {
     const card = document.querySelector<HTMLAnchorElement>(
       'a.game-card[href$="crown.html"]',
     );
     card?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    // 80ms press + 600ms fallback = wait > 700ms
     await new Promise((r) => setTimeout(r, 750));
-    // No assertion needed: simply executing this path covers the fallback
-    // setTimeout's go() invocation (lines 306-311).
-    expect(document.querySelector(".page-transition")).not.toBeNull();
+    expect(navCalls).toEqual(["games/crown.html"]);
+  });
+
+  test("nav fires only once even if animationend + fallback both arrive", async () => {
+    const card = document.querySelector<HTMLAnchorElement>(
+      'a.game-card[href$="flux.html"]',
+    );
+    card?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 120));
+    const overlay = document.querySelector<HTMLElement>(".page-transition");
+    overlay?.dispatchEvent(new Event("animationend", { bubbles: true }));
+    // First nav already fired. Now let the fallback timer also fire.
+    await new Promise((r) => setTimeout(r, 700));
+    expect(navCalls).toEqual(["games/flux.html"]);
+  });
+
+  test("nav fires only once even if animationend dispatched multiple times", async () => {
+    const card = document.querySelector<HTMLAnchorElement>(
+      'a.game-card[href$="crown.html"]',
+    );
+    card?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 120));
+    const overlay = document.querySelector<HTMLElement>(".page-transition");
+    overlay?.dispatchEvent(new Event("animationend", { bubbles: true }));
+    overlay?.dispatchEvent(new Event("animationend", { bubbles: true }));
+    overlay?.dispatchEvent(new Event("animationend", { bubbles: true }));
+    expect(navCalls).toHaveLength(1);
+    expect(navCalls[0]).toBe("games/crown.html");
+  });
+
+  test("nav does NOT fire if a non-animationend event is dispatched on overlay", async () => {
+    const card = document.querySelector<HTMLAnchorElement>(
+      'a.game-card[href$="lex.html"]',
+    );
+    card?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 120));
+    const overlay = document.querySelector<HTMLElement>(".page-transition");
+    overlay?.dispatchEvent(new Event("transitionend", { bubbles: true }));
+    overlay?.dispatchEvent(new Event("animationstart", { bubbles: true }));
+    // Neither should have triggered nav — only animationend or the fallback timer should.
+    expect(navCalls).toEqual([]);
   });
 });
 
