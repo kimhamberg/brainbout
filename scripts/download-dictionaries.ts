@@ -9,6 +9,7 @@ import { createInterface } from "node:readline";
 import { join } from "node:path";
 import { pipeline } from "node:stream/promises";
 import { Readable } from "node:stream";
+import process from "node:process";
 
 const ROOT = join(import.meta.dirname, "..");
 const PUBLIC_DIR = join(ROOT, "public");
@@ -35,50 +36,49 @@ interface KaikkiEntry {
 }
 
 const FORM_OF_GLOSS = [
-  /^alternative (form|spelling) of /i,
-  /^obsolete (form|spelling) of /i,
-  /^(plural|singular) of /i,
-  /^(past|present) (tense |participle )?of /i,
-  /^(comparative|superlative) of /i,
-  /^(diminutive|augmentative) of /i,
-  /^(feminine|masculine|neuter) of /i,
-  /^inflection of /i,
-  /^(misspelling|misconstruction) of /i,
-  /^(nonstandard|eye) dialect (form |spelling )?of /i,
-  /^(archaic|dated|rare) (form|spelling) of /i,
-  /^alternative (letter-case form|version) of /i,
-  /^(definite |indefinite )?(singular|plural) of /i,
-  /^supine of /i,
-  /^imperative of /i,
-  /^gerund of /i,
-  /^singular .+ form of /i,
-  /^form removed /i,
-  /^nonstandard spelling of /i,
-  /^(abbreviation|initialism|acronym) of /i,
-  /^clipping of /i,
-  /^contraction of /i,
+  /^alternative (form|spelling) of /iu,
+  /^obsolete (form|spelling) of /iu,
+  /^(plural|singular) of /iu,
+  /^(past|present) (tense |participle )?of /iu,
+  /^(comparative|superlative) of /iu,
+  /^(diminutive|augmentative) of /iu,
+  /^(feminine|masculine|neuter) of /iu,
+  /^inflection of /iu,
+  /^(misspelling|misconstruction) of /iu,
+  /^(nonstandard|eye) dialect (form |spelling )?of /iu,
+  /^(archaic|dated|rare) (form|spelling) of /iu,
+  /^alternative (letter-case form|version) of /iu,
+  /^(definite |indefinite )?(singular|plural) of /iu,
+  /^supine of /iu,
+  /^imperative of /iu,
+  /^gerund of /iu,
+  /^singular .+ form of /iu,
+  /^form removed /iu,
+  /^nonstandard spelling of /iu,
+  /^(abbreviation|initialism|acronym) of /iu,
+  /^clipping of /iu,
+  /^contraction of /iu,
 ];
 
 function isFormOf(sense: KaikkiSense): boolean {
-  if (sense.tags?.includes("form-of")) return true;
+  if (sense.tags?.includes("form-of")) { return true; }
   const gloss = sense.glosses?.[0] ?? "";
   return FORM_OF_GLOSS.some((p) => p.test(gloss));
 }
 
 function maskWord(text: string, word: string): string {
-  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return text.replace(new RegExp(escaped, "gi"), "___");
+  const escaped = word.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+  return text.replace(new RegExp(escaped, "giu"), "___");
 }
 
 async function download(url: string, dest: string): Promise<void> {
   if (existsSync(dest)) {
-    console.log(`  Cached: ${dest}`);
     return;
   }
-  console.log(`  Downloading: ${url}`);
   const res = await fetch(url);
-  if (!res.ok || !res.body)
+  if (!(res.ok && res.body)) {
     throw new Error(`Download failed: ${String(res.status)}`);
+  }
   const nodeStream = Readable.fromWeb(
     res.body as import("stream/web").ReadableStream,
   );
@@ -91,17 +91,17 @@ async function processJsonl(
 ): Promise<void> {
   const results: DictEntry[] = [];
   let total = 0;
-  let noSenses = 0;
-  let allFormOf = 0;
-  let kept = 0;
+  let _noSenses = 0;
+  let _allFormOf = 0;
+  let _kept = 0;
 
   const rl = createInterface({
     input: createReadStream(inputPath, "utf-8"),
-    crlfDelay: Infinity,
+    crlfDelay: Number.POSITIVE_INFINITY,
   });
 
   for await (const line of rl) {
-    if (!line.trim()) continue;
+    if (!line.trim()) { continue; }
     total++;
 
     let entry: KaikkiEntry;
@@ -133,32 +133,32 @@ async function processJsonl(
 
     const senses = entry.senses ?? [];
     if (senses.length === 0) {
-      noSenses++;
+      _noSenses++;
       continue;
     }
 
     let bestSense: KaikkiSense | null = null;
     for (const sense of senses) {
-      if (isFormOf(sense)) continue;
-      if (!sense.glosses?.length || !sense.glosses[0]) continue;
+      if (isFormOf(sense)) { continue; }
+      if (!(sense.glosses?.length > 0&& sense.glosses[0])) { continue; }
       bestSense = sense;
       break;
     }
 
     if (!bestSense) {
-      allFormOf++;
+      _allFormOf++;
       continue;
     }
 
-    const definition = bestSense.glosses![0];
+    const definition = bestSense.glosses?.[0];
 
     // Skip definitions with Wiktionary editorial markers
-    if (/\(to be confirmed\)|\(please verify\)/i.test(definition)) {
+    if (/\(to be confirmed\)|\(please verify\)/iu.test(definition)) {
       continue;
     }
 
     let example = "";
-    if (bestSense.examples?.length) {
+    if (bestSense.examples?.length > 0) {
       for (const ex of bestSense.examples) {
         if (ex.text) {
           example = maskWord(ex.text, entry.word);
@@ -173,27 +173,19 @@ async function processJsonl(
       definition,
       example,
     });
-    kept++;
+    _kept++;
 
-    if (total % 10000 === 0) {
-      console.log(`  ... ${total} parsed, ${kept} kept`);
+    if (total % 10_000 === 0) {
     }
   }
 
   const json = JSON.stringify(results);
   writeFileSync(outputPath, `${json}\n`);
-  const sizeMB = (Buffer.byteLength(json) / 1024 / 1024).toFixed(1);
-
-  console.log(`\n  Results:`);
-  console.log(`    Total parsed:  ${total}`);
-  console.log(`    No senses:     ${noSenses}`);
-  console.log(`    All form-of:   ${allFormOf}`);
-  console.log(`    Kept:          ${kept}`);
-  console.log(`    Output size:   ${sizeMB} MB`);
+  const _sizeMB = (Buffer.byteLength(json) / 1024 / 1024).toFixed(1);
 }
 
 async function main(): Promise<void> {
-  if (!existsSync(CACHE_DIR)) mkdirSync(CACHE_DIR, { recursive: true });
+  if (!existsSync(CACHE_DIR)) { mkdirSync(CACHE_DIR, { recursive: true }); }
 
   const langs = [
     {
@@ -205,16 +197,12 @@ async function main(): Promise<void> {
   ];
 
   for (const lang of langs) {
-    console.log(`\n=== ${lang.name} ===`);
     const cached = join(CACHE_DIR, lang.cache);
     await download(lang.url, cached);
     await processJsonl(cached, join(PUBLIC_DIR, lang.output));
   }
-
-  console.log("\nDone!");
 }
 
-main().catch((err) => {
-  console.error(err);
+main().catch((_err) => {
   process.exit(1);
 });

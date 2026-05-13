@@ -66,7 +66,7 @@ export const GOLDEN_BASE_POINTS = 5;
 // Solving: accuracy = BPM_DOWN / (BPM_UP + BPM_DOWN)
 // For accuracy = 1 − ER* ≈ 0.8413:
 //   BPM_DOWN / BPM_UP = (1 − ER*) / ER* ≈ 5.303
-const OPTIMAL_ERROR_RATE = 0.15866; // ½(1 − erf(1/√2))
+const OPTIMAL_ERROR_RATE = 0.158_66; // ½(1 − erf(1/√2))
 export const BPM_UP = 1;
 export const BPM_DOWN = (1 - OPTIMAL_ERROR_RATE) / OPTIMAL_ERROR_RATE; // ≈ 5.303
 
@@ -211,8 +211,7 @@ export function generateTrial(state: FluxState): Trial {
 
   // Determine if no-go (not during warm-up, must be unlocked)
   const isNoGo =
-    !isWarmUp &&
-    !isGolden && // golden and no-go are mutually exclusive
+    !(isWarmUp ||isGolden ) && // golden and no-go are mutually exclusive
     state.noGoUnlocked &&
     Math.random() < defined(STAGE_PARAMS[state.stage]).noGoRate;
 
@@ -229,14 +228,14 @@ export function generateTrial(state: FluxState): Trial {
 
 export function getMultiplier(streak: number): number {
   for (const t of STREAK_THRESHOLDS) {
-    if (streak >= t.min) return t.multiplier;
+    if (streak >= t.min) { return t.multiplier; }
   }
   return 1;
 }
 
 export function getStreakLabel(streak: number): string {
   for (const t of STREAK_THRESHOLDS) {
-    if (streak >= t.min) return t.label;
+    if (streak >= t.min) { return t.label; }
   }
   return "";
 }
@@ -261,7 +260,7 @@ function getCorrectSide(trial: Trial, rule: Rule, isNot: boolean): ButtonSide {
       break;
   }
 
-  if (isNot) leftMatch = !leftMatch;
+  if (isNot) { leftMatch = !leftMatch; }
   return leftMatch ? "left" : "right";
 }
 
@@ -278,7 +277,7 @@ export function getRuleLabels(rule: Rule, isNot: boolean): [string, string] {
     case "fill": left = "Solid"; right = "Hollow"; break;
   }
 
-  if (isNot) [left, right] = [right, left];
+  if (isNot) { [left, right] = [right, left]; }
   return [left, right];
 }
 
@@ -309,7 +308,7 @@ export function evaluateResponse(
       correct: true,
       basePoints: 1,
       multiplier,
-      totalPoints: Math.round(1 * multiplier),
+      totalPoints: Math.round(Number(multiplier)),
       feedback: "",
     };
   }
@@ -357,15 +356,15 @@ export type SessionAct = "warmup" | "flow" | "climax";
 
 export function getSessionAct(remaining: number): SessionAct {
   const elapsed = DURATION - remaining;
-  if (elapsed < 15) return "warmup";
-  if (remaining > 15) return "flow";
+  if (elapsed < 15) { return "warmup"; }
+  if (remaining > 15) { return "flow"; }
   return "climax";
 }
 
 /* ---------- BPM helpers ---------- */
 
 export function bpmToMs(bpm: number): number {
-  return Math.round(60000 / bpm);
+  return Math.round(60_000 / bpm);
 }
 
 /* ---------- adaptive difficulty ---------- */

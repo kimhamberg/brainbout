@@ -52,10 +52,6 @@ async function main() {
     await sharp(makeForegroundSvg(d.adaptive))
       .png()
       .toFile(join(dir, "ic_launcher_foreground.png"));
-
-    console.log(
-      `  ${d.name}: ${d.legacy}px legacy, ${d.adaptive}px foreground`,
-    );
   }
 
   // Adaptive icon XML
@@ -84,8 +80,6 @@ async function main() {
 </resources>
 `,
   );
-
-  console.log("Android icons generated.");
 }
 
 main();

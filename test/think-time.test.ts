@@ -10,8 +10,8 @@ describe("eloToNodes", () => {
 
   it("returns ~25000 nodes at 1800 Elo", () => {
     const n = eloToNodes(1800);
-    expect(n).toBeGreaterThan(15000);
-    expect(n).toBeLessThan(40000);
+    expect(n).toBeGreaterThan(15_000);
+    expect(n).toBeLessThan(40_000);
   });
 
   it("scales logarithmically", () => {
@@ -33,7 +33,7 @@ describe("computeThinkTime", () => {
       ...defaults,
     });
     expect(t).toBeGreaterThanOrEqual(1000);
-    expect(t).toBeLessThanOrEqual(30000);
+    expect(t).toBeLessThanOrEqual(30_000);
   });
 
   it("thinks faster on recaptures", () => {

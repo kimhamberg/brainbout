@@ -24,7 +24,7 @@ import {
 
 function getEl(id: string): HTMLElement {
   const el = document.getElementById(id);
-  if (el === null) throw new Error(`Missing #${id} element`);
+  if (el === null) { throw new Error(`Missing #${id} element`); }
   return el;
 }
 const game = getEl("game");
@@ -58,7 +58,7 @@ function shapeClasses(trial: Trial, sizeOverride?: string): string {
   classes.push(`form-${trial.shape}`);
   classes.push(`color-${trial.color}`);
   classes.push(`fill-${trial.fill}`);
-  if (trial.isGolden) classes.push("golden");
+  if (trial.isGolden) { classes.push("golden"); }
   return classes.join(" ");
 }
 
@@ -72,14 +72,14 @@ function shapeHtml(trial: Trial): string {
 }
 
 function streakHtml(): string {
-  if (state.streak < 3) return "";
+  if (state.streak < 3) { return ""; }
   const label = getStreakLabel(state.streak);
   const mult = getMultiplier(state.streak);
   return `<div class="streak-display streak-${label}">x${String(mult)} ${label}</div>`;
 }
 
 function renderPlaying(): void {
-  if (!currentTrial) return;
+  if (!currentTrial) { return; }
 
   const [leftLabel, rightLabel] = getRuleLabels(trialRule, trialIsNot);
   const act = getSessionAct(currentRemaining);
@@ -148,7 +148,7 @@ function spawnParticles(color: string): void {
 /* ---------- feedback ---------- */
 
 function showFeedback(correct: boolean, message: string, golden = false): void {
-  const feedback = document.getElementById("feedback");
+  const feedback = document.querySelector("#feedback");
   if (feedback) {
     if (correct && golden) {
       feedback.classList.add("correct-golden");
@@ -189,7 +189,7 @@ function applyJuice(correct: boolean, side: ButtonSide | null, isNoGo: boolean):
 /* ---------- response handling ---------- */
 
 function handleResponse(pressed: ButtonSide | null): void {
-  if (gameOver || inputLocked || !currentTrial) return;
+  if (gameOver || inputLocked || !currentTrial) { return; }
   inputLocked = true;
   responded = true;
 
@@ -213,7 +213,7 @@ function handleResponse(pressed: ButtonSide | null): void {
     }
     showFeedback(true, result.feedback || `+${String(result.totalPoints)}`, result.isGolden === true);
     updateAdaptation(state, true);
-    if (state.streak >= 3) sound.playStreakUp();
+    if (state.streak >= 3) { sound.playStreakUp(); }
   } else {
     if (result.noGoFail) {
       sound.playNogoFail();
@@ -228,12 +228,12 @@ function handleResponse(pressed: ButtonSide | null): void {
 
   // Update score display
   const scoreEl = game.querySelector(".score-display");
-  if (scoreEl) scoreEl.textContent = `Score: ${String(state.score)}`;
+  if (scoreEl) { scoreEl.textContent = `Score: ${String(state.score)}`; }
 
   // Advance to next trial after brief feedback delay
   const feedbackMs = result.correct ? 250 : 450;
   advanceTimeout = setTimeout(() => {
-    if (!gameOver) nextTrial();
+    if (!gameOver) { nextTrial(); }
   }, feedbackMs);
 }
 
@@ -242,7 +242,7 @@ function handleResponse(pressed: ButtonSide | null): void {
 let advanceTimeout: ReturnType<typeof setTimeout> | null = null;
 
 function nextTrial(): void {
-  if (gameOver) return;
+  if (gameOver) { return; }
 
   // Clear stale juice classes so the new shape doesn't inherit exit animations
   game.classList.remove(
@@ -275,9 +275,9 @@ function nextTrial(): void {
   renderPlaying();
 
   // Timeout: if no response within the beat window, count as miss
-  if (trialTimeout !== null) clearTimeout(trialTimeout);
+  if (trialTimeout !== null) { clearTimeout(trialTimeout); }
   trialTimeout = setTimeout(() => {
-    if (!responded && !gameOver) {
+    if (!(responded || gameOver)) {
       handleResponse(null);
     }
   }, bpmToMs(state.bpm));
@@ -343,7 +343,7 @@ function animateCountUp(el: HTMLElement, target: number): void {
     } else {
       // Add pulse to Play Again button
       const btn = game.querySelector("#again-btn");
-      if (btn) btn.classList.add("pulse");
+      if (btn) { btn.classList.add("pulse"); }
     }
   }
   requestAnimationFrame(frame);
@@ -351,8 +351,8 @@ function animateCountUp(el: HTMLElement, target: number): void {
 
 function getBest(key: string): number | null {
   const val = localStorage.getItem(`brainbout:${key}:best`);
-  if (val === null) return null;
-  const n = parseInt(val, 10);
+  if (val === null) { return null; }
+  const n = Number.parseInt(val, 10);
   return Number.isNaN(n) ? null : n;
 }
 
@@ -377,7 +377,7 @@ function showResult(): void {
   const best = getBest("flux");
   const isNewBest = best === null || finalScore > best;
   const nearMiss = !isNewBest && best !== null && finalScore >= best * 0.9;
-  const diff = best !== null ? best - finalScore : 0;
+  const diff = best === null ? 0 : best - finalScore;
 
   saveBest("flux", finalScore);
 
@@ -400,7 +400,7 @@ function showResult(): void {
   `;
 
   const scoreEl = game.querySelector<HTMLElement>(".final-score");
-  if (scoreEl) animateCountUp(scoreEl, finalScore);
+  if (scoreEl) { animateCountUp(scoreEl, finalScore); }
 
   sound.playVictory();
 }
@@ -418,7 +418,7 @@ function startGame(): void {
   correctTrials = 0;
   responded = false;
 
-  if (timerRef !== null) timerRef.stop();
+  if (timerRef !== null) { timerRef.stop(); }
   stopTrials();
 
   timerRef = createTimer({
@@ -440,11 +440,11 @@ function startGame(): void {
 
 game.addEventListener("click", (e) => {
   const target = (e.target as HTMLElement).closest<HTMLElement>("button");
-  if (!target) return;
+  if (!target) { return; }
 
   if (target.classList.contains("flux-btn")) {
     const side = target.dataset["side"] as ButtonSide | undefined;
-    if (side) handleResponse(side);
+    if (side) { handleResponse(side); }
   } else if (target.id === "again-btn") {
     startGame();
   } else if (target.id === "back-btn") {
@@ -453,7 +453,7 @@ game.addEventListener("click", (e) => {
 });
 
 document.addEventListener("keydown", (e) => {
-  if (gameOver || inputLocked) return;
+  if (gameOver || inputLocked) { return; }
   if (e.key === "ArrowLeft") {
     e.preventDefault();
     handleResponse("left");

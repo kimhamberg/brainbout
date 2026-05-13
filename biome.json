@@ -23,18 +23,15 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
-      "style": {
-        "noNonNullAssertion": "off",
-        "useNamingConvention": "off"
-      },
-      "suspicious": {
-        "noExplicitAny": "off"
-      },
-      "complexity": {
-        "noExcessiveCognitiveComplexity": "off",
-        "useLiteralKeys": "off"
-      }
+      "recommended": false,
+      "a11y": "on",
+      "complexity": "on",
+      "correctness": "on",
+      "performance": "on",
+      "security": "on",
+      "style": "on",
+      "suspicious": "on",
+      "nursery": "on"
     }
   },
   "javascript": {
@@ -48,6 +45,41 @@
     "linter": { "enabled": false },
     "formatter": { "enabled": false }
   },
+  "overrides": [
+    {
+      "includes": ["**"],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "useLiteralKeys": "off",
+            "useMaxParams": "off"
+          },
+          "style": {
+            "noMagicNumbers": "off",
+            "noNonNullAssertion": "off",
+            "useNamingConvention": "off"
+          },
+          "nursery": {
+            "noContinue": "off",
+            "noIncrementDecrement": "off",
+            "noTernary": "off",
+            "useExplicitReturnType": "off",
+            "useExplicitType": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["scripts/**"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noNodejsModules": "off"
+          }
+        }
+      }
+    }
+  ],
   "assist": {
     "enabled": true,
     "actions": {

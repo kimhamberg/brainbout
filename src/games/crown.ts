@@ -86,7 +86,7 @@ const INITIAL_MS = 15 * 60 * 1000;
 const INCREMENT_MS = 10 * 1000;
 function getEl(id: string): HTMLElement {
   const el = document.getElementById(id);
-  if (el === null) throw new Error(`Missing #${id} element`);
+  if (el === null) { throw new Error(`Missing #${id} element`); }
   return el;
 }
 const game = getEl("game");
@@ -120,7 +120,7 @@ function isThreefoldRepetition(): boolean {
   const key = positionKey();
   let count = 0;
   for (const k of positionHistory) {
-    if (k === key && ++count >= 3) return true;
+    if (k === key && ++count >= 3) { return true; }
   }
   return false;
 }
@@ -132,7 +132,7 @@ function isLive(): boolean {
 }
 
 function showPly(ply: number): void {
-  if (!api || ply < 0 || ply >= fenHistory.length) return;
+  if (!api || ply < 0 || ply >= fenHistory.length) { return; }
   viewPly = ply;
   const live = isLive();
   api.set({
@@ -157,10 +157,10 @@ function showPly(ply: number): void {
 }
 
 function updateNavButtons(): void {
-  const prev = document.getElementById("hist-prev") as HTMLButtonElement | null;
-  const next = document.getElementById("hist-next") as HTMLButtonElement | null;
-  if (prev) prev.disabled = viewPly === 0;
-  if (next) next.disabled = isLive();
+  const prev = document.querySelector("#hist-prev") as HTMLButtonElement | null;
+  const next = document.querySelector("#hist-next") as HTMLButtonElement | null;
+  if (prev) { prev.disabled = viewPly === 0; }
+  if (next) { next.disabled = isLive(); }
 }
 
 // --- Game actions (draw, takeback, resign) ---
@@ -173,27 +173,28 @@ function isPlayerTurn(): boolean {
 }
 
 function updateActionButtons(): void {
-  const draw = document.getElementById(
-    "action-draw",
+  const draw = document.querySelector(
+    "#action-draw",
   ) as HTMLButtonElement | null;
-  const take = document.getElementById(
-    "action-takeback",
+  const take = document.querySelector(
+    "#action-takeback",
   ) as HTMLButtonElement | null;
-  const resign = document.getElementById(
-    "action-resign",
+  const resign = document.querySelector(
+    "#action-resign",
   ) as HTMLButtonElement | null;
-  if (draw) draw.disabled = !isPlayerTurn() || offerPending || drawDeclined;
-  if (take)
+  if (draw) { draw.disabled = !isPlayerTurn() || offerPending || drawDeclined; }
+  if (take) {
     take.disabled =
       !isPlayerTurn() || offerPending || takebackDeclined || moves.length < 2;
-  if (resign) resign.disabled = gameOver || offerPending;
+  }
+  if (resign) { resign.disabled = gameOver || offerPending; }
 }
 
 function showOfferResult(btnId: string, accepted: boolean): void {
   const btn = document.getElementById(btnId);
-  if (!btn) return;
+  if (!btn) { return; }
   const label = btn.querySelector(".action-label");
-  if (!label) return;
+  if (!label) { return; }
   const original = label.textContent;
   label.textContent = accepted ? "Accepted" : "Declined";
   btn.classList.add(accepted ? "accepted" : "declined");
@@ -204,7 +205,7 @@ function showOfferResult(btnId: string, accepted: boolean): void {
 }
 
 function onResign(): void {
-  if (gameOver || offerPending) return;
+  if (gameOver || offerPending) { return; }
   clock.stop();
   engineClock.stop();
   gameOver = true;
@@ -212,7 +213,7 @@ function onResign(): void {
 }
 
 async function onDrawOffer(): Promise<void> {
-  if (!isPlayerTurn() || offerPending || drawDeclined) return;
+  if (!isPlayerTurn() || offerPending || drawDeclined) { return; }
   offerPending = true;
   updateActionButtons();
 
@@ -231,8 +232,8 @@ async function onDrawOffer(): Promise<void> {
   const cp =
     result.score.type === "mate"
       ? result.score.value > 0
-        ? 10000
-        : -10000
+        ? 10_000
+        : -10_000
       : result.score.value;
   const engineEval = -cp; // Flip to engine's perspective
 
@@ -254,15 +255,16 @@ async function onDrawOffer(): Promise<void> {
 }
 
 async function onTakeback(): Promise<void> {
-  if (!isPlayerTurn() || offerPending || takebackDeclined || moves.length < 2)
+  if (!isPlayerTurn() || offerPending || takebackDeclined || moves.length < 2) {
     return;
+  }
   offerPending = true;
   updateActionButtons();
 
   // Evaluate position before the player's last move
   const targetPly = fenHistory.length - 3; // Position before player's last move
   const movesBeforePlayer = moves.slice(0, -2);
-  const playerMove = moves[moves.length - 2];
+  const playerMove = moves.at(-2);
 
   const thinkDelay = 1500 + Math.random() * 2000;
   const evalPromise = engine.evalPosition(
@@ -319,7 +321,7 @@ function showPromotionPicker(
   callback: (role: string) => void,
 ): void {
   const wrap = game.querySelector<HTMLElement>(".cg-wrap");
-  if (!wrap) return;
+  if (!wrap) { return; }
 
   const file = dest.charCodeAt(0) - 97; // 0-7
   const rank = Number(dest[1]); // 1-8
@@ -389,13 +391,13 @@ function finishGame(result: number, message: string): void {
     </div>
   `;
 
-  if (result === 1) sound.playVictory();
-  else if (result === 0) sound.playDefeat();
-  else sound.playDraw();
+  if (result === 1) { sound.playVictory(); }
+  else if (result === 0) { sound.playDefeat(); }
+  else { sound.playDraw(); }
 }
 
 function updateBoard(): void {
-  if (!api) return;
+  if (!api) { return; }
   api.set({
     fen: makeFen(pos.toSetup()),
     turnColor: pos.turn,
@@ -416,7 +418,7 @@ function checkGameEnd(): boolean {
     engineClock.stop();
     gameOver = true;
     const result = winner === playerColor ? 1 : 0;
-    if (result === 1) recordCheckmate(engineElo);
+    if (result === 1) { recordCheckmate(engineElo); }
     finishGame(
       result,
       winner === playerColor ? "Checkmate — you win!" : "Checkmate — you lose",
@@ -459,10 +461,10 @@ function dimClock(id: string, dim: boolean): void {
 }
 
 function onEngineMove(uci: string): void {
-  if (gameOver) return;
+  if (gameOver) { return; }
 
   const move = parseUci(uci);
-  if (!move) return;
+  if (!move) { return; }
 
   const from = "from" in move ? makeSquare(move.from) : makeSquare(move.to);
   const to = makeSquare(move.to);
@@ -475,15 +477,15 @@ function onEngineMove(uci: string): void {
   fenHistory.push(makeFen(pos.toSetup()));
   viewPly = fenHistory.length - 1;
 
-  if (wasLive && api) api.move(from as Key, to as Key);
+  if (wasLive && api) { api.move(from as Key, to as Key); }
   updateBoard();
   updateNavButtons();
 
-  if (isCapture) sound.playCapture();
-  else sound.playMove();
-  if (pos.isCheck()) sound.playCheck();
+  if (isCapture) { sound.playCapture(); }
+  else { sound.playMove(); }
+  if (pos.isCheck()) { sound.playCheck(); }
 
-  if (checkGameEnd()) return;
+  if (checkGameEnd()) { return; }
 
   drawDeclined = false;
   takebackDeclined = false;
@@ -492,13 +494,13 @@ function onEngineMove(uci: string): void {
   clock.start();
 
   // Execute queued premove
-  if (api?.playPremove() === true) return;
+  if (api?.playPremove() === true) {  }
 }
 
 function commitPlayerMove(orig: string, dest: string, promoChar: string): void {
   const uci = orig + dest + promoChar;
   const move = parseUci(uci);
-  if (!move || !pos.isLegal(move)) return;
+  if (!(move && pos.isLegal(move))) { return; }
 
   const isCapture = pos.board.occupied.has(move.to);
   pos.play(move);
@@ -513,11 +515,11 @@ function commitPlayerMove(orig: string, dest: string, promoChar: string): void {
   updateNavButtons();
   updateActionButtons();
 
-  if (isCapture) sound.playCapture();
-  else sound.playMove();
-  if (pos.isCheck()) sound.playCheck();
+  if (isCapture) { sound.playCapture(); }
+  else { sound.playMove(); }
+  if (pos.isCheck()) { sound.playCheck(); }
 
-  if (checkGameEnd()) return;
+  if (checkGameEnd()) { return; }
 
   // Switch clocks: player stops (already stopped above), engine starts
   dimClock("player-clock", true);
@@ -567,12 +569,12 @@ function commitPlayerMove(orig: string, dest: string, promoChar: string): void {
 }
 
 function onPlayerMove(orig: string, dest: string): void {
-  if (gameOver || !isLive()) return;
+  if (gameOver || !isLive()) { return; }
 
   // Detect promotion: pawn reaching the back rank
   const from = parseSquare(orig);
   const to = parseSquare(dest);
-  if (from === undefined || to === undefined) return;
+  if (from === undefined || to === undefined) { return; }
   const isPawn = pos.board.pawn.has(from);
   const backRank = pos.turn === "white" ? 7 : 0;
 
@@ -627,7 +629,7 @@ function renderGame(): void {
   `;
 
   const boardEl = game.querySelector<HTMLElement>(".crown-board");
-  if (!boardEl) return;
+  if (!boardEl) { return; }
 
   api = Chessground(boardEl, {
     fen: makeFen(pos.toSetup()),
@@ -647,23 +649,23 @@ function renderGame(): void {
     premovable: { enabled: true },
   });
 
-  document.getElementById("hist-prev")?.addEventListener("click", () => {
-    if (viewPly > 0) showPly(viewPly - 1);
+  document.querySelector("#hist-prev")?.addEventListener("click", () => {
+    if (viewPly > 0) { showPly(viewPly - 1); }
   });
-  document.getElementById("hist-next")?.addEventListener("click", () => {
-    if (!isLive()) showPly(viewPly + 1);
+  document.querySelector("#hist-next")?.addEventListener("click", () => {
+    if (!isLive()) { showPly(viewPly + 1); }
   });
-  document.getElementById("action-takeback")?.addEventListener("click", () => {
+  document.querySelector("#action-takeback")?.addEventListener("click", () => {
     void onTakeback();
   });
-  document.getElementById("action-draw")?.addEventListener("click", () => {
+  document.querySelector("#action-draw")?.addEventListener("click", () => {
     void onDrawOffer();
   });
-  document.getElementById("action-resign")?.addEventListener("click", onResign);
+  document.querySelector("#action-resign")?.addEventListener("click", onResign);
 }
 
 function onHistoryKey(e: KeyboardEvent): void {
-  if (gameOver) return;
+  if (gameOver) { return; }
   if (e.key === "ArrowLeft" && viewPly > 0) {
     e.preventDefault();
     showPly(viewPly - 1);
@@ -700,10 +702,10 @@ async function main(): Promise<void> {
     initialMs: INITIAL_MS,
     incrementMs: INCREMENT_MS,
     onTick: (ms) => {
-      const el = document.getElementById("player-clock");
+      const el = document.querySelector("#player-clock");
       if (el) {
         el.textContent = formatClock(ms);
-        el.classList.toggle("low", ms < 60000);
+        el.classList.toggle("low", ms < 60_000);
       }
     },
     onFlag,
@@ -713,10 +715,10 @@ async function main(): Promise<void> {
     initialMs: INITIAL_MS,
     incrementMs: INCREMENT_MS,
     onTick: (ms) => {
-      const el = document.getElementById("engine-clock");
+      const el = document.querySelector("#engine-clock");
       if (el) {
         el.textContent = formatClock(ms);
-        el.classList.toggle("low", ms < 60000);
+        el.classList.toggle("low", ms < 60_000);
       }
     },
     onFlag: onEngineFlag,

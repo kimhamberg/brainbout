@@ -34,6 +34,4 @@ for (const { name, size } of sizes) {
     .composite([{ input: icon, top: padding, left: padding }])
     .png()
     .toFile(resolve(outDir, name));
-
-  console.log(`Generated ${name} (${String(size)}x${String(size)})`);
 }

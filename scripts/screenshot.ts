@@ -27,7 +27,7 @@ async function main(): Promise<void> {
   // Force dark theme (Frappe) for a richer screenshot
   await page.evaluate(() => {
     localStorage.setItem("theme", "frappe");
-    document.documentElement.dataset.theme = "frappe";
+    document.documentElement.dataset["theme"] = "frappe";
   });
   await page.waitForSelector(".game-list", { timeout: 10_000 });
   // Let transitions settle
@@ -60,8 +60,6 @@ async function main(): Promise<void> {
     ])
     .png()
     .toFile(OUTPUT);
-
-  console.log(`Screenshot saved to ${OUTPUT} (${FRAME_W}x${FRAME_H})`);
 }
 
 void main();

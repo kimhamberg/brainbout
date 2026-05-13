@@ -13,7 +13,7 @@ function key(gameId: string): string {
 
 function load(gameId: string): StageData {
   const raw = localStorage.getItem(key(gameId));
-  if (raw === null) return { stage: 1, history: [] };
+  if (raw === null) { return { stage: 1, history: [] }; }
   try {
     return JSON.parse(raw) as StageData;
   } catch {
@@ -59,10 +59,10 @@ export type Readiness = "grey" | "amber" | "green";
 
 export function readiness(gameId: string, threshold: number): Readiness {
   const data = load(gameId);
-  if (data.stage >= MAX_STAGE) return "grey";
-  if (data.history.length < HISTORY_SIZE) return "grey";
+  if (data.stage >= MAX_STAGE) { return "grey"; }
+  if (data.history.length < HISTORY_SIZE) { return "grey"; }
   const avg = data.history.reduce((sum, v) => sum + v, 0) / data.history.length;
-  if (avg >= threshold) return "green";
-  if (avg >= threshold - 0.1) return "amber";
+  if (avg >= threshold) { return "green"; }
+  if (avg >= threshold - 0.1) { return "amber"; }
   return "grey";
 }

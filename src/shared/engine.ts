@@ -7,32 +7,32 @@ export interface EngineInfo {
 }
 
 export function parseBestMove(line: string): string | null {
-  const match = /^bestmove\s+([a-h][1-8][a-h][1-8][qrbn]?)/.exec(line);
+  const match = /^bestmove\s+([a-h][1-8][a-h][1-8][qrbn]?)/u.exec(line);
   return match?.[1] ?? null;
 }
 
 /** Compute absolute eval swing between two info lines (centipawns). */
 export function computeEvalSwing(prev: EngineInfo, curr: EngineInfo): number {
-  const toCP = (s: EngineInfo["score"]): number =>
-    s.type === "mate" ? (s.value > 0 ? 10000 : -10000) : s.value;
-  return Math.abs(toCP(curr.score) - toCP(prev.score));
+  const toCp = (s: EngineInfo["score"]): number =>
+    s.type === "mate" ? (s.value > 0 ? 10_000 : -10_000) : s.value;
+  return Math.abs(toCp(curr.score) - toCp(prev.score));
 }
 
 export function parseInfoLine(line: string): EngineInfo | null {
-  const depthMatch = /^info\s.*?\bdepth\s+(\d+)/.exec(line);
-  if (!depthMatch) return null;
+  const depthMatch = /^info\s.*?\bdepth\s+(\d+)/u.exec(line);
+  if (!depthMatch) { return null; }
 
-  const scoreMatch = /score\s+(cp|mate)\s+(-?\d+)/.exec(line);
-  if (!scoreMatch) return null;
+  const scoreMatch = /score\s+(cp|mate)\s+(-?\d+)/u.exec(line);
+  if (!scoreMatch) { return null; }
 
-  const pvMatch = /\bpv\s+(.+)$/.exec(line);
-  const pv = pvMatch ? defined(pvMatch[1]).trim().split(/\s+/) : [];
+  const pvMatch = /\bpv\s+(.+)$/u.exec(line);
+  const pv = pvMatch ? defined(pvMatch[1]).trim().split(/\s+/u) : [];
 
   return {
-    depth: parseInt(defined(depthMatch[1]), 10),
+    depth: Number.parseInt(defined(depthMatch[1]), 10),
     score: {
       type: defined(scoreMatch[1]) as "cp" | "mate",
-      value: parseInt(defined(scoreMatch[2]), 10),
+      value: Number.parseInt(defined(scoreMatch[2]), 10),
     },
     pv,
   };
@@ -90,10 +90,9 @@ export class StockfishEngine {
     this.infoLines = [];
     const movesStr = moves.length > 0 ? ` moves ${moves.join(" ")}` : "";
     this.send(`position fen ${startFen}${movesStr}`);
+    const nodes = options?.nodes ?? 0;
     const searchCmd =
-      options?.nodes != null && options.nodes > 0
-        ? `go nodes ${options.nodes}`
-        : "go depth 8";
+      nodes > 0 ? `go nodes ${nodes}` : "go depth 8";
     this.send(searchCmd);
   }
 
@@ -138,9 +137,9 @@ export class StockfishEngine {
   }
 
   public getEvalSwing(): number {
-    if (this.infoLines.length < 2) return 0;
-    const prev = defined(this.infoLines[this.infoLines.length - 2]);
-    const curr = defined(this.infoLines[this.infoLines.length - 1]);
+    if (this.infoLines.length < 2) { return 0; }
+    const prev = defined(this.infoLines.at(-2));
+    const curr = defined(this.infoLines.at(-1));
     return computeEvalSwing(prev, curr);
   }
 

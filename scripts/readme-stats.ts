@@ -33,15 +33,9 @@ const soundCount = readdirSync(join(root, "public", "sounds")).filter((f) =>
 const template = readFileSync(join(root, "README.md.tpl"), "utf-8");
 
 const readme = template
-  .replace(/\{\{TEST_COUNT\}\}/g, String(testCount))
-  .replace(/\{\{TEST_FILES\}\}/g, String(testFiles))
-  .replace(/\{\{GAME_COUNT\}\}/g, String(gameCount))
-  .replace(/\{\{SOUND_COUNT\}\}/g, String(soundCount));
+  .replace(/\{\{TEST_COUNT\}\}/gu, String(testCount))
+  .replace(/\{\{TEST_FILES\}\}/gu, String(testFiles))
+  .replace(/\{\{GAME_COUNT\}\}/gu, String(gameCount))
+  .replace(/\{\{SOUND_COUNT\}\}/gu, String(soundCount));
 
 writeFileSync(join(root, "README.md"), readme);
-
-console.log("README.md generated:");
-console.log(`  tests:      ${testCount}`);
-console.log(`  test files: ${testFiles}`);
-console.log(`  games:      ${gameCount}`);
-console.log(`  sounds:     ${soundCount}`);

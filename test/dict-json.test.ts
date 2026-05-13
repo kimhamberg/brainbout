@@ -10,7 +10,7 @@ interface DictEntry {
 }
 
 function loadDict(lang: string): DictEntry[] {
-  const path = resolve(__dirname, `../public/dict-${lang}.json`);
+  const path = resolve(import.meta.dirname, `../public/dict-${lang}.json`);
   return JSON.parse(readFileSync(path, "utf-8")) as DictEntry[];
 }
 
@@ -18,7 +18,7 @@ describe("dict-no.json", () => {
   const dict = loadDict("no");
 
   it("has substantial entry count", () => {
-    expect(dict.length).toBeGreaterThan(20000);
+    expect(dict.length).toBeGreaterThan(20_000);
   });
 
   it("every entry has required string fields", () => {
@@ -35,20 +35,20 @@ describe("dict-no.json", () => {
 
   it("has no form-of definitions in first 1000 entries", () => {
     const formOfPatterns = [
-      /^alternative (form|spelling) of /i,
-      /^plural of /i,
-      /^past tense of /i,
-      /^present participle of /i,
-      /^inflection of /i,
-      /^(definite |indefinite )?(singular|plural) of /i,
-      /^(feminine|masculine|neuter) of /i,
-      /^imperative of /i,
-      /^supine of /i,
-      /^gerund of /i,
-      /^form removed /i,
-      /^(abbreviation|initialism|acronym) of /i,
-      /^clipping of /i,
-      /^contraction of /i,
+      /^alternative (form|spelling) of /iu,
+      /^plural of /iu,
+      /^past tense of /iu,
+      /^present participle of /iu,
+      /^inflection of /iu,
+      /^(definite |indefinite )?(singular|plural) of /iu,
+      /^(feminine|masculine|neuter) of /iu,
+      /^imperative of /iu,
+      /^supine of /iu,
+      /^gerund of /iu,
+      /^form removed /iu,
+      /^(abbreviation|initialism|acronym) of /iu,
+      /^clipping of /iu,
+      /^contraction of /iu,
     ];
     for (const entry of dict.slice(0, 1000)) {
       for (const pattern of formOfPatterns) {
@@ -60,8 +60,8 @@ describe("dict-no.json", () => {
   it("examples do not contain the target word unmasked", () => {
     for (const entry of dict.slice(0, 1000)) {
       if (entry.example && entry.example !== "") {
-        const escaped = entry.word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        const pattern = new RegExp(`\\b${escaped}\\b`, "i");
+        const escaped = entry.word.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+        const pattern = new RegExp(`\\b${escaped}\\b`, "iu");
         expect(entry.example).not.toMatch(pattern);
       }
     }

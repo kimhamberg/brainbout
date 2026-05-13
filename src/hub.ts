@@ -68,7 +68,7 @@ function getGameStat(game: string): string | null {
   }
   if (game === "flux") {
     const best = getBest("flux");
-    return best !== null ? `Best: ${String(best)} pts` : null;
+    return best === null ? null : `Best: ${String(best)} pts`;
   }
   if (game === "lex") {
     const mastered = getMasteredCount("no");
@@ -91,7 +91,7 @@ const completedParam = params.get("completed");
 const stored = sessionStorage.getItem("brainbout:current-session");
 if (stored !== null) {
   for (const g of JSON.parse(stored) as string[]) {
-    if ((GAMES as readonly string[]).includes(g)) session.add(g as GameId);
+    if ((GAMES as readonly string[]).includes(g)) { session.add(g as GameId); }
   }
 }
 
@@ -121,8 +121,8 @@ if (session.size === GAMES.length) {
 // --- Render ---
 
 function render(): void {
-  const hub = document.getElementById("hub");
-  if (!hub) return;
+  const hub = document.querySelector("#hub");
+  if (!hub) { return; }
 
   const today = todayString();
   const streak = getStreak(today);
@@ -131,11 +131,13 @@ function render(): void {
 
   // Header stats badges
   html += `<div class="hub-stats-bar">`;
-  if (streak > 0)
+  if (streak > 0) {
     html += `<span class="streak-badge">${String(streak)}-day streak</span>`;
-  if (sessionsToday > 0)
+  }
+  if (sessionsToday > 0) {
     html += `<span class="sessions-badge">${String(sessionsToday)} session${sessionsToday === 1 ? "" : "s"} today</span>`;
-  html += `</div>`;
+  }
+  html += "</div>";
 
   // Game list
   html += `<div class="game-list">`;
@@ -159,10 +161,12 @@ function render(): void {
       right = `<span class="done-badge">\u2713</span>`;
     } else {
       right = `<button class="stage-chip readiness-${ready}" data-game="${game}">Stage ${String(stage)}</button>`;
-      if (ready === "green")
+      if (ready === "green") {
         right += `<button class="advance-btn" data-game="${game}">Advance \u25b8</button>`;
-      if (stage > 1)
+      }
+      if (stage > 1) {
         right += `<button class="retreat-btn" data-game="${game}">\u25be</button>`;
+      }
     }
     line1 += `<div class="game-card-right">${right}</div>`;
 
@@ -170,7 +174,7 @@ function render(): void {
     const line2 = `<span class="game-tagline">${tagline}</span>`;
 
     // Line 3: per-game stat (only if data exists)
-    const line3 = stat !== null ? `<span class="game-stat">${stat}</span>` : "";
+    const line3 = stat === null ? "" : `<span class="game-stat">${stat}</span>`;
 
     const inner = `<div class="game-card-top">${line1}</div>${line2}${line3}`;
 
@@ -180,7 +184,7 @@ function render(): void {
       html += `<a href="${GAME_URLS[game]}" class="game-card ${cls}" style="${style}"><span class="game-play">Play</span>${inner}</a>`;
     }
   }
-  html += `</div>`;
+  html += "</div>";
 
   // Action button
   if (sessionJustCompleted) {
@@ -205,7 +209,7 @@ function showStagePopover(chip: HTMLElement, game: string): void {
 
   const stage = getStage(game);
   const descriptions = STAGE_DESCRIPTIONS[game];
-  if (!descriptions) return;
+  if (!descriptions) { return; }
 
   const popover = document.createElement("div");
   popover.className = "stage-popover";
@@ -220,8 +224,8 @@ function showStagePopover(chip: HTMLElement, game: string): void {
 
   // Position relative to the chip
   const rect = chip.getBoundingClientRect();
-  const hub = document.getElementById("hub");
-  if (!hub) return;
+  const hub = document.querySelector("#hub");
+  if (!hub) { return; }
   const hubRect = hub.getBoundingClientRect();
 
   popover.style.top = `${String(rect.bottom - hubRect.top + 4)}px`;
@@ -251,7 +255,7 @@ function startNewSession(): void {
 render();
 
 // --- Page transition & event delegation ---
-document.getElementById("hub")?.addEventListener("click", (e) => {
+document.querySelector("#hub")?.addEventListener("click", (e) => {
   const target = e.target as HTMLElement;
 
   if (target.closest(".new-session-btn") !== null) {
@@ -295,11 +299,11 @@ document.getElementById("hub")?.addEventListener("click", (e) => {
   }
 
   const card = target.closest<HTMLAnchorElement>("a.game-card");
-  if (!card) return;
+  if (!card) { return; }
 
   e.preventDefault();
   const href = card.getAttribute("href");
-  if (href === null || href === "") return;
+  if (href === null || href === "") { return; }
 
   // Tactile press feedback on the card
   card.classList.add("pressed");

@@ -531,7 +531,7 @@ describe("updateAdaptation", () => {
 
   it("tracks peakStreak", () => {
     const state = createFluxState(1);
-    for (let i = 0; i < 8; i++) updateAdaptation(state, true);
+    for (let i = 0; i < 8; i++) { updateAdaptation(state, true); }
     expect(state.peakStreak).toBe(8);
     updateAdaptation(state, false);
     expect(state.peakStreak).toBe(8); // preserved
@@ -570,7 +570,7 @@ describe("updateAdaptation", () => {
   it("converges to ~84.13% accuracy (Wilson et al. 2019)", () => {
     // At equilibrium: accuracy = BPM_DOWN / (BPM_UP + BPM_DOWN)
     const equilibrium = BPM_DOWN / (BPM_UP + BPM_DOWN);
-    expect(equilibrium).toBeCloseTo(1 - 0.15866, 4);
+    expect(equilibrium).toBeCloseTo(1 - 0.158_66, 4);
   });
 });
 
