@@ -43,7 +43,7 @@ jobs:
           curl -fsSL https://github.com/pinterest/ktlint/releases/latest/download/ktlint -o ~/.local/bin/ktlint
           bash <(curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash) latest ~/.local/bin
           chmod +x ~/.local/bin/*
-      - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+      - run: echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - run: bunx tsc --noEmit
       - run: bun run check
       - run: bun run lint:css
