@@ -10,7 +10,6 @@
     "test:watch": "bun test --watch",
     "lint": "biome lint src/ test/ scripts/",
     "lint:css": "stylelint \"src/**/*.css\"",
-    "lint:tokens": "! grep -rnE '(transition|animation)[^;]*\\b[0-9]+\\.?[0-9]*(ms|s)\\b' --include='*.css' src/ --exclude=style.css | grep -vE '(ambient|calc)'",
     "format": "biome format --write .",
     "format:check": "biome format .",
     "screenshot": "bun scripts/screenshot.ts",

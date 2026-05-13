@@ -40,7 +40,7 @@ lint-go:
 
 lint-kt:
 	@command -v ktlint >/dev/null 2>&1 && ktlint "android/**/*.kt" || echo "ktlint not installed, skipping"
-	@command -v detekt-cli >/dev/null 2>&1 && detekt-cli --input android/ --config detekt.yml --build-upon-default-config --all-rules || echo "detekt not installed, skipping"
+	@command -v detekt-cli >/dev/null 2>&1 && detekt-cli --input android/ --all-rules || echo "detekt not installed, skipping"
 
 lint-py:
 	uv run ruff check

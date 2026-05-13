@@ -54,7 +54,7 @@ jobs:
       - run: ktlint "android/**/*.kt"
       - run: |
           curl -sSL https://github.com/detekt/detekt/releases/download/v1.23.8/detekt-cli-1.23.8-all.jar -o /tmp/detekt.jar
-      - run: java -jar /tmp/detekt.jar --input android/ --config detekt.yml --build-upon-default-config --all-rules
+      - run: java -jar /tmp/detekt.jar --input android/ --all-rules
 
   lint-html:
     name: HTML lint

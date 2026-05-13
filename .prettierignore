@@ -1,7 +1,0 @@
-dist
-server/web
-android
-node_modules
-public/stockfish
-public/dict-no.json
-public/dict-en.json
