@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/favicon.svg" alt="Brainbout" width="96" />
+  <img src="favicon.svg" alt="Brainbout" width="96" />
 </p>
 
 <h1 align="center">Brainbout</h1>
@@ -7,7 +7,6 @@
 <p align="center">
   <a href="https://github.com/kimhamberg/brainbout/actions/workflows/ci.yml"><img src="https://github.com/kimhamberg/brainbout/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPL--3.0-blue.svg" alt="License: GPL-3.0" /></a>
-  <a href="package.json"><img src="https://img.shields.io/github/package-json/v/kimhamberg/brainbout?color=c6d0f5&label=version" alt="Version" /></a>
   <a href="https://kimhamberg.github.io/brainbout/"><img src="https://img.shields.io/badge/Web-Play_Online-8caaee" alt="Web" /></a>
   <a href="https://github.com/kimhamberg/brainbout/releases/latest/download/brainbout-linux-amd64"><img src="https://img.shields.io/badge/Linux-Download-a6d189" alt="Linux" /></a>
   <a href="https://github.com/kimhamberg/brainbout/releases/latest/download/brainbout-windows-amd64.exe"><img src="https://img.shields.io/badge/Windows-Download-e5c890" alt="Windows" /></a>

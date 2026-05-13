@@ -38,7 +38,7 @@ jobs:
         if: steps.linters.outputs.cache-hit != 'true'
         run: |
           mkdir -p ~/.local/bin
-          curl -fsSL https://github.com/kristoff-it/superhtml/releases/latest/download/superhtml-x86_64-linux -o ~/.local/bin/superhtml
+          curl -fsSL https://github.com/kristoff-it/superhtml/releases/latest/download/x86_64-linux-musl.tar.xz | tar -xJ -C ~/.local/bin
           curl -fsSL https://github.com/tamasfe/taplo/releases/latest/download/taplo-linux-x86_64.gz | gunzip > ~/.local/bin/taplo
           curl -fsSL https://github.com/pinterest/ktlint/releases/latest/download/ktlint -o ~/.local/bin/ktlint
           bash <(curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash) latest ~/.local/bin

@@ -19,6 +19,5 @@
     "outDir": "dist",
     "sourceMap": true
   },
-  "include": ["src", "test", "server", "scripts"],
-  "exclude": ["server/embed.gen.ts"]
+  "include": ["src", "test", "server", "scripts"]
 }

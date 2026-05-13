@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { chromium } from "playwright";
 import sharp from "sharp";
 import index from "../index.html";
+import { assetFetch } from "./serve";
 
 const WIDTH = 480;
 const HEIGHT = 640;
@@ -18,24 +19,7 @@ async function main(): Promise<void> {
   const server = Bun.serve({
     port: 5199,
     routes: { "/": index },
-    async fetch(req) {
-      const { pathname } = new URL(req.url);
-      const rootFiles = new Set([
-        "/favicon.svg",
-        "/apple-touch-icon.png",
-        "/manifest.json",
-      ]);
-      const sfMatch = /^\/stockfish\/(.+)$/u.exec(pathname);
-      const path = sfMatch
-        ? join(ROOT, "node_modules/stockfish/bin", sfMatch[1]!)
-        : rootFiles.has(pathname)
-          ? join(ROOT, pathname)
-          : join(ROOT, "public", pathname);
-      const f = Bun.file(path);
-      return (await f.exists())
-        ? new Response(f)
-        : new Response("Not Found", { status: 404 });
-    },
+    fetch: assetFetch(ROOT),
   });
 
   const browser = await chromium.launch();
