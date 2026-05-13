@@ -1418,5 +1418,76 @@ describe("rng module", () => {
   });
 });
 
+/* ====================================================================== */
+/* hub: robust against malformed sessionStorage / URL params               */
+/* ====================================================================== */
+
+describe("property: hub init resists garbage state", () => {
+  function seedDom(): void {
+    document.body.innerHTML = `
+      <div id="app" class="app">
+        <header class="hub-header">
+          <button id="theme-btn" aria-label="Toggle theme"></button>
+          <span class="hub-icon-slot"></span>
+        </header>
+        <main id="hub"></main>
+      </div>
+    `;
+  }
+
+  beforeEach(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+    window.location.search = "";
+    seedDom();
+  });
+
+  it("any string in sessionStorage:current-session is non-fatal", async () => {
+    const { init } = await import("../src/hub");
+    fc.assert(
+      fc.property(fc.string(), (junk) => {
+        seedDom();
+        sessionStorage.setItem("brainbout:current-session", junk);
+        expect(() => init()).not.toThrow();
+      }),
+      cfg,
+    );
+  });
+
+  it("any string in ?completed= URL param is non-fatal", async () => {
+    const { init } = await import("../src/hub");
+    fc.assert(
+      fc.property(fc.string(), (junk) => {
+        seedDom();
+        window.location.search = `?completed=${encodeURIComponent(junk)}`;
+        expect(() => init()).not.toThrow();
+      }),
+      cfg,
+    );
+  });
+
+  it("arbitrary JSON arrays in sessionStorage filter down to known game ids", async () => {
+    const { init } = await import("../src/hub");
+    fc.assert(
+      fc.property(fc.array(fc.string()), (arr) => {
+        seedDom();
+        sessionStorage.setItem(
+          "brainbout:current-session",
+          JSON.stringify(arr),
+        );
+        init();
+        // Every rendered done card must correspond to a real game id
+        const doneCards = document.querySelectorAll<HTMLElement>(
+          "#hub .game-card.done .game-name",
+        );
+        for (const el of doneCards) {
+          expect(["Crown", "Flux", "Lex"]).toContain(el.textContent);
+        }
+      }),
+      cfg,
+    );
+  });
+});
+
 /* keep the variable referenced so import isn't dead */
 void seededRng;

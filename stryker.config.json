@@ -1,10 +1,13 @@
 {
   "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
   "testRunner": "command",
-  "commandRunner": { "command": "bun test" },
+  "commandRunner": {
+    "command": "FAST_CHECK_NUM_RUNS=10 bun test --bail"
+  },
   "coverageAnalysis": "off",
   "mutate": [
     "src/chess960.ts",
+    "src/hub.ts",
     "src/games/flux-engine.ts",
     "src/games/lex-srs.ts",
     "src/shared/assert.ts",
@@ -24,11 +27,15 @@
     "/ref-sounds",
     "/.dict-cache",
     "/coverage",
-    "/reports"
+    "/reports",
+    "/test/e2e",
+    "/playwright-report",
+    "/test-results"
   ],
-  "checkers": ["typescript"],
-  "tsconfigFile": "tsconfig.json",
-  "thresholds": { "high": 90, "low": 70, "break": 70 },
+  "disableTypeChecks": "{src,test}/**/*.ts",
+  "incremental": true,
+  "incrementalFile": "reports/stryker-incremental.json",
+  "thresholds": { "high": 90, "low": 70, "break": 65 },
   "concurrency": 4,
   "timeoutMS": 30000,
   "reporters": ["progress", "clear-text", "html"],

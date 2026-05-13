@@ -3,7 +3,7 @@ preload = ["./test/setup.ts"]
 coverageReporter = ["text", "lcov"]
 coverageThreshold = { lines = 1.0, functions = 1.0, statements = 1.0 }
 coveragePathIgnorePatterns = [
-  "src/hub.ts",
+  "src/hub.entry.ts",
   "src/games/crown.ts",
   "src/games/flux.ts",
   "src/games/lex.ts",
