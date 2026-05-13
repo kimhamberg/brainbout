@@ -14,7 +14,7 @@
   <a href="https://github.com/kimhamberg/brainbout/releases/latest/download/brainbout.apk"><img src="https://img.shields.io/badge/Android-APK-ef9f76" alt="Android" /></a>
 </p>
 
-A daily brain workout. Train your brain, not your scroll thumb. No accounts, no ads, no internet required. Progress tracked locally.
+A daily brain workout. Train your brain, not your thumb scroll. No accounts, no ads, no internet required. Progress tracked locally.
 
 - <img src="docs/icons/crown.svg" width="16" /> **Crown** — Chess960 rapid, 15+10 vs Stockfish
 - <img src="docs/icons/flux.svg" width="16" /> **Flux** — adaptive rule-switching with inhibition (60s)
@@ -65,7 +65,7 @@ Covers position generation, chess clock, cognitive games, engine parsing, timer,
 
 ## Sound
 
-20 synthesised sounds (modal wood synthesis for chess pieces, FM bells, additive warm tones). Generator lives in a separate offline tool — see `brainbout-sounds/`. Output WAVs are committed to `public/sounds/`.
+20 synthesized sounds (modal wood synthesis for chess pieces, FM bells, additive warm tones). Generator lives in a separate offline tool — see `brainbout-sounds/`. Output WAVs are committed to `public/sounds/`.
 
 ## Stack
 
@@ -75,7 +75,7 @@ Covers position generation, chess clock, cognitive games, engine parsing, timer,
 - [Vite](https://vite.dev) — multi-page build tooling
 - [Catppuccin](https://github.com/catppuccin/catppuccin) — color theme (Frappe dark / Latte light)
 - [Lucide](https://lucide.dev) — icons
-- [Bun](https://bun.sh) — desktop server compiled to single binary with embedded assets
+- [Bun](https://bun.sh) — desktop server compiled to a single binary with embedded assets
 - [Kotlin](https://kotlinlang.org) + [Android WebView](https://developer.android.com/develop/ui/views/layout/webapps/webview) — mobile wrapper
 
 ## Research
