@@ -1,3 +1,5 @@
+import { rng } from "./rng";
+
 /** Duhamel formula: nodes = e^((elo + 365) / 214) */
 export function eloToNodes(elo: number): number {
   return Math.round(Math.exp((elo + 365) / 214));
@@ -25,7 +27,7 @@ export function computeThinkTime(input: ThinkTimeInput): number {
 
   // Forced move: short delay with jitter (0.4-0.8s)
   if (isForced) {
-    const jitter = 0.8 + Math.random() * 0.4;
+    const jitter = 0.8 + rng() * 0.4;
     return Math.min(Math.round(500 * jitter), remainingMs - 1000);
   }
 
@@ -52,7 +54,7 @@ export function computeThinkTime(input: ThinkTimeInput): number {
   base *= complexity;
 
   // Jitter: +/- 20%
-  const jitter = 0.8 + Math.random() * 0.4;
+  const jitter = 0.8 + rng() * 0.4;
   base *= jitter;
 
   // Clamp: [1s, min(30s, remaining - 5s)]

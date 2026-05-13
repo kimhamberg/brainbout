@@ -1,4 +1,5 @@
 import { defined } from "../shared/assert";
+import { rng } from "../shared/rng";
 
 export type Rule = "color" | "shape" | "size" | "fill";
 export type ButtonSide = "left" | "right";
@@ -123,11 +124,11 @@ export const STAGE_PARAMS: StageParams[] = [
 /* ---------- helpers ---------- */
 
 function randInt(min: number, max: number): number {
-  return min + Math.floor(Math.random() * (max - min + 1));
+  return min + Math.floor(rng() * (max - min + 1));
 }
 
 function pick<T>(arr: readonly T[]): T {
-  return defined(arr[Math.floor(Math.random() * arr.length)]);
+  return defined(arr[Math.floor(rng() * arr.length)]);
 }
 
 function rollSwitchCount(stage: number): number {
@@ -146,8 +147,8 @@ function generateGoTrial(): Trial {
   return {
     color: pick(GO_COLORS),
     shape: pick(GO_SHAPES),
-    size: Math.random() < 0.5 ? "big" : "small",
-    fill: Math.random() < 0.5 ? "solid" : "hollow",
+    size: rng() < 0.5 ? "big" : "small",
+    fill: rng() < 0.5 ? "solid" : "hollow",
     isNoGo: false,
     isGolden: false,
   };
@@ -223,7 +224,7 @@ export function generateTrial(state: FluxState): Trial {
 
       // NOT activation + progressive rule unlock
       const sp = defined(STAGE_PARAMS[state.stage]);
-      if (sp.notAllowed && state.switchCount >= 6 && Math.random() < 0.3) {
+      if (sp.notAllowed && state.switchCount >= 6 && rng() < 0.3) {
         state.isNot = true;
       } else {
         state.isNot = false;
@@ -244,13 +245,13 @@ export function generateTrial(state: FluxState): Trial {
 
   // Determine if golden (not during warm-up)
   const isGolden =
-    !isWarmUp && Math.random() < defined(STAGE_PARAMS[state.stage]).goldenRate;
+    !isWarmUp && rng() < defined(STAGE_PARAMS[state.stage]).goldenRate;
 
   // Determine if no-go (not during warm-up, must be unlocked)
   const isNoGo =
     !(isWarmUp || isGolden) && // golden and no-go are mutually exclusive
     state.noGoUnlocked &&
-    Math.random() < defined(STAGE_PARAMS[state.stage]).noGoRate;
+    rng() < defined(STAGE_PARAMS[state.stage]).noGoRate;
 
   if (isNoGo) {
     return generateNoGoTrial(state.rule);

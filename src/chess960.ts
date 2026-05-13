@@ -1,5 +1,6 @@
 // src/chess960.ts
 import { defined } from "./shared/assert";
+import { rng } from "./shared/rng";
 
 export function chess960Backrank(id: number): string[] {
   const pieces = new Array<string | null>(8).fill(null);
@@ -87,6 +88,6 @@ export function chess960Fen(id: number): { fen: string; id: number } {
 }
 
 export function randomChess960(): { fen: string; id: number } {
-  const id = Math.floor(Math.random() * 960);
+  const id = Math.floor(rng() * 960);
   return chess960Fen(id);
 }

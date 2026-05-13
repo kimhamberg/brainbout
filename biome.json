@@ -112,6 +112,9 @@
           "nursery": {
             "noConditionalExpect": "off",
             "useExpect": "off"
+          },
+          "suspicious": {
+            "noBitwiseOperators": "off"
           }
         }
       }

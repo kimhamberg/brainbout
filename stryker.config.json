@@ -9,6 +9,7 @@
     "src/games/lex-srs.ts",
     "src/shared/assert.ts",
     "src/shared/progress.ts",
+    "src/shared/rng.ts",
     "src/shared/stages.ts",
     "src/shared/think-time.ts",
     "src/shared/timer.ts"
