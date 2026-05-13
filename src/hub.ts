@@ -15,43 +15,43 @@ import {
 import { advance, getStage, readiness, retreat } from "./shared/stages";
 import { initTheme, wireToggle } from "./shared/theme";
 
-const GAME_LABELS: Record<string, string> = {
-  crown: "Crown",
-  flux: "Flux",
-  lex: "Lex",
+interface GameMeta {
+  label: string;
+  url: string;
+  accent: string;
+  tagline: string;
+  threshold: number;
+  stages: [string, string, string];
+}
+
+const GAME_META: Record<GameId, GameMeta> = {
+  crown: {
+    label: "Crown",
+    url: "games/crown.html",
+    accent: "var(--ctp-green)",
+    tagline: "Outsmart Stockfish",
+    threshold: 0.6,
+    stages: ["600 Elo", "1200 Elo", "1600 Elo"],
+  },
+  flux: {
+    label: "Flux",
+    url: "games/flux.html",
+    accent: "var(--ctp-red)",
+    tagline: "Think fast, switch faster",
+    threshold: 0.8,
+    stages: ["Relaxed \u00b7 2s", "Brisk \u00b7 1.5s", "Intense \u00b7 1.2s"],
+  },
+  lex: {
+    label: "Lex",
+    url: "games/lex.html",
+    accent: "var(--ctp-blue)",
+    tagline: "Build your vocabulary",
+    threshold: 0.8,
+    stages: ["Multiple choice", "Hinted cloze", "Free recall"],
+  },
 };
 
-const GAME_URLS: Record<string, string> = {
-  crown: "games/crown.html",
-  flux: "games/flux.html",
-  lex: "games/lex.html",
-};
-
-const GAME_ACCENTS: Record<string, string> = {
-  crown: "var(--ctp-green)",
-  flux: "var(--ctp-red)",
-  lex: "var(--ctp-blue)",
-};
-
-const GAME_TAGLINES: Record<string, string> = {
-  crown: "Outsmart Stockfish",
-  flux: "Think fast, switch faster",
-  lex: "Build your vocabulary",
-};
-
-const READINESS_THRESHOLDS: Record<string, number> = {
-  crown: 0.6,
-  flux: 0.8,
-  lex: 0.8,
-};
-
-const STAGE_DESCRIPTIONS: Record<string, string[]> = {
-  crown: ["600 Elo", "1200 Elo", "1600 Elo"],
-  flux: ["Relaxed \u00b7 2s", "Brisk \u00b7 1.5s", "Intense \u00b7 1.2s"],
-  lex: ["Multiple choice", "Hinted cloze", "Free recall"],
-};
-
-function getGameStat(game: string): string | null {
+function getGameStat(game: GameId): string | null {
   if (game === "crown") {
     const stage = getStage(game);
     const eloByStage = [0, 600, 1200, 1600];
@@ -142,19 +142,18 @@ function render(): void {
   html += `<div class="game-list">`;
   for (let i = 0; i < GAMES.length; i++) {
     const game = defined(GAMES[i]);
+    const meta = GAME_META[game];
     const done = session.has(game);
     const cls = done ? "done" : "";
-    const style = `--i:${String(i)};--accent:${GAME_ACCENTS[game]}`;
+    const style = `--i:${String(i)};--accent:${meta.accent}`;
 
     const stage = getStage(game);
-    const threshold = READINESS_THRESHOLDS[game] ?? 0.8;
-    const ready = readiness(game, threshold);
-    const tagline = GAME_TAGLINES[game];
+    const ready = readiness(game, meta.threshold);
     const stat = getGameStat(game);
 
     // Line 1: icon + name (left) + status area (right)
     let line1 = `<span class="game-icon">${GAME_ICONS[game]}</span>`;
-    line1 += `<span class="game-name">${GAME_LABELS[game]}</span>`;
+    line1 += `<span class="game-name">${meta.label}</span>`;
     let right = "";
     if (done) {
       right = `<span class="done-badge">\u2713</span>`;
@@ -170,7 +169,7 @@ function render(): void {
     line1 += `<div class="game-card-right">${right}</div>`;
 
     // Line 2: tagline
-    const line2 = `<span class="game-tagline">${tagline}</span>`;
+    const line2 = `<span class="game-tagline">${meta.tagline}</span>`;
 
     // Line 3: per-game stat (only if data exists)
     const line3 = stat === null ? "" : `<span class="game-stat">${stat}</span>`;
@@ -180,7 +179,7 @@ function render(): void {
     if (done) {
       html += `<div class="game-card ${cls}" style="${style}">${inner}</div>`;
     } else {
-      html += `<a href="${GAME_URLS[game]}" class="game-card ${cls}" style="${style}"><span class="game-play">Play</span>${inner}</a>`;
+      html += `<a href="${meta.url}" class="game-card ${cls}" style="${style}"><span class="game-play">Play</span>${inner}</a>`;
     }
   }
   html += "</div>";
@@ -203,23 +202,20 @@ function dismissPopover(): void {
   document.querySelector(".stage-popover")?.remove();
 }
 
-function showStagePopover(chip: HTMLElement, game: string): void {
+function showStagePopover(chip: HTMLElement, game: GameId): void {
   dismissPopover();
 
   const stage = getStage(game);
-  const descriptions = STAGE_DESCRIPTIONS[game];
-  if (!descriptions) {
-    return;
-  }
+  const meta = GAME_META[game];
 
   const popover = document.createElement("div");
   popover.className = "stage-popover";
-  popover.style.setProperty("--accent", GAME_ACCENTS[game] ?? "");
+  popover.style.setProperty("--accent", meta.accent);
 
   let rows = "";
-  for (let s = 1; s <= descriptions.length; s++) {
+  for (let s = 1; s <= meta.stages.length; s++) {
     const current = s === stage ? " current" : "";
-    rows += `<div class="stage-row${current}"><span class="stage-row-num">${String(s)}</span><span>${descriptions[s - 1]}</span></div>`;
+    rows += `<div class="stage-row${current}"><span class="stage-row-num">${String(s)}</span><span>${meta.stages[s - 1]}</span></div>`;
   }
   popover.innerHTML = rows;
 
@@ -271,8 +267,8 @@ document.querySelector("#hub")?.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
     const { game } = stageChip.dataset;
-    if (game !== undefined && game !== "") {
-      showStagePopover(stageChip, game);
+    if (game !== undefined && (GAMES as readonly string[]).includes(game)) {
+      showStagePopover(stageChip, game as GameId);
     }
     return;
   }

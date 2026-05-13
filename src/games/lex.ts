@@ -1,4 +1,5 @@
 import { defined } from "../shared/assert";
+import { BASE } from "../shared/base";
 import { mountAppIcon } from "../shared/icons";
 import { recordSessionScore, todayString } from "../shared/progress";
 import * as sound from "../shared/sounds";
@@ -95,8 +96,7 @@ function streakMultiplier(): number {
 }
 
 async function loadDict(): Promise<void> {
-  const base = import.meta.env.BASE_URL;
-  const resp = await fetch(`${base}dict-${lang}.json`);
+  const resp = await fetch(`${BASE}dict-${lang}.json`);
   dict = (await resp.json()) as DictEntry[];
   allWords = [...new Set(dict.map((d) => d.word))];
 
@@ -380,9 +380,9 @@ function handleChoice(chosen: string): void {
   const buttons = game.querySelectorAll<HTMLButtonElement>(".choice-btn");
   for (const btn of buttons) {
     btn.disabled = true;
-    if (btn.dataset["word"] === currentEntry.word) {
+    if (btn.dataset.word === currentEntry.word) {
       btn.classList.add("correct");
-    } else if (btn.dataset["word"] === chosen && !correct) {
+    } else if (btn.dataset.word === chosen && !correct) {
       btn.classList.add("wrong");
     }
   }
@@ -483,7 +483,7 @@ game.addEventListener("click", (e) => {
   }
 
   if (target.classList.contains("choice-btn")) {
-    handleChoice(target.dataset["word"] ?? "");
+    handleChoice(target.dataset.word ?? "");
   } else if (target.id === "again-btn") {
     void startGame();
   } else if (target.id === "back-btn") {

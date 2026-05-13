@@ -9,7 +9,6 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
-    "noPropertyAccessFromIndexSignature": true,
     "noImplicitReturns": true,
     "noImplicitOverride": true,
     "isolatedModules": true,
@@ -20,6 +19,6 @@
     "outDir": "dist",
     "sourceMap": true
   },
-  "include": ["src", "test", "server", "scripts", "vite.config.ts"],
+  "include": ["src", "test", "server", "scripts"],
   "exclude": ["server/embed.gen.ts"]
 }

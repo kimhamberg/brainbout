@@ -1,4 +1,5 @@
 import { defined } from "./assert";
+import { BASE } from "./base";
 
 export interface EngineInfo {
   depth: number;
@@ -56,9 +57,8 @@ export class StockfishEngine {
   }
 
   public init(elo = 1500): Promise<void> {
-    const base = import.meta.env.BASE_URL;
     return new Promise((resolve) => {
-      this.worker = new Worker(`${base}stockfish/stockfish-18-lite-single.js`);
+      this.worker = new Worker(`${BASE}stockfish/stockfish-18-lite-single.js`);
       this.worker.addEventListener(
         "message",
         (e: MessageEvent<string>): void => {

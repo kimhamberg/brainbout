@@ -1,4 +1,6 @@
-const BASE = `${import.meta.env.BASE_URL}sounds/`;
+import { BASE } from "./base";
+
+const SOUNDS = `${BASE}sounds/`;
 
 let ctx: AudioContext | null = null;
 const buffers = new Map<string, AudioBuffer>();
@@ -14,7 +16,7 @@ function fetchBuffer(name: string): Promise<AudioBuffer> {
   if (inflight) {
     return inflight;
   }
-  const promise = fetch(`${BASE}${name}.wav`)
+  const promise = fetch(`${SOUNDS}${name}.wav`)
     .then((r) => r.arrayBuffer())
     .then((data) => getCtx().decodeAudioData(data))
     .then((buf) => {

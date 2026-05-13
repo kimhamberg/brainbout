@@ -21,7 +21,7 @@ jobs:
           java-version: 17
 
       - run: bun install --frozen-lockfile
-      - run: bunx vite build
+      - run: bun run build
 
       # Desktop binaries (cross-compiled via bun build --compile)
       - run: bun server/build.ts brainbout-linux-amd64

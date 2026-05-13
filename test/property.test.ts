@@ -57,7 +57,7 @@ import {
 } from "../src/shared/stages";
 import { computeThinkTime, eloToNodes } from "../src/shared/think-time";
 
-const NUM_RUNS = Number(process.env["FAST_CHECK_NUM_RUNS"] ?? 200);
+const NUM_RUNS = Number(process.env.FAST_CHECK_NUM_RUNS ?? 200);
 const cfg = { numRuns: NUM_RUNS } as const;
 
 /** Deterministic RNG: returns 0.5 always (good for symmetric branch coverage). */
@@ -110,11 +110,11 @@ describe("property: chess960", () => {
           counts[p] = (counts[p] ?? 0) + 1;
         }
         return (
-          counts["R"] === 2 &&
-          counts["K"] === 1 &&
-          counts["B"] === 2 &&
-          counts["Q"] === 1 &&
-          counts["N"] === 2
+          counts.R === 2 &&
+          counts.K === 1 &&
+          counts.B === 2 &&
+          counts.Q === 1 &&
+          counts.N === 2
         );
       }),
       cfg,

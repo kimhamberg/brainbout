@@ -1,49 +1,65 @@
 import { join } from "node:path";
 import { chromium } from "playwright";
 import sharp from "sharp";
-import { createServer } from "vite";
+import index from "../index.html";
 
 const WIDTH = 480;
 const HEIGHT = 640;
 const OUTPUT = "docs/screenshot.png";
 
-// Phone frame compositing constants
 const BEZEL_X = 38;
 const BEZEL_Y = 58;
-const FRAME_W = 556; // WIDTH + BEZEL_X * 2
-const FRAME_H = 756; // HEIGHT + BEZEL_Y * 2
-const FRAME_SVG = join(import.meta.dirname, "..", "docs", "phone-frame.svg");
+const FRAME_W = 556;
+const FRAME_H = 756;
+const ROOT = join(import.meta.dirname, "..");
+const FRAME_SVG = join(ROOT, "docs", "phone-frame.svg");
 
 async function main(): Promise<void> {
-  const server = await createServer({ server: { port: 5199 } });
-  await server.listen();
+  const server = Bun.serve({
+    port: 5199,
+    routes: { "/": index },
+    async fetch(req) {
+      const { pathname } = new URL(req.url);
+      const rootFiles = new Set([
+        "/favicon.svg",
+        "/apple-touch-icon.png",
+        "/manifest.json",
+      ]);
+      const sfMatch = /^\/stockfish\/(.+)$/u.exec(pathname);
+      const path = sfMatch
+        ? join(ROOT, "node_modules/stockfish/bin", sfMatch[1]!)
+        : rootFiles.has(pathname)
+          ? join(ROOT, pathname)
+          : join(ROOT, "public", pathname);
+      const f = Bun.file(path);
+      return (await f.exists())
+        ? new Response(f)
+        : new Response("Not Found", { status: 404 });
+    },
+  });
 
   const browser = await chromium.launch();
   const page = await browser.newPage({
     viewport: { width: WIDTH, height: HEIGHT },
   });
 
-  await page.goto("http://localhost:5199");
-  // Force dark theme (Frappe) for a richer screenshot
+  await page.goto(server.url.href);
   await page.evaluate(() => {
     localStorage.setItem("theme", "frappe");
-    document.documentElement.dataset["theme"] = "frappe";
+    document.documentElement.dataset.theme = "frappe";
   });
   await page.locator(".game-list").waitFor({ timeout: 10_000 });
-  // Let transitions settle
   await page.waitForTimeout(300);
 
   await page.screenshot({ path: OUTPUT });
 
   await browser.close();
-  await server.close();
+  await server.stop();
 
-  // Composite screenshot into phone frame
   const frame = await sharp(FRAME_SVG, { density: 72 })
     .resize(FRAME_W, FRAME_H)
     .png()
     .toBuffer();
-
   const screenshot = await sharp(OUTPUT).png().toBuffer();
 
   await sharp({

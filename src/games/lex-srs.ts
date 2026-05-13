@@ -129,27 +129,26 @@ export function maxTypos(wordLength: number): number {
 export function levenshtein(a: string, b: string): number {
   const m = a.length;
   const n = b.length;
-  const dp: number[][] = Array.from({ length: m + 1 }, () =>
-    Array.from({ length: n + 1 }, () => 0),
-  );
+  const w = n + 1;
+  const dp = new Uint32Array((m + 1) * w);
 
   for (let i = 0; i <= m; i++) {
-    defined(dp[i])[0] = i;
+    dp[i * w] = i;
   }
   for (let j = 0; j <= n; j++) {
-    defined(dp[0])[j] = j;
+    dp[j] = j;
   }
 
   for (let i = 1; i <= m; i++) {
     for (let j = 1; j <= n; j++) {
       const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      defined(dp[i])[j] = Math.min(
-        defined(defined(dp[i - 1])[j]) + 1,
-        defined(defined(dp[i])[j - 1]) + 1,
-        defined(defined(dp[i - 1])[j - 1]) + cost,
+      dp[i * w + j] = Math.min(
+        dp[(i - 1) * w + j]! + 1,
+        dp[i * w + (j - 1)]! + 1,
+        dp[(i - 1) * w + (j - 1)]! + cost,
       );
     }
   }
 
-  return defined(defined(dp[m])[n]);
+  return dp[m * w + n]!;
 }
