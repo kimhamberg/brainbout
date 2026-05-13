@@ -18,7 +18,7 @@ function stateKey(lang: string, word: string): string {
 }
 
 function addDays(dateStr: string, days: number): string {
-  const d = new Date(dateStr + "T00:00:00");
+  const d = new Date(`${dateStr}T00:00:00`);
   d.setDate(d.getDate() + days);
   const y = String(d.getFullYear());
   const m = String(d.getMonth() + 1).padStart(2, "0");

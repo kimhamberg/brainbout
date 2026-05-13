@@ -1,5 +1,5 @@
 // test/chess960.test.ts
-import { describe, it, expect } from "vitest";
+import { describe, it, expect } from "bun:test";
 import { chess960Backrank, chess960Fen } from "../src/chess960";
 import { defined } from "../src/shared/assert";
 

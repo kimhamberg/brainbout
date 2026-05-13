@@ -1,0 +1,2 @@
+@custom-media --viewport-sm (width >= 480px);
+@custom-media --motion-reduce (prefers-reduced-motion: reduce);

@@ -1,5 +1,5 @@
-// @vitest-environment happy-dom
-import { describe, it, expect } from "vitest";
+
+import { describe, it, expect } from "bun:test";
 import { defined } from "../src/shared/assert";
 import {
   STAGE_PARAMS,

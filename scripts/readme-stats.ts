@@ -1,6 +1,6 @@
-import { execSync } from "child_process";
-import { readdirSync, readFileSync, writeFileSync } from "fs";
-import { join } from "path";
+import { execSync } from "node:child_process";
+import { readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 
 const root = join(import.meta.dirname, "..");
 

@@ -1,12 +1,12 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, jest } from "bun:test";
 import { createTimer } from "../src/shared/timer";
 
 beforeEach(() => {
-  vi.useFakeTimers();
+  jest.useFakeTimers();
 });
 
 afterEach(() => {
-  vi.useRealTimers();
+  jest.useRealTimers();
 });
 
 describe("createTimer", () => {
@@ -23,15 +23,15 @@ describe("createTimer", () => {
     });
     timer.start();
 
-    vi.advanceTimersByTime(1000);
-    vi.advanceTimersByTime(1000);
-    vi.advanceTimersByTime(1000);
+    jest.advanceTimersByTime(1000);
+    jest.advanceTimersByTime(1000);
+    jest.advanceTimersByTime(1000);
 
     expect(ticks).toEqual([2, 1, 0]);
   });
 
   it("calls onDone when time runs out", () => {
-    const done = vi.fn<() => void>();
+    const done = jest.fn<() => void>();
     const timer = createTimer({
       seconds: 2,
       onTick: () => {
@@ -41,9 +41,9 @@ describe("createTimer", () => {
     });
     timer.start();
 
-    vi.advanceTimersByTime(2000);
+    jest.advanceTimersByTime(2000);
 
-    expect(done).toHaveBeenCalledOnce();
+    expect(done).toHaveBeenCalledTimes(1);
   });
 
   it("stops when stop() is called", () => {
@@ -59,9 +59,9 @@ describe("createTimer", () => {
     });
     timer.start();
 
-    vi.advanceTimersByTime(2000);
+    jest.advanceTimersByTime(2000);
     timer.stop();
-    vi.advanceTimersByTime(5000);
+    jest.advanceTimersByTime(5000);
 
     expect(ticks).toEqual([9, 8]);
   });

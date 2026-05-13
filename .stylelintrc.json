@@ -30,9 +30,10 @@
     "csstools/media-use-custom-media": [
       "always-known",
       {
-        "importFrom": ["src/style.css"]
+        "importFrom": ["src/shared/media.css"]
       }
     ],
+    "import-notation": "string",
     "scales/alpha-values": [
       0, 0.05, 0.1, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5, 0.6, 0.8, 0.9, 1
     ],

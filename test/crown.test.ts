@@ -1,5 +1,5 @@
-// @vitest-environment happy-dom
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+
+import { describe, it, expect, beforeEach, afterEach, jest } from "bun:test";
 
 // Set up the DOM before importing the module, since crown.ts
 // runs document.getElementById("game") at the top level on import.
@@ -24,11 +24,11 @@ globalThis.Worker = fakeWorker as unknown as typeof Worker;
 const { createClock } = await import("../src/games/crown");
 
 beforeEach(() => {
-  vi.useFakeTimers();
+  jest.useFakeTimers();
 });
 
 afterEach(() => {
-  vi.useRealTimers();
+  jest.useRealTimers();
 });
 
 describe("createClock", () => {
@@ -46,8 +46,8 @@ describe("createClock", () => {
     });
     clock.start();
 
-    vi.advanceTimersByTime(100);
-    vi.advanceTimersByTime(100);
+    jest.advanceTimersByTime(100);
+    jest.advanceTimersByTime(100);
 
     expect(ticks.length).toBeGreaterThanOrEqual(2);
     expect(ticks[0]).toBeLessThan(3000);
@@ -55,7 +55,7 @@ describe("createClock", () => {
   });
 
   it("calls onFlag when time runs out", () => {
-    const onFlag = vi.fn<() => void>();
+    const onFlag = jest.fn<() => void>();
     const clock = createClock({
       initialMs: 500,
       incrementMs: 0,
@@ -66,9 +66,9 @@ describe("createClock", () => {
     });
     clock.start();
 
-    vi.advanceTimersByTime(600);
+    jest.advanceTimersByTime(600);
 
-    expect(onFlag).toHaveBeenCalledOnce();
+    expect(onFlag).toHaveBeenCalledTimes(1);
   });
 
   it("adds increment on addIncrement()", () => {
@@ -85,12 +85,12 @@ describe("createClock", () => {
     });
     clock.start();
 
-    vi.advanceTimersByTime(1000);
+    jest.advanceTimersByTime(1000);
     clock.stop();
     clock.addIncrement();
     // Should be roughly 2000 (3000 - 1000) + 2000 increment = 4000
     clock.start();
-    vi.advanceTimersByTime(100);
+    jest.advanceTimersByTime(100);
     expect(lastMs).toBeGreaterThan(3500);
     clock.stop();
   });

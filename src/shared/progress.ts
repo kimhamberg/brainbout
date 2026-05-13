@@ -78,7 +78,7 @@ export function recordCheckmate(elo: number): void {
 
 export function getStreak(today: string): number {
   let streak = 0;
-  const d = new Date(today + "T00:00:00");
+  const d = new Date(`${today}T00:00:00`);
   let val = localStorage.getItem(key("sessions", formatDate(d)));
   while (val !== null && Number(val) >= 1) {
     streak++;

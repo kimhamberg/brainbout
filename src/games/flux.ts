@@ -336,7 +336,7 @@ function animateCountUp(el: HTMLElement, target: number): void {
   const start = performance.now();
   function frame(now: number): void {
     const progress = Math.min((now - start) / duration, 1);
-    const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+    const eased = 1 - (1 - progress) ** 3; // ease-out cubic
     el.textContent = String(Math.round(target * eased));
     if (progress < 1) {
       requestAnimationFrame(frame);
@@ -353,7 +353,7 @@ function getBest(key: string): number | null {
   const val = localStorage.getItem(`brainbout:${key}:best`);
   if (val === null) return null;
   const n = parseInt(val, 10);
-  return isNaN(n) ? null : n;
+  return Number.isNaN(n) ? null : n;
 }
 
 function saveBest(key: string, score: number): void {

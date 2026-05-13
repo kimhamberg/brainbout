@@ -1,6 +1,6 @@
 import sharp from "sharp";
-import { mkdirSync, writeFileSync } from "fs";
-import { join } from "path";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 
 // Catppuccin Frappe base (#303446)
 const BG_COLOR = "#303446";

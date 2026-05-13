@@ -15,6 +15,7 @@
     "isolatedModules": true,
     "esModuleInterop": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["bun-types"],
     "skipLibCheck": true,
     "outDir": "dist",
     "sourceMap": true

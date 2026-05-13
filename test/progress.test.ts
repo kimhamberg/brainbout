@@ -1,5 +1,5 @@
-// @vitest-environment happy-dom
-import { describe, it, expect, beforeEach } from "vitest";
+
+import { describe, it, expect, beforeEach } from "bun:test";
 import {
   GAMES,
   recordSessionScore,

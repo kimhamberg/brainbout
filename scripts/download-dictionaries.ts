@@ -4,11 +4,11 @@ import {
   writeFileSync,
   existsSync,
   mkdirSync,
-} from "fs";
-import { createInterface } from "readline";
-import { join } from "path";
-import { pipeline } from "stream/promises";
-import { Readable } from "stream";
+} from "node:fs";
+import { createInterface } from "node:readline";
+import { join } from "node:path";
+import { pipeline } from "node:stream/promises";
+import { Readable } from "node:stream";
 
 const ROOT = join(import.meta.dirname, "..");
 const PUBLIC_DIR = join(ROOT, "public");
@@ -181,7 +181,7 @@ async function processJsonl(
   }
 
   const json = JSON.stringify(results);
-  writeFileSync(outputPath, json + "\n");
+  writeFileSync(outputPath, `${json}\n`);
   const sizeMB = (Buffer.byteLength(json) / 1024 / 1024).toFixed(1);
 
   console.log(`\n  Results:`);

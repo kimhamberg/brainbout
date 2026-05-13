@@ -1,3 +1,5 @@
+@import "../shared/media.css";
+
 /* ========== Keyframes ========== */
 
 @keyframes stimulus-enter {
@@ -210,10 +212,26 @@
     }
   }
 
-  @keyframes burst-left,
-  @keyframes burst-right,
-  @keyframes crack-split,
-  @keyframes dissolve,
+  @keyframes burst-left {
+    to {
+      opacity: 0;
+    }
+  }
+  @keyframes burst-right {
+    to {
+      opacity: 0;
+    }
+  }
+  @keyframes crack-split {
+    to {
+      opacity: 0;
+    }
+  }
+  @keyframes dissolve {
+    to {
+      opacity: 0;
+    }
+  }
   @keyframes explode {
     to {
       opacity: 0;
