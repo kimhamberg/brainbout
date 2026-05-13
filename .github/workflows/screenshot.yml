@@ -21,16 +21,13 @@ jobs:
         with:
           token: ${{ secrets.SCREENSHOT_PAT }}
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
+      - uses: oven-sh/setup-bun@v2
 
-      - run: npm ci
-      - run: npx playwright install --with-deps chromium
-      - run: npm run screenshot
-      - run: npm run readme
-      - run: npx prettier --write README.md
+      - run: bun install --frozen-lockfile
+      - run: bunx playwright install --with-deps chromium
+      - run: bun run screenshot
+      - run: bun run readme
+      - run: bunx biome format --write README.md
 
       - name: Push screenshot and README if changed
         run: |

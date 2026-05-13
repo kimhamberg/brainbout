@@ -1,0 +1,59 @@
+pre-commit:
+  parallel: true
+  jobs:
+    - name: biome
+      glob: "*.{ts,js,json}"
+      run: bunx biome lint {staged_files}
+
+    - name: biome-format
+      glob: "*.{ts,js,json}"
+      run: bunx biome format {staged_files}
+
+    - name: tsc
+      glob: "*.ts"
+      run: bunx tsc --noEmit
+
+    - name: stylelint
+      glob: "*.css"
+      run: bunx stylelint {staged_files}
+
+    - name: ruff
+      glob: "*.py"
+      run: uv run ruff check {staged_files}
+
+    - name: ruff-format
+      glob: "*.py"
+      run: uv run ruff format --check {staged_files}
+
+    - name: ty
+      glob: "*.py"
+      run: uv run ty check
+
+    - name: superhtml
+      glob: "*.html"
+      run: superhtml check {staged_files}
+
+    - name: actionlint
+      glob: ".github/workflows/*.yml"
+      run: actionlint
+
+    - name: taplo
+      glob: "*.toml"
+      run: taplo lint {staged_files}
+
+    - name: checkmake
+      glob: "Makefile"
+      run: checkmake Makefile
+
+    - name: golangci
+      glob: "server/**/*.go"
+      run: cd server && golangci-lint run ./...
+
+    - name: ktlint
+      glob: "android/**/*.kt"
+      run: ktlint {staged_files}
+
+pre-push:
+  jobs:
+    - name: test
+      run: bun test

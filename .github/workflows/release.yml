@@ -13,10 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
+      - uses: oven-sh/setup-bun@v2
 
       - uses: actions/setup-go@v5
         with:
@@ -27,8 +24,8 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - run: npm ci
-      - run: npx vite build
+      - run: bun install --frozen-lockfile
+      - run: bunx vite build
 
       # Desktop binaries
       - run: |

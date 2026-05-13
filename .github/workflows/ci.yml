@@ -12,15 +12,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npx tsc --noEmit
-      - run: npm run lint
-      - run: npm run lint:css
-      - run: npm run format:check
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bunx tsc --noEmit
+      - run: bun run lint
+      - run: bun run lint:css
+      - run: bun run format:check
 
   lint-go:
     name: Go lint
@@ -59,14 +56,50 @@ jobs:
           curl -sSL https://github.com/detekt/detekt/releases/download/v1.23.8/detekt-cli-1.23.8-all.jar -o /tmp/detekt.jar
       - run: java -jar /tmp/detekt.jar --input android/ --config detekt.yml --build-upon-default-config --all-rules
 
+  lint-html:
+    name: HTML lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          curl -sSL https://github.com/kristoff-it/superhtml/releases/latest/download/superhtml-x86_64-linux -o /usr/local/bin/superhtml
+          chmod +x /usr/local/bin/superhtml
+      - run: superhtml check index.html games/*.html
+
+  lint-actions:
+    name: GitHub Actions lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker://rhysd/actionlint:latest
+
+  lint-toml:
+    name: TOML lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          curl -fsSL https://github.com/tamasfe/taplo/releases/latest/download/taplo-linux-x86_64.gz | gunzip > /usr/local/bin/taplo
+          chmod +x /usr/local/bin/taplo
+      - run: taplo lint
+      - run: taplo fmt --check
+
+  lint-makefile:
+    name: Makefile lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+      - run: go install github.com/mrtazz/checkmake/cmd/checkmake@latest
+      - run: checkmake Makefile
+
   test:
     name: Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npm test
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun test
