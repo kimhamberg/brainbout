@@ -110,3 +110,41 @@ describe("GAMES", () => {
     expect(GAMES).toEqual(["crown", "flux", "lex"]);
   });
 });
+
+describe("storage quota tolerance", () => {
+  it("recordSessionScore swallows QuotaExceededError", () => {
+    const original = Storage.prototype.setItem;
+    Storage.prototype.setItem = function setItem(): void {
+      throw new DOMException("quota", "QuotaExceededError");
+    };
+    try {
+      expect(() => recordSessionScore("flux", 42)).not.toThrow();
+    } finally {
+      Storage.prototype.setItem = original;
+    }
+  });
+
+  it("completeSession swallows QuotaExceededError", () => {
+    const original = Storage.prototype.setItem;
+    Storage.prototype.setItem = function setItem(): void {
+      throw new DOMException("quota", "QuotaExceededError");
+    };
+    try {
+      expect(() => completeSession()).not.toThrow();
+    } finally {
+      Storage.prototype.setItem = original;
+    }
+  });
+
+  it("recordCheckmate swallows QuotaExceededError", () => {
+    const original = Storage.prototype.setItem;
+    Storage.prototype.setItem = function setItem(): void {
+      throw new DOMException("quota", "QuotaExceededError");
+    };
+    try {
+      expect(() => recordCheckmate(600)).not.toThrow();
+    } finally {
+      Storage.prototype.setItem = original;
+    }
+  });
+});

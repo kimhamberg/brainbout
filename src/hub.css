@@ -351,9 +351,10 @@
   border-radius: 6px;
 
   font-size: 0.75rem;
-  color: var(--ctp-subtext0);
+  font-weight: 600;
+  color: var(--ctp-text);
 
-  background: var(--ctp-surface1);
+  background: var(--ctp-base);
 
   transition:
     background-color var(--dur-250) ease,

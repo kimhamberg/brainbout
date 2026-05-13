@@ -1,26 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from "bun:test";
-
-// Set up the DOM before importing the module, since crown.ts
-// runs document.getElementById("game") at the top level on import.
-document.body.innerHTML = '<main id="game"></main>';
-
-// Stub Worker so StockfishEngine.init() doesn't throw when the
-// module-level main() fires during import.
-function fakeWorker(): void {
-  /* stub constructor */
-}
-fakeWorker.prototype.addEventListener = function addEventListener(): void {
-  /* stub */
-};
-fakeWorker.prototype.postMessage = function postMessage(): void {
-  /* stub */
-};
-fakeWorker.prototype.terminate = function terminate(): void {
-  /* stub */
-};
-globalThis.Worker = fakeWorker as unknown as typeof Worker;
-
-const { createClock } = await import("../src/games/crown");
+import { createClock, formatClock } from "../src/games/crown-clock";
 
 beforeEach(() => {
   jest.useFakeTimers();
@@ -70,6 +49,59 @@ describe("createClock", () => {
     expect(onFlag).toHaveBeenCalledTimes(1);
   });
 
+  it("remaining() reflects elapsed time", () => {
+    const clock = createClock({
+      initialMs: 5000,
+      incrementMs: 0,
+      onTick: () => {
+        /* noop */
+      },
+      onFlag: () => {
+        /* noop */
+      },
+    });
+    expect(clock.remaining()).toBe(5000);
+    clock.start();
+    jest.advanceTimersByTime(1500);
+    clock.stop();
+    expect(clock.remaining()).toBeLessThan(5000);
+    expect(clock.remaining()).toBeGreaterThanOrEqual(0);
+  });
+
+  it("stop is idempotent (no throw if called twice)", () => {
+    const clock = createClock({
+      initialMs: 1000,
+      incrementMs: 0,
+      onTick: () => {
+        /* noop */
+      },
+      onFlag: () => {
+        /* noop */
+      },
+    });
+    clock.start();
+    clock.stop();
+    expect(() => clock.stop()).not.toThrow();
+  });
+
+  it("clamps remaining to 0 on flag (never negative)", () => {
+    let lastMs = -1;
+    const clock = createClock({
+      initialMs: 100,
+      incrementMs: 0,
+      onTick: (ms) => {
+        lastMs = ms;
+      },
+      onFlag: () => {
+        /* noop */
+      },
+    });
+    clock.start();
+    jest.advanceTimersByTime(1000);
+    expect(lastMs).toBeGreaterThanOrEqual(0);
+    expect(clock.remaining()).toBe(0);
+  });
+
   it("adds increment on addIncrement()", () => {
     let lastMs = 0;
     const clock = createClock({
@@ -92,5 +124,28 @@ describe("createClock", () => {
     jest.advanceTimersByTime(100);
     expect(lastMs).toBeGreaterThan(3500);
     clock.stop();
+  });
+});
+
+describe("formatClock", () => {
+  it("formats whole minutes", () => {
+    expect(formatClock(60_000)).toBe("1:00");
+    expect(formatClock(15 * 60_000)).toBe("15:00");
+  });
+  it("formats sub-minute correctly", () => {
+    expect(formatClock(45_000)).toBe("0:45");
+    expect(formatClock(5_000)).toBe("0:05");
+  });
+  it("ceils to the next second (in-game timer presentation)", () => {
+    expect(formatClock(999)).toBe("0:01");
+    expect(formatClock(1)).toBe("0:01");
+  });
+  it("zero and negative values clamp to 0:00", () => {
+    expect(formatClock(0)).toBe("0:00");
+    expect(formatClock(-1000)).toBe("0:00");
+  });
+  it("pads seconds with leading zero", () => {
+    expect(formatClock(63_000)).toBe("1:03");
+    expect(formatClock(125_000)).toBe("2:05");
   });
 });

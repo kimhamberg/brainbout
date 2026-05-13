@@ -7,6 +7,15 @@ function key(...parts: string[]): string {
   return `${PREFIX}:${parts.join(":")}`;
 }
 
+function safeSet(k: string, v: string): void {
+  try {
+    localStorage.setItem(k, v);
+  } catch {
+    // QuotaExceededError / SecurityError (e.g., private mode): drop the
+    // write so the session keeps running rather than crashing the page.
+  }
+}
+
 function formatDate(d: Date): string {
   const y = String(d.getFullYear());
   const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -35,13 +44,13 @@ export function recordSessionScore(game: GameId, score: number): void {
   // Update today-best
   const prevToday = getTodayBest(game);
   if (prevToday === null || score > prevToday) {
-    localStorage.setItem(key("today-best", today, game), String(score));
+    safeSet(key("today-best", today, game), String(score));
   }
 
   // Update all-time best
   const prevBest = getBest(game);
   if (prevBest === null || score > prevBest) {
-    localStorage.setItem(key("best", game), String(score));
+    safeSet(key("best", game), String(score));
   }
 }
 
@@ -60,10 +69,10 @@ export function completeSession(): void {
   const today = todayString();
 
   const todayCount = getSessionsToday();
-  localStorage.setItem(key("sessions", today), String(todayCount + 1));
+  safeSet(key("sessions", today), String(todayCount + 1));
 
   const total = getTotalSessions();
-  localStorage.setItem(key("total-sessions"), String(total + 1));
+  safeSet(key("total-sessions"), String(total + 1));
 }
 
 export function getCheckmates(elo: number): number {
@@ -73,7 +82,7 @@ export function getCheckmates(elo: number): number {
 
 export function recordCheckmate(elo: number): void {
   const count = getCheckmates(elo);
-  localStorage.setItem(key("checkmates", String(elo)), String(count + 1));
+  safeSet(key("checkmates", String(elo)), String(count + 1));
 }
 
 export function getStreak(today: string): number {
