@@ -12,15 +12,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - uses: oven-sh/setup-bun@v2
-
+      - uses: ./.github/actions/setup
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
-
-      - run: bun install --frozen-lockfile
+          java-version: '17'
       - run: bun run build
 
       # Desktop binaries (cross-compiled via bun build --compile)

@@ -94,12 +94,6 @@ A prospective cohort study of 469 adults over 75 in the _New England Journal of 
 
 The spacing effect is one of the most robust findings in memory research, first demonstrated by Ebbinghaus (1885) and [replicated 130 years later](https://doi.org/10.1371/journal.pone.0120644) with comparable results (Murre & Dros, 2015). A meta-analysis of 317 experiments across 184 articles confirmed that distributed practice produces stronger retention than massed practice, with optimal inter-study intervals scaling with the target retention interval [(Cepeda et al., 2006)](https://doi.org/10.1037/0033-2909.132.3.354). At the neural level, spacing increases pattern similarity in the ventromedial prefrontal cortex across repetitions, and irregular spacing outperforms uniform intervals — a prediction from computational models validated experimentally [(Smolen et al., 2016)](https://doi.org/10.1038/nrn.2015.18).
 
-## Roadmap
-
-- [ ] Every game feels vital and polished — tight animations, satisfying sounds, zero rough edges
-- [ ] Crown matches feel like playing a real human — natural move timing, personality, tension
-- [ ] Lex actually trains vocabulary — spaced repetition that sticks, real progress over weeks
-
 ## Contributing
 
 Contributions are welcome. Please open an issue first to discuss what you'd like to change.

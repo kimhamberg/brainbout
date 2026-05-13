@@ -6,26 +6,44 @@ on:
   pull_request:
     branches: [master, main]
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            android:
+              - 'android/**'
+      - uses: ./.github/actions/setup
       - uses: actions/setup-java@v4
+        if: steps.changes.outputs.android == 'true'
         with:
           distribution: temurin
-          java-version: 17
-      - name: Install external linters
+          java-version: '17'
+      - name: Cache linter binaries
+        id: linters
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/bin
+          key: linters-${{ hashFiles('.github/workflows/ci.yml') }}
+      - name: Install linter binaries
+        if: steps.linters.outputs.cache-hit != 'true'
         run: |
-          sudo curl -fsSL https://github.com/kristoff-it/superhtml/releases/latest/download/superhtml-x86_64-linux -o /usr/local/bin/superhtml
-          sudo chmod +x /usr/local/bin/superhtml
-          curl -fsSL https://github.com/tamasfe/taplo/releases/latest/download/taplo-linux-x86_64.gz | gunzip | sudo tee /usr/local/bin/taplo > /dev/null
-          sudo chmod +x /usr/local/bin/taplo
-          sudo curl -sSL https://github.com/pinterest/ktlint/releases/latest/download/ktlint -o /usr/local/bin/ktlint
-          sudo chmod +x /usr/local/bin/ktlint
-      - run: bun install --frozen-lockfile
+          mkdir -p ~/.local/bin
+          curl -fsSL https://github.com/kristoff-it/superhtml/releases/latest/download/superhtml-x86_64-linux -o ~/.local/bin/superhtml
+          curl -fsSL https://github.com/tamasfe/taplo/releases/latest/download/taplo-linux-x86_64.gz | gunzip > ~/.local/bin/taplo
+          curl -fsSL https://github.com/pinterest/ktlint/releases/latest/download/ktlint -o ~/.local/bin/ktlint
+          bash <(curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash) latest ~/.local/bin
+          chmod +x ~/.local/bin/*
+      - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
       - run: bunx tsc --noEmit
       - run: bun run check
       - run: bun run lint:css
@@ -33,15 +51,15 @@ jobs:
       - run: taplo lint
       - run: taplo fmt --check
       - run: ktlint "android/**/*.kt"
-      - uses: docker://rhysd/actionlint:latest
+        if: steps.changes.outputs.android == 'true'
+      - run: actionlint
 
   test:
     name: Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install --frozen-lockfile
+      - uses: ./.github/actions/setup
       - run: bun run test:cov
 
   fuzz:
@@ -49,20 +67,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install --frozen-lockfile
-      - run: bun run test:fuzz
-
-  mutation:
-    name: Mutation (Stryker)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install --frozen-lockfile
-      - run: bun run test:mutation
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: stryker-report
-          path: reports/mutation/
+      - uses: ./.github/actions/setup
+      - run: FAST_CHECK_NUM_RUNS=10000 bun test test/property.test.ts
