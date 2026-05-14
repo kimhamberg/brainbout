@@ -69,7 +69,7 @@ Unit tests cover position generation, chess clock, cognitive games, engine parsi
 
 ## Sound
 
-20 synthesized sounds (modal wood synthesis for chess pieces, FM bells, additive warm tones). Generator lives in a separate offline tool — see `brainbout-sounds/`. Output WAVs are committed to `public/sounds/`.
+Synthesized sounds (modal wood synthesis for chess pieces, FM bells, additive warm tones). The generator lives in a separate offline tool. Output WAVs are committed to `public/sounds/`.
 
 ## Stack
 
@@ -89,9 +89,7 @@ Flux combines cued task switching with go/no-go inhibition. These target two of 
 
 **Crown — mental rotation (spatial reasoning)**
 
-The original Crown was a Stockfish chess client. Recent meta-analyses with active controls — most importantly [Sala & Gobet (2023)](https://doi.org/10.1177/17456916221091830) — concluded that chess training, like working-memory training and music training, shows essentially no far transfer to general cognition when properly controlled (corrected g ≈ 0.01). Brainbout's bar is "trains a sub-skill with replicated transfer evidence", so the chess game was retired. Crown is now a chess-themed mental-rotation drill: two boards are shown side by side under a stated transform (rot 90°/180°/270° or mirror); the player judges whether they are the same configuration or whether one piece has moved. Stage curriculum widens the transform set and the piece-count with progress. Per-trial budget 8 s; 20 trials per session.
-
-The mental-rotation literature is the strongest evidence in cognitive-training game research today. Uttal et al.'s meta-analysis of 217 spatial-training studies reports an average Hedges's g of 0.47 (SE 0.04), with effects that are durable across delays and that transfer to untrained spatial tasks [(Uttal et al., 2013)](https://doi.org/10.1037/a0028446). A more recent meta-analysis of 89 effect sizes (N = 3,765) shows spatial training transfers to mathematics with g ≈ 0.28 — and, critically, the control-group type does not moderate the effect, ruling out a pure placebo explanation [(Hawes et al., 2022)](https://doi.org/10.1037/dev0001281). Long-term durability has been confirmed at 90 days post-training, accompanied by ERP changes [(npj Science of Learning 2025)](https://www.nature.com/articles/s41539-025-00309-2). Skeptics still dispute the size of far-transfer claims, so the framing here is honest: mental rotation training reliably improves the trained spatial sub-skill and likely transfers to mathematics; broader claims remain contested.
+The mental-rotation literature is the strongest evidence in cognitive-training game research today. Uttal et al.'s meta-analysis of 217 spatial-training studies reports an average Hedges' g of 0.47 (SE 0.04), with effects that are durable across delays and that transfer to untrained spatial tasks [(Uttal et al., 2013)](https://doi.org/10.1037/a0028446). A more recent meta-analysis of 89 effect sizes (N = 3,765) shows spatial training transfers to mathematics with g ≈ 0.28 — and, critically, the control-group type does not moderate the effect, ruling out a pure placebo explanation [(Hawes et al., 2022)](https://doi.org/10.1037/dev0001281). Long-term durability has been confirmed at 90 days post-training, accompanied by ERP changes [(npj Science of Learning 2025)](https://www.nature.com/articles/s41539-025-00309-2). Skeptics still dispute the size of far-transfer claims, so the framing here is honest: mental rotation training reliably improves the trained spatial sub-skill and likely transfers to mathematics; broader claims remain contested.
 
 **Lex — spaced retrieval practice (FSRS-style scheduling)**
 
