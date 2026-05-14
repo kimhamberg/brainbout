@@ -31,5 +31,5 @@ pre-commit:
 
 pre-push:
   jobs:
-    - name: test
-      run: bun test
+    - name: test:cov
+      run: bun run test:cov

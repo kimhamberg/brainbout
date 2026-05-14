@@ -5,6 +5,7 @@ import {
   iconSvg,
   mountAppIcon,
   mountHubIcon,
+  mountQuitButton,
 } from "../src/shared/icons";
 import { GAMES } from "../src/shared/progress";
 
@@ -84,6 +85,33 @@ describe("mountAppIcon", () => {
       const svg = document.querySelector(".app-title svg");
       expect(svg).not.toBeNull();
     }
+  });
+});
+
+describe("mountQuitButton", () => {
+  beforeEach(() => {
+    document.body.innerHTML = '<button id="quit-btn"></button>';
+  });
+
+  test("injects 16px SVG into the button", () => {
+    mountQuitButton(() => {});
+    const svg = document.querySelector("#quit-btn svg");
+    expect(svg).not.toBeNull();
+    expect(svg?.getAttribute("width")).toBe("16");
+  });
+
+  test("attaches click handler to the button", () => {
+    let clicks = 0;
+    mountQuitButton(() => {
+      clicks++;
+    });
+    document.getElementById("quit-btn")?.dispatchEvent(new MouseEvent("click"));
+    expect(clicks).toBe(1);
+  });
+
+  test("no-op when #quit-btn is missing", () => {
+    document.body.innerHTML = "";
+    expect(() => mountQuitButton(() => {})).not.toThrow();
   });
 });
 
