@@ -144,37 +144,39 @@
   box-shadow: var(--ctp-shadow);
 }
 
-/* ========== Quit button (top-right) ========== */
+/* ========== Quit button (header) ========== */
 
 .quit-btn {
   cursor: pointer;
-
-  position: fixed;
-  top: calc(1rem + env(safe-area-inset-top, 0px));
-  right: calc(1rem + env(safe-area-inset-right, 0px));
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 32px;
+  height: 32px;
   padding: 0;
-  border: none;
+  border: 1px solid var(--ctp-surface1);
   border-radius: 6px;
 
-  color: var(--ctp-text);
+  color: var(--ctp-subtext0);
 
-  background: var(--ctp-surface0);
-  box-shadow: var(--ctp-shadow);
+  background: none;
 
   transition:
+    border-color var(--dur-150) ease,
+    color var(--dur-150) ease,
     background-color var(--dur-150) ease,
-    transform var(--dur-150) ease;
+    transform var(--dur-200) ease;
 
   &:hover {
-    transform: scale(1.05);
-    background: var(--ctp-surface1);
+    border-color: var(--ctp-red);
+    color: var(--ctp-text);
+  }
+
+  &:active {
+    transform: scale(0.92);
+    background: var(--ctp-surface0);
   }
 }
 

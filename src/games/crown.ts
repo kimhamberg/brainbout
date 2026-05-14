@@ -6,7 +6,7 @@ import "../shared/board-theme.css";
 import { Chessground } from "@lichess-org/chessground";
 import type { Api } from "@lichess-org/chessground/api";
 import { BASE } from "../shared/base";
-import { mountAppIcon } from "../shared/icons";
+import { mountAppIcon, mountQuitButton } from "../shared/icons";
 import { recordSessionScore } from "../shared/progress";
 import * as sound from "../shared/sounds";
 import { getStage, recordResult } from "../shared/stages";
@@ -76,9 +76,6 @@ function renderPlaying(): void {
     </div>
     <div class="rotate-feedback" id="feedback"></div>
     <div class="score-display">Score: ${String(score)}</div>
-    <button id="quit-btn" class="quit-btn" aria-label="End session">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-    </button>
   `;
   const elA = getEl("board-a");
   const elB = getEl("board-b");
@@ -218,13 +215,15 @@ game.addEventListener("click", (e) => {
     if (pressed === "same" || pressed === "different") {
       handleResponse(pressed);
     }
-  } else if (target.id === "quit-btn") {
-    if (!gameOver) showResult();
   } else if (target.id === "again-btn") {
     startGame();
   } else if (target.id === "back-btn") {
     window.location.href = `${BASE}?completed=crown`;
   }
+});
+
+mountQuitButton(() => {
+  if (!gameOver) showResult();
 });
 
 startGame();

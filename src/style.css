@@ -105,6 +105,10 @@ header {
     align-items: center;
   }
 
+  & .header-actions {
+    gap: 0.5rem;
+  }
+
   & h1 {
     display: flex;
     gap: 0.5rem;

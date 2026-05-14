@@ -32,6 +32,15 @@ export function mountAppIcon(game: GameId, stroke: string): void {
   }
 }
 
+const QUIT_PATHS = `<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>`;
+
+export function mountQuitButton(onClick: () => void): void {
+  const btn = document.getElementById("quit-btn");
+  if (!btn) return;
+  btn.innerHTML = iconSvg(QUIT_PATHS, { size: 16 });
+  btn.addEventListener("click", onClick);
+}
+
 export function mountHubIcon(): void {
   const slot = document.querySelector(".hub-icon-slot");
   if (slot) {
