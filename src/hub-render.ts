@@ -16,9 +16,13 @@ export const GAME_META: Record<GameId, GameMeta> = {
     label: "Crown",
     url: "games/crown.html",
     accent: "var(--ctp-green)",
-    tagline: "Outsmart Stockfish",
+    tagline: "Rotate the board, spot the change",
     threshold: 0.6,
-    stages: ["600 Elo", "1200 Elo", "1600 Elo"],
+    stages: [
+      "180° · 3-4 pieces",
+      "90/180/270° · 5-7 pieces",
+      "± mirror · 8-12 pieces",
+    ],
   },
   flux: {
     label: "Flux",

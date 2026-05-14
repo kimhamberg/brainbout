@@ -13,7 +13,6 @@ import {
   GAMES,
   type GameId,
   getBest,
-  getCheckmates,
   getSessionsToday,
   getStreak,
   getTotalSessions,
@@ -23,12 +22,8 @@ import { advance, getStage, readiness, retreat } from "./shared/stages";
 import { initTheme, wireToggle } from "./shared/theme";
 
 function crownStat(): string | null {
-  const stage = getStage("crown");
-  const elo = [0, 600, 1200, 1600][stage] ?? 1200;
-  const mates = getCheckmates(elo);
-  return mates > 0
-    ? `${String(mates)} checkmate${mates === 1 ? "" : "s"} at ${String(elo)} Elo`
-    : null;
+  const best = getBest("crown");
+  return best === null ? null : `Best: ${String(best)} pts`;
 }
 
 function fluxStat(): string | null {

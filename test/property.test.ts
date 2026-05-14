@@ -1,7 +1,13 @@
-import { afterAll, beforeEach, describe, expect, it } from "bun:test";
+import {
+  afterAll,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+} from "bun:test";
 import process from "node:process";
 import fc from "fast-check";
-import { chess960Backrank, chess960Fen, randomChess960 } from "../src/chess960";
 import {
   BPM_DOWN,
   BPM_UP,
@@ -21,18 +27,7 @@ import {
   updateAdaptation,
   WARM_UP_TRIALS,
 } from "../src/games/flux-engine";
-import {
-  BOX_INTERVALS,
-  getDueWords,
-  getMasteredCount,
-  getMastery,
-  getMasteryStreak,
-  getWordState,
-  jitterInterval,
-  levenshtein,
-  maxTypos,
-  recordAnswer,
-} from "../src/games/lex-srs";
+import { jitterInterval, levenshtein, maxTypos } from "../src/games/lex-srs";
 import { defined } from "../src/shared/assert";
 import {
   completeSession,
@@ -56,7 +51,6 @@ import {
   recordResult,
   retreat,
 } from "../src/shared/stages";
-import { computeThinkTime, eloToNodes } from "../src/shared/think-time";
 
 const NUM_RUNS = Number(process.env.FAST_CHECK_NUM_RUNS ?? 200);
 const cfg = { numRuns: NUM_RUNS } as const;
@@ -78,161 +72,12 @@ function seededRng(seed: number): Rng {
   };
 }
 
-afterAll(() => {
+// The rng module is a singleton shared across test files in the same Bun
+// process. Reset after every test so per-describe `setRng` calls cannot
+// leak into other files (e.g., flux.test.ts) that assume Math.random.
+afterEach(() => {
   resetRng();
 });
-
-/* ====================================================================== */
-/* chess960                                                                */
-/* ====================================================================== */
-
-describe("property: chess960", () => {
-  const ids = fc.integer({ min: 0, max: 959 });
-
-  it("backrank length is always 8", () => {
-    fc.assert(
-      fc.property(ids, (id) => chess960Backrank(id).length === 8),
-      cfg,
-    );
-  });
-
-  it("backrank index 8 is undefined (no overflow)", () => {
-    fc.assert(
-      fc.property(ids, (id) => chess960Backrank(id)[8] === undefined),
-      cfg,
-    );
-  });
-
-  it("backrank piece composition is RRKBBQNN", () => {
-    fc.assert(
-      fc.property(ids, (id) => {
-        const counts: Record<string, number> = {};
-        for (const p of chess960Backrank(id)) {
-          counts[p] = (counts[p] ?? 0) + 1;
-        }
-        return (
-          counts.R === 2 &&
-          counts.K === 1 &&
-          counts.B === 2 &&
-          counts.Q === 1 &&
-          counts.N === 2
-        );
-      }),
-      cfg,
-    );
-  });
-
-  it("no null entries in backrank", () => {
-    fc.assert(
-      fc.property(ids, (id) => {
-        const r = chess960Backrank(id);
-        return r.every(
-          (p) => p === "R" || p === "K" || p === "B" || p === "Q" || p === "N",
-        );
-      }),
-      cfg,
-    );
-  });
-
-  it("king strictly between rooks", () => {
-    fc.assert(
-      fc.property(ids, (id) => {
-        const r = chess960Backrank(id);
-        const rooks = r.flatMap((p, i) => (p === "R" ? [i] : []));
-        const king = r.indexOf("K");
-        return defined(rooks[0]) < king && king < defined(rooks[1]);
-      }),
-      cfg,
-    );
-  });
-
-  it("bishops on opposite-colour squares", () => {
-    fc.assert(
-      fc.property(ids, (id) => {
-        const r = chess960Backrank(id);
-        const bishops = r.flatMap((p, i) => (p === "B" ? [i] : []));
-        return defined(bishops[0]) % 2 !== defined(bishops[1]) % 2;
-      }),
-      cfg,
-    );
-  });
-
-  it("fen has 6 space-separated fields with side w", () => {
-    fc.assert(
-      fc.property(ids, (id) => {
-        const { fen } = chess960Fen(id);
-        const fields = fen.split(" ");
-        return fields.length === 6 && fields[1] === "w";
-      }),
-      cfg,
-    );
-  });
-
-  it("fen castling field has exactly 4 chars, 2 upper + 2 lower", () => {
-    fc.assert(
-      fc.property(ids, (id) => {
-        const { fen } = chess960Fen(id);
-        const castling = defined(fen.split(" ")[2]);
-        return (
-          castling.length === 4 &&
-          castling[0] === castling[0]?.toUpperCase() &&
-          castling[1] === castling[1]?.toUpperCase() &&
-          castling[2] === castling[2]?.toLowerCase() &&
-          castling[3] === castling[3]?.toLowerCase()
-        );
-      }),
-      cfg,
-    );
-  });
-
-  it("fen returns same id", () => {
-    fc.assert(
-      fc.property(ids, (id) => chess960Fen(id).id === id),
-      cfg,
-    );
-  });
-
-  it("position 518 == standard chess", () => {
-    expect(chess960Backrank(518).join("")).toBe("RNBQKBNR");
-  });
-
-  it("position 0", () => {
-    expect(chess960Backrank(0).join("")).toBe("BBQNNRKR");
-  });
-
-  it("position 959", () => {
-    expect(chess960Backrank(959).join("")).toBe("RKRNNQBB");
-  });
-});
-
-describe("randomChess960", () => {
-  beforeEach(resetRng);
-
-  it("returns integer id in [0,959]", () => {
-    for (let i = 0; i < 200; i++) {
-      const { id } = randomChess960();
-      expect(Number.isInteger(id)).toBe(true);
-      expect(id).toBeGreaterThanOrEqual(0);
-      expect(id).toBeLessThan(960);
-    }
-  });
-
-  it("rng 0 → id 0", () => {
-    setRng(constRng(0));
-    expect(randomChess960().id).toBe(0);
-  });
-
-  it("rng 0.9999 → id 959", () => {
-    setRng(constRng(0.999_999));
-    expect(randomChess960().id).toBe(959);
-  });
-
-  it("rng 0.5 → id 480", () => {
-    setRng(constRng(0.5));
-    expect(randomChess960().id).toBe(480);
-  });
-});
-
 /* ====================================================================== */
 /* lex-srs                                                                 */
 /* ====================================================================== */
@@ -368,348 +213,6 @@ describe("lex-srs.jitterInterval", () => {
       ),
       cfg,
     );
-  });
-});
-
-describe("lex-srs.recordAnswer + getWordState", () => {
-  beforeEach(() => {
-    localStorage.clear();
-    // Pin SRS jitter to the midpoint (factor=1.0) for deterministic nextDue.
-    setRng(() => 0.5);
-  });
-  afterAll(resetRng);
-
-  it("correct: advances box by 1", () => {
-    recordAnswer("en", "cat", true, "2025-01-01");
-    expect(getWordState("en", "cat").box).toBe(1);
-  });
-
-  it("correct at box 5 stays at 5 (clamped to BOX_INTERVALS.length-1)", () => {
-    for (let i = 0; i < 10; i++) {
-      recordAnswer("en", "cat", true, "2025-01-01");
-    }
-    expect(getWordState("en", "cat").box).toBe(BOX_INTERVALS.length - 1);
-    expect(getWordState("en", "cat").box).toBe(5);
-  });
-
-  it("correct sets nextDue = today + interval[newBox]", () => {
-    recordAnswer("en", "cat", true, "2025-01-01");
-    // newBox=1, interval=1 → 2025-01-02
-    expect(getWordState("en", "cat").nextDue).toBe("2025-01-02");
-  });
-
-  it("correct after 3 streak advances mastery + resets streak", () => {
-    recordAnswer("en", "cat", true, "2025-01-01");
-    recordAnswer("en", "cat", true, "2025-01-02");
-    expect(getMasteryStreak("en", "cat")).toBe(2);
-    recordAnswer("en", "cat", true, "2025-01-03");
-    expect(getMastery("en", "cat")).toBe(1);
-    expect(getMasteryStreak("en", "cat")).toBe(0);
-  });
-
-  it("mastery caps at MAX_MASTERY (2)", () => {
-    for (let i = 0; i < 50; i++) {
-      recordAnswer("en", "cat", true, "2025-01-01");
-    }
-    expect(getMastery("en", "cat")).toBe(2);
-  });
-
-  it("incorrect resets box to 0 and streak to 0; preserves mastery", () => {
-    for (let i = 0; i < 3; i++) {
-      recordAnswer("en", "cat", true, "2025-01-01");
-    }
-    expect(getMastery("en", "cat")).toBe(1);
-    recordAnswer("en", "cat", false, "2025-01-04");
-    expect(getWordState("en", "cat").box).toBe(0);
-    expect(getMasteryStreak("en", "cat")).toBe(0);
-    expect(getMastery("en", "cat")).toBe(1);
-  });
-
-  it("incorrect sets nextDue to empty string", () => {
-    recordAnswer("en", "cat", true, "2025-01-01");
-    recordAnswer("en", "cat", false, "2025-01-02");
-    expect(getWordState("en", "cat").nextDue).toBe("");
-  });
-});
-
-describe("lex-srs.getDueWords", () => {
-  beforeEach(() => localStorage.clear());
-
-  it("never-answered word is due (nextDue === '')", () => {
-    expect(getDueWords("en", ["new"], "2025-01-01")).toEqual(["new"]);
-  });
-
-  it("nextDue === today is due (uses <=)", () => {
-    recordAnswer("en", "cat", true, "2025-01-01"); // nextDue = 2025-01-02
-    expect(getDueWords("en", ["cat"], "2025-01-02")).toEqual(["cat"]);
-  });
-
-  it("nextDue > today is not due", () => {
-    recordAnswer("en", "cat", true, "2025-01-01"); // nextDue = 2025-01-02
-    expect(getDueWords("en", ["cat"], "2025-01-01")).toEqual([]);
-  });
-
-  it("filters correctly across multiple words", () => {
-    recordAnswer("en", "due", true, "2025-01-01");
-    recordAnswer("en", "future", true, "2025-01-10");
-    expect(
-      getDueWords("en", ["due", "future", "fresh"], "2025-01-02").sort(),
-    ).toEqual(["due", "fresh"]);
-  });
-});
-
-describe("lex-srs.getMasteredCount", () => {
-  beforeEach(() => localStorage.clear());
-
-  it("0 when no mastered words", () => {
-    expect(getMasteredCount("en")).toBe(0);
-  });
-
-  it("counts only words with mastery >= MAX_MASTERY", () => {
-    for (let i = 0; i < 20; i++) {
-      recordAnswer("en", "a", true, "2025-01-01");
-    }
-    recordAnswer("en", "b", true, "2025-01-01"); // mastery 0
-    expect(getMasteredCount("en")).toBe(1);
-  });
-
-  it("scoped by lang prefix", () => {
-    for (let i = 0; i < 20; i++) {
-      recordAnswer("en", "a", true, "2025-01-01");
-      recordAnswer("no", "b", true, "2025-01-01");
-    }
-    expect(getMasteredCount("en")).toBe(1);
-    expect(getMasteredCount("no")).toBe(1);
-  });
-
-  it("handles missing storage entry gracefully", () => {
-    localStorage.setItem("brainbout:lex:en:x", "{}");
-    expect(getMasteredCount("en")).toBe(0);
-  });
-});
-
-describe("BOX_INTERVALS constants", () => {
-  it("starts at 0", () => expect(BOX_INTERVALS[0]).toBe(0));
-  it("has 6 entries", () => expect(BOX_INTERVALS.length).toBe(6));
-  it("ends at 30", () => expect(BOX_INTERVALS[5]).toBe(30));
-});
-
-/* ====================================================================== */
-/* think-time                                                              */
-/* ====================================================================== */
-
-describe("think-time.eloToNodes", () => {
-  it("exact: elo 0", () =>
-    expect(eloToNodes(0)).toBe(Math.round(Math.exp(365 / 214))));
-  it("exact: elo 1500", () => {
-    expect(eloToNodes(1500)).toBe(Math.round(Math.exp((1500 + 365) / 214)));
-  });
-  it("monotonic strict", () => {
-    fc.assert(
-      fc.property(
-        fc.integer({ min: 0, max: 3499 }),
-        (elo) => eloToNodes(elo + 100) > eloToNodes(elo),
-      ),
-      cfg,
-    );
-  });
-  it("positive for any sane elo", () => {
-    fc.assert(
-      fc.property(
-        fc.integer({ min: 0, max: 3500 }),
-        (elo) => eloToNodes(elo) > 0,
-      ),
-      cfg,
-    );
-  });
-});
-
-describe("think-time.computeThinkTime (deterministic RNG)", () => {
-  beforeEach(() => setRng(constRng(0.5))); // jitter = 1.0 → no jitter
-  afterAll(resetRng);
-
-  it("forced move: exact 500ms (jitter=1.0)", () => {
-    expect(
-      computeThinkTime({
-        remainingMs: 60_000,
-        moveNumber: 5,
-        evalSwing: 0,
-        isRecapture: false,
-        isForced: true,
-      }),
-    ).toBe(500);
-  });
-
-  it("forced move clamped to remainingMs - 1000", () => {
-    expect(
-      computeThinkTime({
-        remainingMs: 1200,
-        moveNumber: 5,
-        evalSwing: 0,
-        isRecapture: false,
-        isForced: true,
-      }),
-    ).toBe(200);
-  });
-
-  it("moveNumber < 10 → movesLeft = 40 - mv", () => {
-    // remainingMs 60000, mv 5, movesLeft 35, base 1714.28...
-    // evalSwing 0 → complexity 0.5 → base 857.14, jitter 1.0
-    // clamp [1000, min(30000, 55000)] → 1000
-    expect(
-      computeThinkTime({
-        remainingMs: 60_000,
-        moveNumber: 5,
-        evalSwing: 0,
-        isRecapture: false,
-        isForced: false,
-      }),
-    ).toBe(1000);
-  });
-
-  it("moveNumber > 30 → movesLeft floors at 10", () => {
-    // remainingMs 60000, mv 50 → movesLeft 10
-    // evalSwing 50 → complexity 0.8 + (30/80)*0.7 = 1.0625
-    // base = 60000/10 * 1.0625 = 6375
-    expect(
-      computeThinkTime({
-        remainingMs: 60_000,
-        moveNumber: 50,
-        evalSwing: 50,
-        isRecapture: false,
-        isForced: false,
-      }),
-    ).toBe(6375);
-  });
-
-  it("evalSwing 0 → complexity 0.5", () => {
-    // remainingMs 60000, mv 50, movesLeft 10, base=6000, complexity 0.5 → 3000
-    expect(
-      computeThinkTime({
-        remainingMs: 60_000,
-        moveNumber: 50,
-        evalSwing: 0,
-        isRecapture: false,
-        isForced: false,
-      }),
-    ).toBe(3000);
-  });
-
-  it("evalSwing 20 → complexity 0.8", () => {
-    expect(
-      computeThinkTime({
-        remainingMs: 60_000,
-        moveNumber: 50,
-        evalSwing: 20,
-        isRecapture: false,
-        isForced: false,
-      }),
-    ).toBe(Math.round((60_000 / 10) * 0.8));
-  });
-
-  it("evalSwing 100 → complexity 1.5", () => {
-    expect(
-      computeThinkTime({
-        remainingMs: 60_000,
-        moveNumber: 50,
-        evalSwing: 100,
-        isRecapture: false,
-        isForced: false,
-      }),
-    ).toBe(Math.round((60_000 / 10) * 1.5));
-  });
-
-  it("evalSwing 300 (high) clamps complexity at 2.0", () => {
-    expect(
-      computeThinkTime({
-        remainingMs: 60_000,
-        moveNumber: 50,
-        evalSwing: 500,
-        isRecapture: false,
-        isForced: false,
-      }),
-    ).toBe(Math.round((60_000 / 10) * 2.0));
-  });
-
-  it("recapture multiplies complexity by 0.3", () => {
-    // mv 50, movesLeft 10, base 6000, evalSwing 50 complexity 1.0625, recapture × 0.3
-    expect(
-      computeThinkTime({
-        remainingMs: 60_000,
-        moveNumber: 50,
-        evalSwing: 50,
-        isRecapture: true,
-        isForced: false,
-      }),
-    ).toBeCloseTo(6000 * 1.0625 * 0.3, 6);
-  });
-
-  it("clamps min to 1000ms", () => {
-    expect(
-      computeThinkTime({
-        remainingMs: 60_000,
-        moveNumber: 50,
-        evalSwing: 0,
-        isRecapture: true,
-        isForced: false,
-      }),
-    ).toBe(1000);
-  });
-
-  it("clamps max to 30000ms", () => {
-    // remainingMs 1_000_000, mv 50, base 100000, evalSwing 500 → ×2.0 = 200000 → clamp 30000
-    expect(
-      computeThinkTime({
-        remainingMs: 1_000_000,
-        moveNumber: 50,
-        evalSwing: 500,
-        isRecapture: false,
-        isForced: false,
-      }),
-    ).toBe(30_000);
-  });
-
-  it("max clamp uses remainingMs - 5000 when remaining low", () => {
-    // remainingMs 20000, mv 50, base 2000, ×2.0=4000 → max(1000,min(4000, min(30000, 15000)))=4000
-    // Want test where remaining-5000 < 30000:
-    // remainingMs 10000, base 1000, complexity 2.0 → 2000, max=min(30000,5000)=5000 → 2000
-    expect(
-      computeThinkTime({
-        remainingMs: 10_000,
-        moveNumber: 50,
-        evalSwing: 500,
-        isRecapture: false,
-        isForced: false,
-      }),
-    ).toBe(2000);
-  });
-
-  it("jitter rng 0 → 0.8 multiplier", () => {
-    setRng(constRng(0));
-    // mv 50, movesLeft 10, base 6000, evalSwing 0 complexity 0.5 → 3000, jitter 0.8 → 2400
-    expect(
-      computeThinkTime({
-        remainingMs: 60_000,
-        moveNumber: 50,
-        evalSwing: 0,
-        isRecapture: false,
-        isForced: false,
-      }),
-    ).toBe(2400);
-  });
-
-  it("jitter rng 1 → 1.2 multiplier", () => {
-    setRng(constRng(0.999_999));
-    // 3000 * 1.2 = 3600
-    const out = computeThinkTime({
-      remainingMs: 60_000,
-      moveNumber: 50,
-      evalSwing: 0,
-      isRecapture: false,
-      isForced: false,
-    });
-    expect(out).toBeGreaterThanOrEqual(3599);
-    expect(out).toBeLessThanOrEqual(3600);
   });
 });
 
@@ -1330,6 +833,11 @@ describe("progress.recordSessionScore + getBest", () => {
   it("getTodayBest returns null when none", () => {
     expect(getTodayBest("crown")).toBeNull();
   });
+
+  it("first score of 0 still seeds today-best (covers prevToday-null branch)", () => {
+    recordSessionScore("crown", 0);
+    expect(getTodayBest("crown")).toBe(0);
+  });
 });
 
 describe("progress.completeSession + getSessionsToday + getTotalSessions", () => {
@@ -1439,14 +947,15 @@ describe("rng module", () => {
     setRng(() => 0.123);
     setRng(() => 0.456);
     resetRng();
-    // After resetRng, rng() returns Math.random() — just verify range
-    const v = (() => {
-      // we can't call rng here directly without import; assert via downstream:
-      const id1 = randomChess960().id;
-      const id2 = randomChess960().id;
-      return id1 >= 0 && id1 < 960 && id2 >= 0 && id2 < 960;
-    })();
-    expect(v).toBe(true);
+    // After resetRng, jitterInterval falls back to Math.random; both calls
+    // produce values within the documented ±25% band, proving the default
+    // rng is wired up.
+    const a = jitterInterval(10);
+    const b = jitterInterval(10);
+    expect(a).toBeGreaterThanOrEqual(7);
+    expect(a).toBeLessThanOrEqual(13);
+    expect(b).toBeGreaterThanOrEqual(7);
+    expect(b).toBeLessThanOrEqual(13);
   });
 });
 

@@ -2,15 +2,13 @@
   "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
   "testRunner": "command",
   "commandRunner": {
-    "command": "FAST_CHECK_NUM_RUNS=10 bun test --bail"
+    "command": "FAST_CHECK_NUM_RUNS=10 bun test --bail --isolate"
   },
   "coverageAnalysis": "off",
   "mutate": [
-    "src/chess960.ts",
     "src/hub.ts",
     "src/hub-render.ts",
-    "src/games/crown-clock.ts",
-    "src/games/crown-logic.ts",
+    "src/games/crown-rotation.ts",
     "src/games/flux-engine.ts",
     "src/games/flux-render.ts",
     "src/games/lex-logic.ts",
@@ -22,7 +20,6 @@
     "src/shared/sounds.ts",
     "src/shared/stages.ts",
     "src/shared/theme.ts",
-    "src/shared/think-time.ts",
     "src/shared/timer.ts"
   ],
   "ignorePatterns": [

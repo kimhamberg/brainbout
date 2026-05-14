@@ -59,13 +59,17 @@ describe("GAME_META: structural invariants", () => {
   });
 
   test("exact tagline values", () => {
-    expect(GAME_META.crown.tagline).toBe("Outsmart Stockfish");
+    expect(GAME_META.crown.tagline).toBe("Rotate the board, spot the change");
     expect(GAME_META.flux.tagline).toBe("Think fast, switch faster");
     expect(GAME_META.lex.tagline).toBe("Build your vocabulary");
   });
 
   test("exact stage labels", () => {
-    expect(GAME_META.crown.stages).toEqual(["600 Elo", "1200 Elo", "1600 Elo"]);
+    expect(GAME_META.crown.stages).toEqual([
+      "180° · 3-4 pieces",
+      "90/180/270° · 5-7 pieces",
+      "± mirror · 8-12 pieces",
+    ]);
     expect(GAME_META.flux.stages).toEqual([
       "Relaxed · 2s",
       "Brisk · 1.5s",
@@ -134,6 +138,28 @@ describe("renderHubHtml: stats bar", () => {
   });
   test("stats-bar wrapper always present", () => {
     expect(renderHubHtml(makeState())).toContain('<div class="hub-stats-bar">');
+  });
+  test("empty stats-bar is properly closed before game-list opens", () => {
+    expect(renderHubHtml(makeState())).toContain(
+      '<div class="hub-stats-bar"></div><div class="game-list">',
+    );
+  });
+});
+
+describe("renderHubHtml: game cards (icon slot)", () => {
+  test('each card contains a <span class="game-icon"> wrapping its icon', () => {
+    const out = renderHubHtml(makeState());
+    const openers = out.match(/<span class="game-icon">/gu) ?? [];
+    expect(openers).toHaveLength(3);
+    // Inner content is SVG markup beginning with '<svg' (not the closing </span>).
+    expect(out).toMatch(/<span class="game-icon"><svg/u);
+  });
+});
+
+describe("renderPopoverHtml: leading char", () => {
+  test("output starts with a stage-row div (not a leading sentinel)", () => {
+    const out = renderPopoverHtml(GAME_META.crown, 1);
+    expect(out.startsWith("<div")).toBe(true);
   });
 });
 
@@ -213,6 +239,16 @@ describe("renderHubHtml: game cards", () => {
       makeState({ cards: [makeCard({ game: "crown", stat: null })] }),
     );
     expect(out).not.toContain("game-stat");
+  });
+
+  test("stat=null leaves nothing between tagline close and anchor close", () => {
+    // Real branch emits "" → tagline span is immediately followed by </a>.
+    // Any non-empty fallback (literal text, sentinel string) would inject
+    // characters between the </span> and </a> and break this match.
+    const out = renderHubHtml(
+      makeState({ cards: [makeCard({ game: "crown", stat: null })] }),
+    );
+    expect(out).toContain("</span></a>");
   });
 
   test("stat line is rendered with the exact provided text", () => {

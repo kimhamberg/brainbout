@@ -7,5 +7,4 @@ coveragePathIgnorePatterns = [
   "src/games/crown.ts",
   "src/games/flux.ts",
   "src/games/lex.ts",
-  "src/shared/engine.ts",
 ]

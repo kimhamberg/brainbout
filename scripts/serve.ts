@@ -11,14 +11,8 @@ const ROOT_FILES = new Set([
   "/manifest.json",
 ]);
 
-const STOCKFISH_RE = /^\/stockfish\/(.+)$/u;
-
 /** Resolve a request pathname to an on-disk file under the repo. */
 export function resolveAsset(root: string, pathname: string): string {
-  const sf = STOCKFISH_RE.exec(pathname);
-  if (sf) {
-    return join(root, "node_modules/stockfish/bin", sf[1]!);
-  }
   if (ROOT_FILES.has(pathname)) {
     return join(root, pathname);
   }

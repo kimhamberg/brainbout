@@ -17,7 +17,7 @@
     "test:mutation": "stryker run",
     "check": "biome check",
     "check:fix": "biome check --write",
-    "lint": "bunx tsc --noEmit && bun run check && bun run lint:css && bun run lint:html && bun run lint:kt",
+    "lint": "bun scripts/lint.ts",
     "lint:css": "stylelint \"src/**/*.css\"",
     "lint:html": "superhtml check index.html games/*.html",
     "lint:kt": "ktlint \"android/**/*.kt\"",
@@ -27,9 +27,7 @@
     "gen:icons": "bun scripts/gen-icons.ts"
   },
   "dependencies": {
-    "@lichess-org/chessground": "^10.0.2",
-    "chessops": "^0.15.0",
-    "stockfish": "^18.0.5"
+    "@lichess-org/chessground": "^10.0.2"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.3",

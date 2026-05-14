@@ -45,11 +45,3 @@ for (const rel of glob.scanSync({ cwd: DIST, onlyFiles: true })) {
 }
 
 cpSync(join(ROOT, "public"), DIST, { recursive: true });
-
-const SF = "stockfish-18-lite-single";
-for (const ext of [".js", ".wasm"]) {
-  cpSync(
-    join(ROOT, "node_modules/stockfish/bin", SF + ext),
-    join(DIST, "stockfish", SF + ext),
-  );
-}

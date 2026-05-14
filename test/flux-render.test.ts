@@ -82,6 +82,12 @@ describe("ringClass", () => {
   });
 });
 
+describe("RING_CIRCUMFERENCE", () => {
+  test("equals 2 · π · 40 (numerical value, not just relative)", () => {
+    expect(RING_CIRCUMFERENCE).toBeCloseTo(2 * Math.PI * 40, 10);
+  });
+});
+
 describe("ringOffset", () => {
   test("full ring at remaining=0 (offset = circumference)", () => {
     expect(ringOffset(0, 60)).toBeCloseTo(RING_CIRCUMFERENCE, 5);
@@ -140,6 +146,20 @@ describe("computeResultVm", () => {
         .nearMiss,
     ).toBe(false);
   });
+  test("finalScore=0 + previousBest=null → still isNewBest true (null-check, not numeric)", () => {
+    expect(
+      computeResultVm({ ...base, finalScore: 0, previousBest: null }).isNewBest,
+    ).toBe(true);
+  });
+  test("finalScore far below previousBest → nearMiss is exactly false (not a truthy object)", () => {
+    const vm = computeResultVm({ ...base, finalScore: 10, previousBest: 100 });
+    expect(vm.nearMiss).toBe(false);
+  });
+  test("isNewBest case: nearMiss is strictly false even when score >> 90% of previousBest", () => {
+    const vm = computeResultVm({ ...base, finalScore: 200, previousBest: 100 });
+    expect(vm.isNewBest).toBe(true);
+    expect(vm.nearMiss).toBe(false);
+  });
 });
 
 describe("renderResultHtml", () => {
@@ -176,7 +196,30 @@ describe("renderResultHtml", () => {
       correctTrials: 1,
       totalTrials: 5,
     });
-    expect(renderResultHtml(vm)).not.toContain("NEW BEST");
+    const html = renderResultHtml(vm);
+    expect(html).not.toContain("NEW BEST");
+    // Slot between score and result-label should be whitespace only — kills
+    // mutants that swap the "" branch for a sentinel string.
+    expect(html).toMatch(
+      /data-target="20">0<\/div>\s+<div class="result-label">/u,
+    );
+  });
+
+  test("no near-miss banner when finalScore is far below previous best", () => {
+    const vm = computeResultVm({
+      finalScore: 10,
+      previousBest: 100,
+      subtitle: "test subtitle",
+      peakStreak: 0,
+      peakStreakLabel: "",
+      peakStreakMult: 1,
+      correctTrials: 0,
+      totalTrials: 0,
+    });
+    const html = renderResultHtml(vm);
+    expect(html).not.toContain("near-miss");
+    // The nearMiss slot is empty when nearMiss is false.
+    expect(html).toMatch(/<\/div>\s+<div class="result-label">/u);
   });
 
   test("renders near-miss banner with exact gap", () => {

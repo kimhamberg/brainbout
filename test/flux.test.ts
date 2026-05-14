@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import type { ShapeColor, ShapeForm, Trial } from "../src/games/flux-engine";
 import {
   BPM_DOWN,
@@ -18,6 +18,13 @@ import {
   WARM_UP_TRIALS,
 } from "../src/games/flux-engine";
 import { defined } from "../src/shared/assert";
+import { resetRng, setRng } from "../src/shared/rng";
+
+// The rng module is a singleton shared across test files — `setRng` from one
+// file leaks into the next unless we reset after every test, not just after
+// the suite. Resetting in `afterEach` guarantees no other file (running
+// concurrently or sequentially in the same Bun process) sees a pinned rng.
+afterEach(resetRng);
 
 describe("constants", () => {
   it("DURATION is 75 seconds", () => {
@@ -39,6 +46,7 @@ describe("STAGE_PARAMS", () => {
     expect(p.baseBpm).toBe(55);
     expect(p.floorBpm).toBe(90);
     expect(p.rules).toEqual(["color", "shape", "size"]);
+    expect(p.notAllowed).toBe(false);
     expect(p.switchMin).toBe(5);
     expect(p.switchMax).toBe(7);
     expect(p.noGoRate).toBe(0.1);
@@ -50,6 +58,7 @@ describe("STAGE_PARAMS", () => {
     expect(p.baseBpm).toBe(70);
     expect(p.floorBpm).toBe(110);
     expect(p.rules).toEqual(["color", "shape", "size", "fill"]);
+    expect(p.notAllowed).toBe(false);
     expect(p.switchMin).toBe(4);
     expect(p.switchMax).toBe(6);
     expect(p.noGoRate).toBe(0.15);
@@ -752,5 +761,381 @@ describe("full session simulation", () => {
     // State should still be valid
     expect(state.bpm).toBeGreaterThan(0);
     expect(state.trialCount).toBe(40); // 20 iterations x 2 generateTrial calls
+  });
+});
+
+describe("size and fill draws both outcomes (rng < 0.5 ternary)", () => {
+  beforeEach(() => {
+    resetRng();
+  });
+  it("rng < 0.5 → size 'big', fill 'solid'", () => {
+    setRng(() => 0);
+    const state = createFluxState(1);
+    const t = generateTrial(state);
+    expect(t.size).toBe("big");
+    expect(t.fill).toBe("solid");
+  });
+  it("rng > 0.5 → size 'small', fill 'hollow'", () => {
+    setRng(() => 0.9);
+    const state = createFluxState(1);
+    const t = generateTrial(state);
+    expect(t.size).toBe("small");
+    expect(t.fill).toBe("hollow");
+  });
+  it("rng = 0.5 → size 'small', fill 'hollow' (boundary; uses strict <)", () => {
+    setRng(() => 0.5);
+    const state = createFluxState(1);
+    const t = generateTrial(state);
+    expect(t.size).toBe("small");
+    expect(t.fill).toBe("hollow");
+  });
+});
+
+describe("shape pools — both round and angular reachable", () => {
+  beforeEach(() => {
+    resetRng();
+  });
+  it("rng=0 → shape is the first round shape ('circle')", () => {
+    setRng(() => 0);
+    const state = createFluxState(1);
+    expect(generateTrial(state).shape).toBe("circle");
+  });
+  it("a constant rng tuned past round shapes lands on angular ('diamond')", () => {
+    // GO_SHAPES = [circle, pill, diamond, triangle]; floor(rng*4) = 2 at rng=0.55
+    setRng(() => 0.55);
+    const state = createFluxState(1);
+    expect(generateTrial(state).shape).toBe("diamond");
+  });
+});
+
+describe("randInt boundary uses (max - min + 1)", () => {
+  beforeEach(() => {
+    resetRng();
+  });
+  it("rng→0.999 hits switchMax (stage 1: switchMax=7)", () => {
+    setRng(() => 0.999);
+    const state = createFluxState(1);
+    // rollSwitchCount called inside createFluxState; trialsUntilSwitch reflects it.
+    expect(state.trialsUntilSwitch).toBe(7);
+  });
+  it("rng→0 hits switchMin (stage 1: switchMin=5)", () => {
+    setRng(() => 0);
+    const state = createFluxState(1);
+    expect(state.trialsUntilSwitch).toBe(5);
+  });
+});
+
+describe("no-go trial defaults", () => {
+  it("no-go trial isGolden is false (default not overridden)", () => {
+    const state = createFluxState(1);
+    state.trialCount = WARM_UP_TRIALS;
+    state.noGoUnlocked = true;
+    state.trialsUntilSwitch = 999;
+    state.rule = "color";
+    let seen = false;
+    for (let i = 0; i < 200; i++) {
+      const t = generateTrial(state);
+      if (t.isNoGo) {
+        expect(t.isGolden).toBe(false);
+        seen = true;
+      }
+    }
+    expect(seen).toBe(true);
+  });
+});
+
+describe("pickNextRule slices to unlockedRuleCount", () => {
+  beforeEach(() => {
+    resetRng();
+  });
+  it("unlockedRuleCount=1 → rule stays the same (no others to pick)", () => {
+    setRng(() => 0);
+    const state = createFluxState(2);
+    state.trialCount = WARM_UP_TRIALS;
+    state.rule = "color";
+    state.unlockedRuleCount = 1;
+    state.trialsUntilSwitch = 1;
+    generateTrial(state);
+    expect(state.rule).toBe("color");
+  });
+  it("unlockedRuleCount=2 → switch goes to the OTHER rule, not back to current", () => {
+    // With unlocked=2 and current=color, others=["shape"]. Any rng → "shape".
+    setRng(() => 0);
+    const state = createFluxState(2);
+    state.trialCount = WARM_UP_TRIALS;
+    state.rule = "color";
+    state.unlockedRuleCount = 2;
+    state.trialsUntilSwitch = 1;
+    generateTrial(state);
+    expect(state.rule as string).toBe("shape");
+  });
+});
+
+describe("warm-up gate around rule switching", () => {
+  it("warm-up phase does not decrement trialsUntilSwitch", () => {
+    const state = createFluxState(1);
+    state.trialCount = 0; // warm-up
+    state.trialsUntilSwitch = 3;
+    generateTrial(state);
+    expect(state.trialsUntilSwitch).toBe(3);
+  });
+});
+
+describe("NOT activation thresholds", () => {
+  beforeEach(() => {
+    resetRng();
+  });
+  it("switchCount=5 (after increment) → NOT does not activate (5 < 6)", () => {
+    setRng(() => 0);
+    const state = createFluxState(3);
+    state.trialCount = WARM_UP_TRIALS;
+    state.unlockedRuleCount = 4;
+    state.switchCount = 4; // increments to 5
+    state.trialsUntilSwitch = 1;
+    generateTrial(state);
+    expect(state.switchCount).toBe(5);
+    expect(state.isNot).toBe(false);
+  });
+  it("switchCount=6 (after increment) with rng < 0.3 → NOT activates", () => {
+    setRng(() => 0);
+    const state = createFluxState(3);
+    state.trialCount = WARM_UP_TRIALS;
+    state.unlockedRuleCount = 4;
+    state.switchCount = 5; // increments to 6
+    state.trialsUntilSwitch = 1;
+    generateTrial(state);
+    expect(state.switchCount).toBe(6);
+    expect(state.isNot).toBe(true);
+  });
+  it("rng() = 0.3 exactly → NOT does NOT activate (strict `<`, not `<=`)", () => {
+    // generateTrial consumes rng for pickNextRule, then rollSwitchCount,
+    // then the NOT-activation gate. We feed 0 to the first two and 0.3
+    // exactly to the gate. After the gate (whether NOT activates or not),
+    // more rng calls happen for golden/no-go gates and shape generation —
+    // we provide a tail value that satisfies all downstream paths.
+    let i = 0;
+    const seq = [0, 0, 0.3];
+    setRng(() => seq[i++] ?? 0.99);
+    const state = createFluxState(3);
+    state.trialCount = WARM_UP_TRIALS;
+    state.unlockedRuleCount = 4;
+    state.switchCount = 5; // increments to 6
+    state.trialsUntilSwitch = 1;
+    generateTrial(state);
+    expect(state.isNot).toBe(false);
+  });
+  it("a subsequent switch with rng ≥ 0.3 deactivates NOT", () => {
+    const state = createFluxState(3);
+    state.trialCount = WARM_UP_TRIALS;
+    state.unlockedRuleCount = 4;
+    state.switchCount = 6;
+    state.isNot = true;
+    state.trialsUntilSwitch = 1;
+    setRng(() => 0.5);
+    generateTrial(state);
+    expect(state.isNot).toBe(false);
+  });
+});
+
+describe("rule unlock gate uses UNLOCK_AT_SWITCH[unlockedRuleCount + 1]", () => {
+  beforeEach(() => {
+    resetRng();
+  });
+  it("unlockedRuleCount=3 + switchCount→1 does NOT unlock 4th rule (1 < 4)", () => {
+    setRng(() => 0);
+    const state = createFluxState(2);
+    state.trialCount = WARM_UP_TRIALS;
+    state.unlockedRuleCount = 3;
+    state.switchCount = 0;
+    state.trialsUntilSwitch = 1;
+    generateTrial(state);
+    expect(state.switchCount).toBe(1);
+    expect(state.unlockedRuleCount).toBe(3);
+  });
+  it("unlockedRuleCount=3 + switchCount→4 unlocks 4th rule", () => {
+    setRng(() => 0);
+    const state = createFluxState(2);
+    state.trialCount = WARM_UP_TRIALS;
+    state.unlockedRuleCount = 3;
+    state.switchCount = 3;
+    state.trialsUntilSwitch = 1;
+    generateTrial(state);
+    expect(state.switchCount).toBe(4);
+    expect(state.unlockedRuleCount).toBe(4);
+  });
+});
+
+describe("golden rate is strict-less (rng < goldenRate)", () => {
+  it("rng = exact goldenRate → trial is NOT golden", () => {
+    const state = createFluxState(1);
+    state.trialCount = WARM_UP_TRIALS;
+    state.trialsUntilSwitch = 999;
+    state.noGoUnlocked = false; // avoid no-go path
+    const rate = defined(STAGE_PARAMS[1]).goldenRate;
+    // generateGoTrial consumes rng twice (size, fill) before the gate is checked,
+    // but here the gate is hit first inside generateTrial. Pin rng to exact rate.
+    setRng(() => rate);
+    expect(generateTrial(state).isGolden).toBe(false);
+  });
+});
+
+describe("no-go rate is strict-less (rng < noGoRate)", () => {
+  it("rng = exact noGoRate → trial is NOT no-go", () => {
+    const state = createFluxState(1);
+    state.trialCount = WARM_UP_TRIALS;
+    state.trialsUntilSwitch = 999;
+    state.noGoUnlocked = true;
+    const rate = defined(STAGE_PARAMS[1]).noGoRate;
+    // generateTrial consumes rng in order: golden-gate, no-go-gate, then shape-pick rng inside generateGoTrial/generateNoGoTrial.
+    // To force no-go gate to see exactly `rate`, we feed golden-gate a value above goldenRate first.
+    const golden = defined(STAGE_PARAMS[1]).goldenRate;
+    let i = 0;
+    const seq = [golden, rate];
+    setRng(() => seq[i++] ?? 0.99);
+    expect(generateTrial(state).isNoGo).toBe(false);
+  });
+});
+
+describe("evaluateResponse feedback strings", () => {
+  function goTrial(over: Partial<Trial> = {}): Trial {
+    return {
+      color: "red",
+      shape: "circle",
+      size: "big",
+      fill: "solid",
+      isNoGo: false,
+      isGolden: false,
+      ...over,
+    };
+  }
+  it("correct go-trial press → feedback is empty string", () => {
+    const r = evaluateResponse(
+      goTrial({ color: "red" }),
+      "color",
+      false,
+      0,
+      "left",
+    );
+    expect(r.feedback).toBe("");
+  });
+  it("correct no-go withholding → feedback is empty string", () => {
+    const r = evaluateResponse(
+      goTrial({ isNoGo: true }),
+      "color",
+      false,
+      0,
+      null,
+    );
+    expect(r.feedback).toBe("");
+  });
+  it("wrong press where right side is correct → feedback names the right label", () => {
+    // Cool color → right is correct. Wrong press: "left".
+    const r = evaluateResponse(
+      goTrial({ color: "blue" }),
+      "color",
+      false,
+      0,
+      "left",
+    );
+    expect(r.feedback).toBe("It was Cool");
+  });
+  it("wrong press where left side is correct → feedback names the left label", () => {
+    const r = evaluateResponse(
+      goTrial({ color: "red" }),
+      "color",
+      false,
+      0,
+      "right",
+    );
+    expect(r.feedback).toBe("It was Warm");
+  });
+  it("wrong go-trial press → totalPoints is -1 (penalty)", () => {
+    const r = evaluateResponse(
+      goTrial({ color: "red" }),
+      "color",
+      false,
+      0,
+      "right",
+    );
+    expect(r.totalPoints).toBe(-1);
+  });
+});
+
+describe("generateTrial deterministic probability gates", () => {
+  // Reset rng before each test so leaked pinning from one test cannot poison
+  // unrelated probabilistic assertions in tests that ran earlier in the file.
+  // (resetRng restores Math.random; each test below re-pins with setRng.)
+  beforeEach(() => {
+    resetRng();
+  });
+
+  it("no-go cannot fire during warm-up even when its rate would clear", () => {
+    setRng(() => 0);
+    const state = createFluxState(1);
+    state.noGoUnlocked = true;
+    state.trialCount = 0;
+    for (let i = 0; i < 5; i++) {
+      const t = generateTrial(state);
+      expect(t.isNoGo).toBe(false);
+    }
+  });
+
+  it("low rng on noGoRate fires no-go post-warm-up (and not golden)", () => {
+    setRng(() => 0);
+    const state = createFluxState(1);
+    state.trialCount = WARM_UP_TRIALS;
+    state.trialsUntilSwitch = 999;
+    state.noGoUnlocked = true;
+    const seq = [0.99, 0];
+    let i = 0;
+    setRng(() => seq[i++] ?? 0);
+    const t = generateTrial(state);
+    expect(t.isNoGo).toBe(true);
+  });
+
+  it("rng()=0.999 → no-go never fires (above noGoRate ceiling)", () => {
+    setRng(() => 0.999);
+    const state = createFluxState(1);
+    state.trialCount = WARM_UP_TRIALS;
+    state.trialsUntilSwitch = 999;
+    state.noGoUnlocked = true;
+    for (let i = 0; i < 20; i++) {
+      const t = generateTrial(state);
+      expect(t.isNoGo).toBe(false);
+    }
+  });
+
+  it("NOT does not activate when rng() ≥ 0.3 even at stage 3 with 6+ switches", () => {
+    setRng(() => 0.5);
+    const state = createFluxState(3);
+    state.trialCount = WARM_UP_TRIALS;
+    state.unlockedRuleCount = 4;
+    state.switchCount = 6;
+    state.trialsUntilSwitch = 1;
+    generateTrial(state);
+    expect(state.isNot).toBe(false);
+  });
+
+  it("rule pool stays sliced to unlockedRuleCount (does not leak later rules)", () => {
+    setRng(() => 0);
+    const state = createFluxState(2);
+    state.trialCount = WARM_UP_TRIALS;
+    state.unlockedRuleCount = 2;
+    state.rule = "color";
+    state.trialsUntilSwitch = 1;
+    generateTrial(state);
+    expect(["color", "shape"]).toContain(state.rule);
+  });
+
+  it("unlockedRuleCount never exceeds rules.length (boundary at max)", () => {
+    setRng(() => 0);
+    const state = createFluxState(2);
+    const max = defined(STAGE_PARAMS[2]).rules.length;
+    state.trialCount = WARM_UP_TRIALS;
+    state.unlockedRuleCount = max;
+    state.switchCount = 100;
+    state.trialsUntilSwitch = 1;
+    generateTrial(state);
+    expect(state.unlockedRuleCount).toBe(max);
   });
 });

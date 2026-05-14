@@ -108,6 +108,11 @@ describe("shuffleArray", () => {
   test("empty array stays empty", () => {
     expect(shuffleArray([], () => 0)).toEqual([]);
   });
+  test("rng=0.5 produces exact expected permutation (i+1 swap bound)", () => {
+    // Each step picks j = floor(0.5 * (i + 1)). The expected trace below
+    // pins the Fisher–Yates bound so that the +1 vs -1 mutation is caught.
+    expect(shuffleArray([1, 2, 3, 4, 5], () => 0.5)).toEqual([1, 4, 2, 5, 3]);
+  });
 });
 
 interface W {
@@ -175,6 +180,41 @@ describe("pickDistractors", () => {
     expect(picks).toContain("vwxyzzz");
     expect(picks).not.toContain("");
     expect(picks).not.toContain("yzabcdefg");
+  });
+
+  test("fallback respects count cap when allWords has more than count admissible", () => {
+    // pos pool empty → fallback handles all picks. allWords has 5 admissible,
+    // count=2 → exactly 2 (kills `>= count` flipped to `>` and to constant false).
+    const target = w("apple", "verb");
+    const posPool: W[] = [];
+    const allWords: W[] = [
+      w("plum"),
+      w("grape"),
+      w("melon"),
+      w("peach"),
+      w("guava"),
+    ];
+    expect(pickDistractors(target, posPool, allWords, 2)).toHaveLength(2);
+  });
+
+  test("candidates length filter is inclusive at boundary (kills `<= 3 → < 3` on the posPool path)", () => {
+    // Force the candidates path to be the ONLY source: allWords only has the
+    // target itself, so the fallback can never recover a boundary-length item.
+    const target = w("abcd", "n"); // length 4
+    const posPool = [w("verbose", "n")]; // length 7 → diff 3 (boundary)
+    const allWords = [target];
+    const picks = pickDistractors(target, posPool, allWords, 1);
+    expect(picks).toEqual(["verbose"]);
+  });
+
+  test("fallback length filter is inclusive at boundary (±3 exactly admits)", () => {
+    // target length 5; allWords with length 2 (diff 3) and length 8 (diff 3).
+    const target = w("apple", "verb");
+    const posPool: W[] = [];
+    const allWords: W[] = [w("ab"), w("eightlet")];
+    const picks = pickDistractors(target, posPool, allWords, 2);
+    expect(picks).toContain("ab");
+    expect(picks).toContain("eightlet");
   });
 
   test("hardest-first ordering: most-overlap candidate appears before less-overlap", () => {
@@ -291,5 +331,30 @@ describe("buildQueue", () => {
     const due = new Set(seen);
     const q = buildQueue(dict, seen, due, 20, 0, identity);
     expect(q.filter((d) => seen.has(d.word))).toHaveLength(20);
+  });
+
+  test("filler caps to the exact deficit (does not flood from a large dict)", () => {
+    // 20 dict, 10 seen but none due → reviewCount=0; fresh=10 picked first
+    // (newRatio=0 still falls through to `min(sessionSize - 0, fresh.length)`).
+    // queue=10. Deficit=2. Filler = the 10 seen-not-due words.
+    // The slice(0, 2) is what keeps the final length at exactly 12.
+    const big = Array.from({ length: 20 }, (_, i) => ({
+      word: `f${String(i)}`,
+    }));
+    const seen = new Set(big.slice(0, 10).map((d) => d.word));
+    const due = new Set<string>();
+    const q = buildQueue(big, seen, due, 12, 0, identity);
+    expect(q).toHaveLength(12);
+  });
+
+  test("undersized review+fresh pool: filler bumps queue back up to sessionSize", () => {
+    // 6 due-seen + 4 fresh = 10 total. newRatio=0.5 → reviewCount=min(5, 6)=5;
+    // newCount=min(10-5=5, 4)=4. queue = 9. Filler must add 1 more (the
+    // unused 6th due word) to reach sessionSize=10.
+    const small = dict.slice(0, 10);
+    const seen = new Set(small.slice(0, 6).map((d) => d.word));
+    const due = new Set(seen);
+    const q = buildQueue(small, seen, due, 10, 0.5, identity);
+    expect(q).toHaveLength(10);
   });
 });

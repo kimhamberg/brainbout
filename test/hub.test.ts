@@ -1,5 +1,68 @@
-import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+} from "bun:test";
 import { init } from "../src/hub";
+
+// Replace setTimeout/clearTimeout with a deterministic virtual-time fake.
+// hub.ts schedules a nested press(80ms)→fallback(600ms) pair; tests sleep
+// 120/700/750ms to await those. Real timers + scaling were flaky under
+// concurrent load (mutation runs) because the press-to-fallback gap and the
+// test-wait gap were within scheduler jitter. The fake fires queued callbacks
+// in virtual-time order on each microtask drain, so ordering is exact and
+// total wall-clock cost is microtasks-only.
+const realSetTimeout = globalThis.setTimeout;
+const realClearTimeout = globalThis.clearTimeout;
+type FakeEntry = { at: number; id: number; fn: () => void };
+let virtualNow = 0;
+let nextTimerId = 1;
+const timerQueue: FakeEntry[] = [];
+let pumpScheduled = false;
+
+function schedulePump(): void {
+  if (pumpScheduled) return;
+  pumpScheduled = true;
+  queueMicrotask(() => {
+    pumpScheduled = false;
+    if (timerQueue.length === 0) return;
+    timerQueue.sort((a, b) => a.at - b.at);
+    const next = timerQueue.shift();
+    if (next === undefined) return;
+    virtualNow = next.at;
+    try {
+      next.fn();
+    } finally {
+      if (timerQueue.length > 0) schedulePump();
+    }
+  });
+}
+
+beforeAll(() => {
+  globalThis.setTimeout = ((fn: () => void, ms?: number) => {
+    const id = nextTimerId++;
+    timerQueue.push({ at: virtualNow + Number(ms ?? 0), id, fn });
+    schedulePump();
+    return id as unknown as ReturnType<typeof setTimeout>;
+  }) as typeof setTimeout;
+  globalThis.clearTimeout = ((id: ReturnType<typeof setTimeout>) => {
+    const idx = timerQueue.findIndex((e) => e.id === (id as unknown as number));
+    if (idx >= 0) timerQueue.splice(idx, 1);
+  }) as typeof clearTimeout;
+});
+
+afterAll(() => {
+  globalThis.setTimeout = realSetTimeout;
+  globalThis.clearTimeout = realClearTimeout;
+});
+
+beforeEach(() => {
+  virtualNow = 0;
+  timerQueue.length = 0;
+});
 
 function seedDom(): void {
   document.body.innerHTML = `
@@ -111,6 +174,61 @@ describe("hub: stage popover", () => {
       ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     expect(document.querySelectorAll(".stage-popover")).toHaveLength(1);
   });
+
+  test("dismiss listener is removed with matching capture flag + event name", async () => {
+    // Spy on document add/remove so we can confirm the (event, fn, capture)
+    // tuple used on remove exactly matches the one used on add. A mutation
+    // that flips the capture flag (true→false) or the event name ("click"→"")
+    // would leak the listener — count remains > 0 after dismissal.
+    const adds: Array<{
+      ev: string;
+      fn: EventListenerOrEventListenerObject;
+      cap: unknown;
+    }> = [];
+    const removes: Array<{
+      ev: string;
+      fn: EventListenerOrEventListenerObject;
+      cap: unknown;
+    }> = [];
+    const realAdd = document.addEventListener.bind(document);
+    const realRemove = document.removeEventListener.bind(document);
+    document.addEventListener = ((
+      ev: string,
+      fn: EventListenerOrEventListenerObject,
+      opts?: unknown,
+    ) => {
+      adds.push({ ev, fn, cap: opts });
+      return realAdd(ev, fn, opts as never);
+    }) as typeof document.addEventListener;
+    document.removeEventListener = ((
+      ev: string,
+      fn: EventListenerOrEventListenerObject,
+      opts?: unknown,
+    ) => {
+      removes.push({ ev, fn, cap: opts });
+      return realRemove(ev, fn, opts as never);
+    }) as typeof document.removeEventListener;
+    try {
+      document
+        .querySelector<HTMLButtonElement>('.stage-chip[data-game="flux"]')
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await new Promise((r) => requestAnimationFrame(() => r(null)));
+      document.body.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      // Find the click-outside add/remove pair for the popover dismiss.
+      const dismissAdd = adds.find((a) => a.ev === "click" && a.cap === true);
+      expect(dismissAdd).toBeDefined();
+      const matched = removes.find(
+        (r) =>
+          r.ev === dismissAdd!.ev &&
+          r.fn === dismissAdd!.fn &&
+          r.cap === dismissAdd!.cap,
+      );
+      expect(matched).toBeDefined();
+    } finally {
+      document.addEventListener = realAdd;
+      document.removeEventListener = realRemove;
+    }
+  });
 });
 
 /**
@@ -153,25 +271,10 @@ const navCalls: string[] = [];
 }
 
 describe("hub: card click triggers nav overlay + fallback", () => {
-  // Track every setTimeout scheduled during a test so afterEach can cancel
-  // any that haven't fired (press 80ms, fallback 600ms). Avoids per-test
-  // 750ms drains that bloat mutation runtime.
-  const tracked = new Set<ReturnType<typeof setTimeout>>();
-  const realSetTimeout = globalThis.setTimeout;
   beforeEach(() => {
-    globalThis.setTimeout = ((fn: () => void, ms?: number) => {
-      const id = realSetTimeout(fn, ms);
-      tracked.add(id);
-      return id;
-    }) as typeof setTimeout;
     resetEnv();
     init();
     navCalls.length = 0;
-  });
-  afterEach(() => {
-    for (const id of tracked) clearTimeout(id);
-    tracked.clear();
-    globalThis.setTimeout = realSetTimeout;
   });
 
   test("anchor click is prevent-defaulted and marks card pressed", () => {
@@ -380,15 +483,30 @@ describe("hub: badges + per-game stats", () => {
     localStorage.setItem(`brainbout:sessions:${ymd(today)}`, "2");
     localStorage.setItem(`brainbout:sessions:${ymd(yest)}`, "1");
     localStorage.setItem("brainbout:total-sessions", "7");
-    localStorage.setItem("brainbout:checkmates:600", "3");
+    localStorage.setItem("brainbout:best:crown", "120");
     localStorage.setItem("brainbout:best:flux", "42");
+    // Mastered = stability ≥ 30 days in FSRS-lite.
     localStorage.setItem(
       "brainbout:lex:no:apple",
-      JSON.stringify({ mastery: 2 }),
+      JSON.stringify({
+        s: 31,
+        d: 5,
+        lastReview: "",
+        nextDue: "",
+        lapses: 0,
+        reps: 1,
+      }),
     );
     localStorage.setItem(
       "brainbout:lex:no:banana",
-      JSON.stringify({ mastery: 2 }),
+      JSON.stringify({
+        s: 45,
+        d: 5,
+        lastReview: "",
+        nextDue: "",
+        lapses: 0,
+        reps: 1,
+      }),
     );
     init();
   });
@@ -411,11 +529,11 @@ describe("hub: badges + per-game stats", () => {
     );
   });
 
-  test("crown stat: checkmates @ elo", () => {
+  test("crown stat: best score", () => {
     expect(
       document.querySelector('a.game-card[href$="crown.html"] .game-stat')
         ?.textContent,
-    ).toMatch(/3 checkmates at 600 Elo/u);
+    ).toMatch(/Best: 120 pts/u);
   });
 
   test("flux stat: best score", () => {
@@ -438,28 +556,26 @@ describe("hub: singular vs plural game-stat wording", () => {
     resetEnv();
   });
 
-  test("crown: exactly 1 checkmate uses 'checkmate' (singular)", () => {
-    localStorage.setItem("brainbout:checkmates:600", "1");
+  test("crown stat: best score 1 still says 'pts'", () => {
+    localStorage.setItem("brainbout:best:crown", "1");
     init();
     const stat = document.querySelector(
       'a.game-card[href$="crown.html"] .game-stat',
     )?.textContent;
-    expect(stat).toBe("1 checkmate at 600 Elo");
-  });
-
-  test("crown: 2+ checkmates uses 'checkmates' (plural)", () => {
-    localStorage.setItem("brainbout:checkmates:600", "2");
-    init();
-    const stat = document.querySelector(
-      'a.game-card[href$="crown.html"] .game-stat',
-    )?.textContent;
-    expect(stat).toBe("2 checkmates at 600 Elo");
+    expect(stat).toBe("Best: 1 pts");
   });
 
   test("lex: exactly 1 mastered uses 'word' (singular)", () => {
     localStorage.setItem(
       "brainbout:lex:no:apple",
-      JSON.stringify({ mastery: 2 }),
+      JSON.stringify({
+        s: 31,
+        d: 5,
+        lastReview: "",
+        nextDue: "",
+        lapses: 0,
+        reps: 1,
+      }),
     );
     init();
     const stat = document.querySelector(
@@ -491,6 +607,150 @@ describe("hub: stage popover positioning + accent", () => {
     const popover = document.querySelector<HTMLElement>(".stage-popover");
     expect(popover?.style.top.endsWith("px")).toBe(true);
     expect(popover?.style.right.endsWith("px")).toBe(true);
+  });
+
+  test("popover top arithmetic is `rect.bottom - hubRect.top + 4` (not `+`)", () => {
+    const chip = document.querySelector<HTMLButtonElement>(
+      '.stage-chip[data-game="crown"]',
+    );
+    const hub = document.querySelector<HTMLElement>("#hub");
+    const stubChip = (): DOMRect =>
+      ({
+        bottom: 100,
+        top: 80,
+        left: 0,
+        right: 0,
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+        toJSON: () => ({}),
+      }) as DOMRect;
+    const stubHub = (): DOMRect =>
+      ({
+        bottom: 200,
+        top: 10,
+        left: 0,
+        right: 50,
+        x: 0,
+        y: 0,
+        width: 50,
+        height: 200,
+        toJSON: () => ({}),
+      }) as DOMRect;
+    if (chip) chip.getBoundingClientRect = stubChip;
+    if (hub) hub.getBoundingClientRect = stubHub;
+    chip?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    const popover = document.querySelector<HTMLElement>(".stage-popover");
+    // 100 - 10 + 4 = 94. Mutation `bottom + top + 4` would give 114.
+    expect(popover?.style.top).toBe("94px");
+  });
+
+  test("popover right arithmetic is `hubRect.right - rect.right` (not `+`)", () => {
+    const chip = document.querySelector<HTMLButtonElement>(
+      '.stage-chip[data-game="crown"]',
+    );
+    const hub = document.querySelector<HTMLElement>("#hub");
+    if (chip)
+      chip.getBoundingClientRect = (): DOMRect =>
+        ({
+          bottom: 0,
+          top: 0,
+          left: 0,
+          right: 30,
+          x: 0,
+          y: 0,
+          width: 0,
+          height: 0,
+          toJSON: () => ({}),
+        }) as DOMRect;
+    if (hub)
+      hub.getBoundingClientRect = (): DOMRect =>
+        ({
+          bottom: 0,
+          top: 0,
+          left: 0,
+          right: 100,
+          x: 0,
+          y: 0,
+          width: 100,
+          height: 0,
+          toJSON: () => ({}),
+        }) as DOMRect;
+    chip?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    const popover = document.querySelector<HTMLElement>(".stage-popover");
+    // 100 - 30 = 70. Mutation `+` would give 130.
+    expect(popover?.style.right).toBe("70px");
+  });
+});
+
+describe("hub: popover dismiss handler logic (direct invoke, no DOM leaks)", () => {
+  test("the click-outside handler does NOT dismiss when target is inside the popover", async () => {
+    resetEnv();
+    // Capture the click-outside handler registered inside the rAF callback by
+    // spying on document.addEventListener. Invoking it directly with target =
+    // a child of the popover lets us verify the `!popover.contains(target)`
+    // gate without any cross-test event propagation interference.
+    const realAdd = document.addEventListener.bind(document);
+    let captured: ((ev: MouseEvent) => void) | null = null;
+    document.addEventListener = ((
+      ev: string,
+      fn: EventListenerOrEventListenerObject,
+      opts?: unknown,
+    ) => {
+      if (ev === "click" && opts === true && typeof fn === "function") {
+        captured = fn as (ev: MouseEvent) => void;
+      }
+      return realAdd(ev, fn, opts as never);
+    }) as typeof document.addEventListener;
+    try {
+      init();
+      document
+        .querySelector<HTMLButtonElement>('.stage-chip[data-game="crown"]')
+        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await new Promise((r) => requestAnimationFrame(() => r(null)));
+      const popover = document.querySelector<HTMLElement>(".stage-popover");
+      expect(popover).not.toBeNull();
+      expect(captured).not.toBeNull();
+      const innerChild =
+        popover?.querySelector<HTMLElement>(".stage-row") ?? popover;
+      // Invoke the captured handler directly with target = inner child.
+      (captured as unknown as (ev: { target: Node }) => void)({
+        target: innerChild as Node,
+      });
+      // The popover should NOT have been removed by this invocation.
+      expect(popover?.isConnected).toBe(true);
+    } finally {
+      document.addEventListener = realAdd;
+    }
+  });
+});
+
+describe("hub: ?completed= history cleanup passes empty title", () => {
+  test("history.replaceState is called with title === ''", () => {
+    const spy: Array<[unknown, unknown, unknown]> = [];
+    const orig = window.history.replaceState.bind(window.history);
+    window.history.replaceState = ((
+      state: unknown,
+      title: unknown,
+      url: unknown,
+    ) => {
+      spy.push([state, title, url]);
+      return orig(
+        state as Parameters<History["replaceState"]>[0],
+        title as string,
+        url as string,
+      );
+    }) as typeof window.history.replaceState;
+    try {
+      resetEnv();
+      window.location.search = "?completed=lex";
+      init();
+      expect(spy.length).toBeGreaterThan(0);
+      expect(spy[0]?.[1]).toBe("");
+    } finally {
+      window.history.replaceState = orig;
+    }
   });
 });
 
@@ -537,9 +797,25 @@ describe("hub: advance/retreat with malformed data-game", () => {
     fake.setAttribute("data-game", "");
     hub?.appendChild(fake);
     fake.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    // No stored stage update for any game
-    for (const g of ["crown", "flux", "lex"]) {
-      expect(localStorage.getItem(`brainbout:stage:${g}`)).toBeNull();
+    // Nothing in localStorage carries a `brainbout:stage:` prefix — neither
+    // a real game id nor the empty-string id that would slip through a `||`
+    // mutation of the guard.
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i) ?? "";
+      expect(k.startsWith("brainbout:stage:")).toBe(false);
+    }
+  });
+
+  test("retreat button with empty data-game is a no-op (no stage change)", () => {
+    const hub = document.querySelector("#hub");
+    const fake = document.createElement("button");
+    fake.className = "retreat-btn";
+    fake.setAttribute("data-game", "");
+    hub?.appendChild(fake);
+    fake.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i) ?? "";
+      expect(k.startsWith("brainbout:stage:")).toBe(false);
     }
   });
 
@@ -551,6 +827,62 @@ describe("hub: advance/retreat with malformed data-game", () => {
     hub?.appendChild(fake);
     fake.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     expect(document.querySelector(".stage-popover")).toBeNull();
+  });
+
+  test("stage chip with unknown game id does NOT trigger a JS error on the popover render path", () => {
+    // Capture happy-dom's listener-error reporting via console.error. The
+    // popover-creation path crashes with `Cannot read properties of undefined`
+    // when the `isKnownGame` guard is mutated away, even though the popover
+    // never makes it into the DOM (dispatchEvent swallows listener throws).
+    const realErr = console.error;
+    let errorMessages = "";
+    console.error = (...args: unknown[]): void => {
+      errorMessages += `${args.map(String).join(" ")}\n`;
+    };
+    try {
+      const hub = document.querySelector("#hub");
+      const fake = document.createElement("button");
+      fake.className = "stage-chip";
+      fake.setAttribute("data-game", "notagame");
+      hub?.appendChild(fake);
+      fake.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      expect(errorMessages).not.toMatch(/Cannot read properties of undefined/u);
+      expect(errorMessages).not.toMatch(/TypeError/u);
+    } finally {
+      console.error = realErr;
+    }
+  });
+
+  test("advance button with empty data-game does NOT trigger a console.error", () => {
+    // Mutation that removes the `game !== ""` guard makes advance("") run,
+    // which calls localStorage with a malformed key — observable through
+    // unexpected state changes already covered above, and additionally
+    // verified here through the absence of TypeError reports.
+    const realErr = console.error;
+    let errorMessages = "";
+    console.error = (...args: unknown[]): void => {
+      errorMessages += `${args.map(String).join(" ")}\n`;
+    };
+    try {
+      const hub = document.querySelector("#hub");
+      const fake = document.createElement("button");
+      fake.className = "advance-btn";
+      fake.setAttribute("data-game", "");
+      hub?.appendChild(fake);
+      fake.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      // The guard prevents `advance("")` which would set `brainbout:stage:` key.
+      // With the guard mutated, advance("") runs and the stage:1 default loads
+      // for the empty key — but nothing throws, so this asserts the side-effect:
+      const keys: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k !== null) keys.push(k);
+      }
+      expect(keys.filter((k) => k.startsWith("brainbout:stage:"))).toEqual([]);
+      expect(errorMessages).toBe("");
+    } finally {
+      console.error = realErr;
+    }
   });
 });
 
@@ -572,6 +904,17 @@ describe("hub: defensive click paths", () => {
       'a.game-card[href$="flux.html"]',
     );
     card?.setAttribute("href", "");
+    card?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 120));
+    expect(document.querySelector(".page-transition")).toBeNull();
+    expect(card?.classList.contains("pressed")).toBe(false);
+  });
+
+  test("click on a card with no href attribute (getAttribute=null) bails out", async () => {
+    const card = document.querySelector<HTMLAnchorElement>(
+      'a.game-card[href$="flux.html"]',
+    );
+    card?.removeAttribute("href");
     card?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await new Promise((r) => setTimeout(r, 120));
     expect(document.querySelector(".page-transition")).toBeNull();

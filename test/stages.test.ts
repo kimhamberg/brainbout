@@ -17,6 +17,9 @@ describe("getStage", () => {
   it("returns 1 for unknown game", () => {
     expect(getStage("flux")).toBe(1);
   });
+  it("fresh game history starts empty (kills `['Stryker was here']` default)", () => {
+    expect(getHistory("flux")).toEqual([]);
+  });
 });
 
 describe("recordResult", () => {
@@ -91,6 +94,13 @@ describe("readiness", () => {
     recordResult("flux", 0.65);
     // avg = 0.77, below 0.8 but above 0.7
     expect(readiness("flux", 0.8)).toBe("amber");
+  });
+
+  it("amber boundary is inclusive: avg = threshold - 0.1 → amber (not grey)", () => {
+    // threshold=1, threshold-0.1=0.9 (exact in IEEE 754). avg=0.9 → amber/green.
+    // Since avg<threshold, the green branch is not taken — should land on amber.
+    for (let i = 0; i < 5; i++) recordResult("flux", 0.9);
+    expect(readiness("flux", 1)).toBe("amber");
   });
 
   it("returns grey at max stage", () => {

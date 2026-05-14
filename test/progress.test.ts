@@ -111,6 +111,49 @@ describe("GAMES", () => {
   });
 });
 
+describe("recordSessionScore guards against re-writing equal scores", () => {
+  it("does NOT re-write today-best when new score equals the current today-best", () => {
+    recordSessionScore("flux", 5);
+    let todayWrites = 0;
+    const orig = Storage.prototype.setItem;
+    Storage.prototype.setItem = function setItem(
+      this: Storage,
+      k: string,
+      v: string,
+    ): void {
+      if (k.includes("today-best")) todayWrites++;
+      orig.call(this, k, v);
+    };
+    try {
+      recordSessionScore("flux", 5);
+      expect(todayWrites).toBe(0);
+    } finally {
+      Storage.prototype.setItem = orig;
+    }
+  });
+
+  it("does NOT re-write all-time best when new score equals the current best", () => {
+    recordSessionScore("flux", 5);
+    let bestWrites = 0;
+    const orig = Storage.prototype.setItem;
+    Storage.prototype.setItem = function setItem(
+      this: Storage,
+      k: string,
+      v: string,
+    ): void {
+      // `:best:` (no trailing today- prefix) matches only the all-time key.
+      if (k.endsWith(":best:flux")) bestWrites++;
+      orig.call(this, k, v);
+    };
+    try {
+      recordSessionScore("flux", 5);
+      expect(bestWrites).toBe(0);
+    } finally {
+      Storage.prototype.setItem = orig;
+    }
+  });
+});
+
 describe("storage quota tolerance", () => {
   it("recordSessionScore swallows QuotaExceededError", () => {
     const original = Storage.prototype.setItem;

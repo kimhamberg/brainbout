@@ -3,7 +3,11 @@ import { initTheme, toggleTheme, wireToggle } from "../src/shared/theme";
 
 describe("theme", () => {
   let originalMatchMedia: typeof matchMedia;
-  let mediaListeners: Array<(e: { matches: boolean }) => void> = [];
+  let mediaListeners: Array<{
+    event: string;
+    cb: (e: { matches: boolean }) => void;
+  }> = [];
+  let matchMediaQueries: string[] = [];
 
   beforeEach(() => {
     originalMatchMedia = globalThis.matchMedia;
@@ -11,6 +15,7 @@ describe("theme", () => {
     document.documentElement.removeAttribute("data-theme");
     document.body.innerHTML = "";
     mediaListeners = [];
+    matchMediaQueries = [];
   });
 
   afterEach(() => {
@@ -19,20 +24,27 @@ describe("theme", () => {
 
   const noop = (): void => undefined;
   function stubMatchMedia(matches: boolean): void {
-    globalThis.matchMedia = (() => ({
-      matches,
-      addEventListener: (
-        _event: string,
-        cb: (e: { matches: boolean }) => void,
-      ) => {
-        mediaListeners.push(cb);
-      },
-      removeEventListener: noop,
-    })) as unknown as typeof matchMedia;
+    globalThis.matchMedia = ((query: string) => {
+      matchMediaQueries.push(query);
+      return {
+        matches,
+        addEventListener: (
+          event: string,
+          cb: (e: { matches: boolean }) => void,
+        ) => {
+          mediaListeners.push({ event, cb });
+        },
+        removeEventListener: noop,
+      };
+    }) as unknown as typeof matchMedia;
   }
 
   function emitMediaChange(matches: boolean): void {
-    for (const cb of mediaListeners) cb({ matches });
+    // Only fire listeners registered for the actual "change" event — kills
+    // string mutants that swap the event name (e.g., "change" → "").
+    for (const { event, cb } of mediaListeners) {
+      if (event === "change") cb({ matches });
+    }
   }
 
   it("defaults to frappe when OS prefers dark", () => {
@@ -89,6 +101,38 @@ describe("theme", () => {
     emitMediaChange(true);
     expect(document.documentElement.dataset.theme).toBe("frappe");
   });
+
+  it("matchMedia is queried with the exact `(prefers-color-scheme: light)` string", () => {
+    stubMatchMedia(false);
+    initTheme();
+    for (const q of matchMediaQueries) {
+      expect(q).toBe("(prefers-color-scheme: light)");
+    }
+    expect(matchMediaQueries.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("addEventListener is wired to the 'change' event (not '' or other)", () => {
+    stubMatchMedia(false);
+    initTheme();
+    expect(mediaListeners.length).toBeGreaterThanOrEqual(1);
+    for (const l of mediaListeners) {
+      expect(l.event).toBe("change");
+    }
+  });
+
+  it("saved 'frappe' wins over OS preference 'light' (kills `'frappe' → ''` mutant)", () => {
+    localStorage.setItem("theme", "frappe");
+    stubMatchMedia(true); // OS prefers light → matchMedia would resolve to 'latte'
+    initTheme();
+    expect(document.documentElement.dataset.theme).toBe("frappe");
+  });
+
+  it("saved 'latte' wins over OS preference 'dark' (kills `'latte' → ''` mutant)", () => {
+    localStorage.setItem("theme", "latte");
+    stubMatchMedia(false); // OS prefers dark → matchMedia would resolve to 'frappe'
+    initTheme();
+    expect(document.documentElement.dataset.theme).toBe("latte");
+  });
 });
 
 describe("wireToggle", () => {
@@ -142,5 +186,25 @@ describe("wireToggle", () => {
     expect(document.documentElement.dataset.theme).toBe("frappe");
     // Icon SVG re-rendered after each toggle (no exception, has a child <svg>)
     expect(btn?.querySelector("svg")).not.toBeNull();
+  });
+
+  it("icon is moon glyph (path, no circle) when theme is latte", () => {
+    stubMatchMedia(false);
+    document.body.innerHTML = `<button id="theme-btn"></button>`;
+    document.documentElement.dataset.theme = "latte";
+    wireToggle();
+    const btn = document.querySelector<HTMLElement>("#theme-btn");
+    expect(btn?.querySelector("svg path")).not.toBeNull();
+    expect(btn?.querySelector("svg circle")).toBeNull();
+  });
+
+  it("icon is sun glyph (circle, multiple lines) when theme is frappe", () => {
+    stubMatchMedia(false);
+    document.body.innerHTML = `<button id="theme-btn"></button>`;
+    document.documentElement.dataset.theme = "frappe";
+    wireToggle();
+    const btn = document.querySelector<HTMLElement>("#theme-btn");
+    expect(btn?.querySelector("svg circle")).not.toBeNull();
+    expect(btn?.querySelector("svg path")).toBeNull();
   });
 });

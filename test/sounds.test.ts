@@ -144,6 +144,20 @@ describe("sounds: every trigger plays its own file", () => {
   }
 });
 
+describe("sounds: preload guard runs the cold-path fetch exactly once", () => {
+  test("a second play() call does NOT re-fetch the preload set", async () => {
+    await flush();
+    const wavBefore = calls.fetchedUrls.filter((u) =>
+      u.endsWith(".wav"),
+    ).length;
+    sounds.playWrong();
+    await flush();
+    const wavAfter = calls.fetchedUrls.filter((u) => u.endsWith(".wav")).length;
+    // The preload-all guard means no NEW .wav files are fetched on hot calls.
+    expect(wavAfter - wavBefore).toBe(0);
+  });
+});
+
 describe("sounds: BGM lifecycle (cold + hot)", () => {
   test("first startBgm: schedules fetch of flux-bgm and sets gain to 0.35", async () => {
     const gainsBefore = calls.gainsCreated.length;
