@@ -31,11 +31,26 @@ class MainActivity : AppCompatActivity() {
                     view: WebView,
                     request: WebResourceRequest,
                 ): WebResourceResponse? {
-                    val response = assetLoader.shouldInterceptRequest(request.url)
+                    // Root path ("/") and bare host requests do not map to any
+                    // asset file — AssetsPathHandler returns null on directories,
+                    // leading to net::ERR_INVALID_RESPONSE when the page
+                    // navigates back to the hub via `${BASE}?...` ⇒ "/".
+                    // Rewrite to /index.html so the SPA entry resolves.
+                    val url =
+                        if (request.url.path.isNullOrEmpty() || request.url.path == "/") {
+                            request.url
+                                .buildUpon()
+                                .path("/index.html")
+                                .build()
+                        } else {
+                            request.url
+                        }
+
+                    val response = assetLoader.shouldInterceptRequest(url)
 
                     // Fix WASM MIME type — Android doesn't know application/wasm
                     if (response != null &&
-                        request.url.lastPathSegment?.endsWith(".wasm") == true
+                        url.lastPathSegment?.endsWith(".wasm") == true
                     ) {
                         return WebResourceResponse(
                             "application/wasm",
