@@ -63,8 +63,8 @@
 }
 
 .rotate-board {
-  width: 280px;
-  height: 280px;
+  width: min(280px, 100%);
+  aspect-ratio: 1 / 1;
 }
 
 .rotate-divider {

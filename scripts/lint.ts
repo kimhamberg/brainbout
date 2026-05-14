@@ -6,7 +6,7 @@ interface Job {
 }
 
 const jobs: Job[] = [
-  { name: "tsc", cmd: ["bunx", "tsc", "--noEmit"] },
+  { name: "tsgo", cmd: ["bunx", "tsgo", "--noEmit"] },
   { name: "biome", cmd: ["bunx", "biome", "check"] },
   { name: "css", cmd: ["bunx", "stylelint", "src/**/*.css"] },
   {
