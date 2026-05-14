@@ -8,7 +8,10 @@ interface Job {
 const jobs: Job[] = [
   { name: "tsgo", cmd: ["bunx", "tsgo", "--noEmit"] },
   { name: "biome", cmd: ["bunx", "biome", "check"] },
-  { name: "css", cmd: ["bunx", "stylelint", "src/**/*.css"] },
+  {
+    name: "css",
+    cmd: ["bunx", "stylelint", "--max-warnings", "0", "src/**/*.css"],
+  },
   {
     name: "html",
     cmd: [

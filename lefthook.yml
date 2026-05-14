@@ -11,7 +11,7 @@ pre-commit:
 
     - name: stylelint
       glob: "*.css"
-      run: bunx stylelint {staged_files}
+      run: bunx stylelint --max-warnings 0 {staged_files}
 
     - name: superhtml
       glob: "*.html"
