@@ -51,7 +51,7 @@
     "stylelint-scales": "^5.0.0",
     "stylelint-use-nesting": "^6.0.2",
     "stylelint-value-no-unknown-custom-properties": "^6.1.1",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.3"
   },
   "license": "GPL-3.0"
 }
