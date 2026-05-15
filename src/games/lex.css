@@ -375,6 +375,208 @@
   animation: fade-in-up var(--dur-250) ease both;
 }
 
+/* ========== Crossword grid ========== */
+
+.xw-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--xw-cols, 10), minmax(0, 1fr));
+  gap: 2px;
+
+  width: 100%;
+  max-width: min(400px, 95vw);
+  padding: 0.25rem;
+  border-radius: 6px;
+
+  background: var(--ctp-surface0);
+  box-shadow: var(--ctp-shadow);
+}
+
+.xw-cell {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  aspect-ratio: 1;
+
+  font-weight: 700;
+  color: var(--ctp-text);
+
+  background: var(--ctp-base);
+
+  transition:
+    background-color var(--dur-150) ease,
+    color var(--dur-150) ease,
+    transform var(--dur-150) ease;
+
+  & .xw-letter {
+    font-size: clamp(0.75rem, 3.5vw, 1.125rem);
+    line-height: 1;
+  }
+
+  & .xw-num {
+    position: absolute;
+    top: 1px;
+    left: 2px;
+
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--ctp-overlay0);
+  }
+
+  & .xw-val {
+    position: absolute;
+    right: 2px;
+    bottom: 1px;
+
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--ctp-overlay0);
+
+    opacity: 0;
+  }
+
+  &.xw-blank {
+    background: transparent;
+  }
+
+  &.xw-cross {
+    background: color-mix(in srgb, var(--ctp-lavender) 14%, var(--ctp-base));
+  }
+
+  &.xw-active {
+    background: color-mix(in srgb, var(--ctp-blue) 24%, var(--ctp-base));
+
+    & .xw-val {
+      opacity: 1;
+    }
+  }
+
+  &.xw-typing-correct {
+    color: var(--ctp-green);
+  }
+
+  &.xw-typing-wrong {
+    color: var(--ctp-maroon);
+  }
+
+  &.xw-solved {
+    color: var(--ctp-green);
+    background: color-mix(in srgb, var(--ctp-green) 18%, var(--ctp-base));
+  }
+}
+
+.xw-clues {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+
+  width: 100%;
+  max-width: min(400px, 95vw);
+}
+
+.xw-clue {
+  cursor: pointer;
+
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
+
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--ctp-surface1);
+  border-radius: 6px;
+
+  font-size: 0.875rem;
+  color: var(--ctp-text);
+  text-align: left;
+
+  background: var(--ctp-base);
+
+  transition:
+    border-color var(--dur-150) ease,
+    background-color var(--dur-150) ease;
+
+  & .xw-clue-tag {
+    flex-shrink: 0;
+    min-width: 3.5rem;
+    font-weight: 700;
+    color: var(--ctp-subtext0);
+  }
+
+  & .xw-clue-text {
+    flex: 1;
+  }
+
+  &:hover:not(:disabled) {
+    border-color: var(--game-accent, var(--ctp-blue));
+  }
+
+  &.xw-clue-active {
+    border-color: var(--game-accent, var(--ctp-blue));
+    background: color-mix(in srgb, var(--ctp-blue) 12%, var(--ctp-base));
+  }
+
+  &.xw-clue-solved {
+    color: var(--ctp-subtext0);
+    text-decoration: line-through;
+    background: var(--ctp-surface0);
+  }
+
+  &.xw-clue-bonus .xw-clue-tag {
+    color: var(--ctp-peach);
+  }
+}
+
+.xw-bonus-header {
+  margin-top: 0.5rem;
+
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ctp-peach);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.xw-hint {
+  font-size: 0.875rem;
+  color: var(--ctp-subtext0);
+}
+
+.xw-active-tag {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--game-accent, var(--ctp-blue));
+  letter-spacing: 0.025em;
+}
+
+.xw-prompt-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.xw-back {
+  cursor: pointer;
+
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--ctp-surface1);
+  border-radius: 6px;
+
+  font-size: 0.875rem;
+  color: var(--ctp-subtext0);
+
+  background: none;
+
+  transition:
+    border-color var(--dur-150) ease,
+    color var(--dur-150) ease;
+
+  &:hover {
+    border-color: var(--game-accent, var(--ctp-blue));
+    color: var(--ctp-text);
+  }
+}
+
 /* ========== Quit button (header) ========== */
 
 .quit-btn {
