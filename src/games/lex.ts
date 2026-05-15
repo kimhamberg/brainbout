@@ -146,6 +146,27 @@ function activeCellsKey(): Set<CellKey> {
   return new Set(cellsFor(p).map((c) => cellKey(c.x, c.y)));
 }
 
+function gridBounds(): {
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+} {
+  let minX = Number.POSITIVE_INFINITY;
+  let maxX = Number.NEGATIVE_INFINITY;
+  let minY = Number.POSITIVE_INFINITY;
+  let maxY = Number.NEGATIVE_INFINITY;
+  for (const p of layout.placements) {
+    for (const c of cellsFor(p)) {
+      if (c.x < minX) minX = c.x;
+      if (c.x > maxX) maxX = c.x;
+      if (c.y < minY) minY = c.y;
+      if (c.y > maxY) maxY = c.y;
+    }
+  }
+  return { minX, maxX, minY, maxY };
+}
+
 function renderGrid(typedForActive: string): string {
   if (layout.placements.length === 0) return "";
   const activeKeys = activeCellsKey();
@@ -162,9 +183,11 @@ function renderGrid(typedForActive: string): string {
       if (c && ch) typedAt.set(cellKey(c.x, c.y), ch);
     }
   }
+  const { minX, maxX, minY, maxY } = gridBounds();
+  const width = maxX - minX + 1;
 
-  for (let y = 1; y <= layout.rows; y++) {
-    for (let x = 1; x <= layout.cols; x++) {
+  for (let y = minY; y <= maxY; y++) {
+    for (let x = minX; x <= maxX; x++) {
       const k = cellKey(x, y);
       const info = cells.get(k);
       if (!info) {
@@ -205,7 +228,7 @@ function renderGrid(typedForActive: string): string {
       );
     }
   }
-  return `<div class="xw-grid" style="--xw-cols:${String(layout.cols)};--xw-rows:${String(layout.rows)}">${html.join("")}</div>`;
+  return `<div class="xw-grid-wrap"><div class="xw-grid" style="--xw-cols:${String(width)}">${html.join("")}</div></div>`;
 }
 
 function clueLabel(p: Placement): string {

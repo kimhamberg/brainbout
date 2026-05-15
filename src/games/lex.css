@@ -377,10 +377,8 @@
 
 /* ========== Crossword grid ========== */
 
-.xw-grid {
-  display: grid;
-  grid-template-columns: repeat(var(--xw-cols, 10), minmax(0, 1fr));
-  gap: 2px;
+.xw-grid-wrap {
+  overflow-x: auto;
 
   width: 100%;
   max-width: min(400px, 95vw);
@@ -389,6 +387,15 @@
 
   background: var(--ctp-surface0);
   box-shadow: var(--ctp-shadow);
+}
+
+.xw-grid {
+  display: grid;
+  grid-auto-rows: 28px;
+  grid-template-columns: repeat(var(--xw-cols, 10), 28px);
+  gap: 2px;
+
+  width: max-content;
 }
 
 .xw-cell {
@@ -411,24 +418,25 @@
     transform var(--dur-150) ease;
 
   & .xw-letter {
-    font-size: clamp(0.75rem, 3.5vw, 1.125rem);
+    font-size: 0.875rem;
     line-height: 1;
   }
 
   & .xw-num {
     position: absolute;
-    top: 1px;
-    left: 2px;
+    top: 0;
+    left: 1px;
 
     font-size: 0.75rem;
     font-weight: 600;
+    line-height: 1;
     color: var(--ctp-overlay0);
   }
 
   & .xw-val {
     position: absolute;
-    right: 2px;
-    bottom: 1px;
+    right: 1px;
+    bottom: 0;
 
     font-size: 0.75rem;
     font-weight: 600;
