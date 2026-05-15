@@ -5,6 +5,12 @@ import { recordSessionScore, todayString } from "../shared/progress";
 import * as sound from "../shared/sounds";
 import { recordResult } from "../shared/stages";
 import { initTheme, wireToggle } from "../shared/theme";
+import {
+  boardLayout,
+  letterValue,
+  type Multiplier,
+  turnScore,
+} from "./lex-board";
 import { buildQueue, shuffleArray } from "./lex-logic";
 import {
   type Grade,
@@ -46,6 +52,10 @@ let inputLocked = false;
 let totalReviews = 0;
 let totalAgain = 0;
 let masteredAtStart = 0;
+let totalScore = 0;
+let streak = 0;
+let promptShownAt = 0;
+let currentLayout: Multiplier[] = [];
 
 async function loadDict(): Promise<void> {
   const resp = await fetch(`${BASE}dict-${lang}.json`);
@@ -87,23 +97,60 @@ function countMastered(): number {
   return n;
 }
 
+function renderBoard(typed: string): string {
+  if (!currentEntry) return "";
+  const target = currentEntry.word;
+  const cells: string[] = [];
+  for (let i = 0; i < target.length; i++) {
+    const m = currentLayout[i] ?? null;
+    const ch = typed[i]?.toLowerCase() ?? "";
+    const expected = target[i]?.toLowerCase() ?? "";
+    const filled = ch !== "";
+    const correct = filled && ch === expected;
+    const val = filled ? letterValue(ch) : letterValue(expected);
+    const multCls = m === null ? "" : ` mult-${m.toLowerCase()}`;
+    const stateCls = filled
+      ? correct
+        ? " filled correct"
+        : " filled wrong"
+      : "";
+    const multLabel = m === null ? "" : `<span class="tile-mult">${m}</span>`;
+    const letter = filled ? ch.toUpperCase() : "";
+    cells.push(
+      `<div class="tile${multCls}${stateCls}"><span class="tile-letter">${letter}</span><span class="tile-val">${String(val)}</span>${multLabel}</div>`,
+    );
+  }
+  return `<div class="board" style="--tile-count:${String(target.length)}">${cells.join("")}</div>`;
+}
+
 function renderPrompt(): void {
   if (!currentEntry) return;
   const exHtml = currentEntry.example
     ? `<div class="cue-example">&ldquo;${currentEntry.example}&rdquo;</div>`
     : "";
   game.innerHTML = `
-    <div class="timer">${String(totalReviews + 1)} reviewed · ${String(sessionQueue.length)} left</div>
+    <div class="hud">
+      <div class="timer">${String(totalReviews + 1)} · ${String(sessionQueue.length)} left</div>
+      <div class="score-display" id="score">${String(totalScore)} pts</div>
+      <div class="streak-display">streak ${String(streak)}</div>
+    </div>
     <div class="cue-type">Definition</div>
     <div class="cue-text">${currentEntry.definition}</div>
     ${exHtml}
+    ${renderBoard("")}
     <div class="cloze-input-wrap">
-      <input class="cloze-input" type="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Type the word, or press Enter to reveal…" id="cloze-input" />
+      <input class="cloze-input" type="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Type the word…" id="cloze-input" />
     </div>
     <div class="feedback" id="feedback"></div>
   `;
   const input = document.querySelector<HTMLInputElement>("#cloze-input");
   input?.focus();
+  input?.addEventListener("input", () => {
+    const board = document.querySelector<HTMLElement>(".board");
+    if (board) {
+      board.outerHTML = renderBoard(input.value);
+    }
+  });
   input?.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -128,11 +175,23 @@ function renderReveal(typed: string): void {
   const exHtml = currentEntry.example
     ? `<div class="cue-example">&ldquo;${currentEntry.example}&rdquo;</div>`
     : "";
+  const previewScore = matched
+    ? turnScore(target, currentLayout, streak + 1, Date.now() - promptShownAt)
+    : 0;
+  const previewHtml = matched
+    ? `<div class="score-preview">+${String(previewScore)} pts</div>`
+    : "";
   game.innerHTML = `
-    <div class="timer">${String(totalReviews + 1)} reviewed · ${String(sessionQueue.length)} left</div>
+    <div class="hud">
+      <div class="timer">${String(totalReviews + 1)} · ${String(sessionQueue.length)} left</div>
+      <div class="score-display">${String(totalScore)} pts</div>
+      <div class="streak-display">streak ${String(streak)}</div>
+    </div>
     <div class="cue-type">Definition</div>
     <div class="cue-text">${currentEntry.definition}</div>
     ${exHtml}
+    ${renderBoard(target)}
+    ${previewHtml}
     <div class="reveal-answer ${matched ? "matched" : "missed"}">
       <span class="reveal-label">Answer</span>
       <span class="reveal-word">${target}</span>
@@ -158,12 +217,21 @@ function applyGrade(grade: Grade): void {
   const word = currentEntry.word;
   recordReview(lang, word, grade, todayString());
   totalReviews++;
-  if (grade === "again") totalAgain++;
   if (grade === "again") {
+    totalAgain++;
+    streak = 0;
     sound.playWrong();
     // Insert back near the front so the lapsed card returns this session.
     sessionQueue.splice(2, 0, currentEntry);
   } else {
+    streak++;
+    const earned = turnScore(
+      word,
+      currentLayout,
+      streak,
+      Date.now() - promptShownAt,
+    );
+    totalScore += earned;
     sound.playCorrect();
   }
   setTimeout(nextRound, grade === "again" ? 700 : 400);
@@ -176,6 +244,8 @@ function nextRound(): void {
     return;
   }
   currentEntry = sessionQueue.shift() ?? defined(dict[0]);
+  currentLayout = boardLayout(currentEntry.word);
+  promptShownAt = Date.now();
   revealed = false;
   inputLocked = false;
   renderPrompt();
@@ -190,8 +260,8 @@ function showResult(): void {
   recordResult("lex", accuracy);
   game.innerHTML = `
     <div class="result">
-      <div class="final-score">${String(totalReviews)}</div>
-      <div class="result-label">reviewed · ${String(Math.round(accuracy * 100))}% recalled</div>
+      <div class="final-score">${String(totalScore)}</div>
+      <div class="result-label">pts · ${String(totalReviews)} reviewed · ${String(Math.round(accuracy * 100))}% recalled</div>
       <div class="peak-streak">+${String(newlyMastered)} new mastered word${newlyMastered === 1 ? "" : "s"}</div>
       <div class="result-actions">
         <button id="again-btn">Play Again</button>
@@ -205,6 +275,8 @@ function showResult(): void {
 async function startGame(): Promise<void> {
   totalReviews = 0;
   totalAgain = 0;
+  totalScore = 0;
+  streak = 0;
   revealed = false;
   inputLocked = false;
   gameOver = false;
