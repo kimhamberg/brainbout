@@ -17,7 +17,8 @@
  *   • Adaptive: piece-count and transform set widen with stage.
  */
 
-import type { Grade } from "../shared/fsrs";
+import { defined } from "../shared/assert";
+import { type Grade, getCard, isDue } from "../shared/fsrs";
 import { rng as defaultRng } from "../shared/rng";
 
 export type Color = "w" | "b";
@@ -168,12 +169,15 @@ export function perturbOnePiece(
 export function generateTrial(
   stage: number,
   rng: () => number = defaultRng,
+  today?: string,
 ): Trial {
   const params = getStageParams(stage);
   const n =
     params.pieceMin + pickInt(rng, params.pieceMax - params.pieceMin + 1);
   const a = generatePieces(n, rng);
-  const transform = pick(params.transforms, rng);
+  const dueTransform =
+    today !== undefined ? pickDueCrownTransform(stage, today, rng) : null;
+  const transform = dueTransform ?? pick(params.transforms, rng);
   const transformed = applyTransform(a, transform);
   const isDifferent = rng() >= params.differentRate;
   const b = isDifferent ? perturbOnePiece(transformed, rng) : transformed;
@@ -230,6 +234,41 @@ export function deriveCrownGrade(correct: boolean, elapsedMs: number): Grade {
   if (elapsedMs < 1800) return "easy";
   if (elapsedMs < 3500) return "good";
   return "hard";
+}
+
+/* ─── due-bias generation ────────────────────────────────────────────── */
+
+/**
+ * Bucket that a stage's piece-count range falls into. Because each stage
+ * uses a single bucket (stage 1 → few, stage 2 → mid, stage 3 → many),
+ * a due-class lookup at a given stage reduces to "which transform is due
+ * inside this stage's bucket?".
+ */
+export function bucketForStage(stage: number): PieceBucket {
+  const params = getStageParams(stage);
+  return pieceBucket(params.pieceMin);
+}
+
+/**
+ * If any transform in the stage's pool has a due FSRS card, pick one
+ * uniformly at random from the due set. Returns null when nothing is due
+ * (caller falls back to plain random selection). Pure given `today` and
+ * `rng`; reads localStorage only.
+ */
+export function pickDueCrownTransform(
+  stage: number,
+  today: string,
+  rng: () => number = defaultRng,
+): Transform | null {
+  const params = getStageParams(stage);
+  const bucket = bucketForStage(stage);
+  const due: Transform[] = [];
+  for (const t of params.transforms) {
+    const card = getCard(`crown:${bucket}:${t}`);
+    if (isDue(card, today)) due.push(t);
+  }
+  if (due.length === 0) return null;
+  return defined(due[pickInt(rng, due.length)]);
 }
 
 /* ─── FEN serialization (for Chessground) ────────────────────────────── */

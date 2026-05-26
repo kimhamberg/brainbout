@@ -8,12 +8,14 @@ import {
   createFluxState,
   DURATION,
   deriveFluxGrade,
+  enumerateFluxContexts,
   evaluateResponse,
   fluxClassKey,
   GOLDEN_BASE_POINTS,
   generateTrial,
   getMultiplier,
   getSessionAct,
+  pickDueFluxContext,
   STAGE_PARAMS,
   STREAK_THRESHOLDS,
   updateAdaptation,
@@ -1178,5 +1180,106 @@ describe("deriveFluxGrade", () => {
   it("budget ≤ 0 falls back to good (avoid divide-by-zero / NaN)", () => {
     expect(deriveFluxGrade(true, 100, 0)).toBe("good");
     expect(deriveFluxGrade(true, 100, -1)).toBe("good");
+  });
+});
+
+describe("enumerateFluxContexts", () => {
+  it("at stage 1 (notAllowed=false) returns plain rules only, sliced to unlockedRuleCount", () => {
+    const state = createFluxState(1);
+    state.unlockedRuleCount = 2;
+    expect(enumerateFluxContexts(state)).toEqual([
+      { rule: "color", isNot: false },
+      { rule: "shape", isNot: false },
+    ]);
+  });
+
+  it("at stage 3 (notAllowed=true) returns plain + NOT for every unlocked rule", () => {
+    const state = createFluxState(3);
+    state.unlockedRuleCount = 2;
+    expect(enumerateFluxContexts(state)).toEqual([
+      { rule: "color", isNot: false },
+      { rule: "color", isNot: true },
+      { rule: "shape", isNot: false },
+      { rule: "shape", isNot: true },
+    ]);
+  });
+
+  it("respects unlockedRuleCount (does not leak later rules)", () => {
+    const state = createFluxState(2);
+    state.unlockedRuleCount = 1;
+    const ctxs = enumerateFluxContexts(state);
+    expect(ctxs.every((c) => c.rule === "color")).toBe(true);
+  });
+});
+
+describe("pickDueFluxContext", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it("returns null when no candidate context is due", () => {
+    const state = createFluxState(1);
+    state.unlockedRuleCount = 3;
+    state.rule = "color";
+    // Schedule shape + size in the future.
+    localStorage.setItem(
+      "brainbout:flux:shape",
+      JSON.stringify({ s: 5, nextDue: "2027-01-01" }),
+    );
+    localStorage.setItem(
+      "brainbout:flux:size",
+      JSON.stringify({ s: 5, nextDue: "2027-01-01" }),
+    );
+    expect(pickDueFluxContext(state, "2026-05-26")).toBeNull();
+  });
+
+  it("returns a due rule that is not the current rule (avoids self-repeat)", () => {
+    const state = createFluxState(1);
+    state.unlockedRuleCount = 3;
+    state.rule = "color";
+    // Only shape is due (no entry → empty nextDue → due).
+    localStorage.setItem(
+      "brainbout:flux:size",
+      JSON.stringify({ s: 5, nextDue: "2027-01-01" }),
+    );
+    // color (current rule) is excluded regardless of due-ness.
+    const picked = pickDueFluxContext(state, "2026-05-26");
+    expect(picked).not.toBeNull();
+    expect(picked?.rule).toBe("shape");
+  });
+
+  it("prefers the most-overdue card when multiple are due", () => {
+    const state = createFluxState(1);
+    state.unlockedRuleCount = 3;
+    state.rule = "color";
+    localStorage.setItem(
+      "brainbout:flux:shape",
+      JSON.stringify({ s: 5, nextDue: "2026-05-25" }),
+    );
+    localStorage.setItem(
+      "brainbout:flux:size",
+      JSON.stringify({ s: 5, nextDue: "2026-05-20" }),
+    );
+    const picked = pickDueFluxContext(state, "2026-05-26");
+    expect(picked?.rule).toBe("size");
+  });
+
+  it("returns NOT variant when only that variant is due (stage 3)", () => {
+    const state = createFluxState(3);
+    state.unlockedRuleCount = 2;
+    state.rule = "color";
+    // Push every shape variant except not_shape into the future.
+    localStorage.setItem(
+      "brainbout:flux:shape",
+      JSON.stringify({ s: 5, nextDue: "2027-01-01" }),
+    );
+    // not_shape has no entry → due via empty nextDue.
+    // Exclude all color variants too.
+    localStorage.setItem(
+      "brainbout:flux:not_color",
+      JSON.stringify({ s: 5, nextDue: "2027-01-01" }),
+    );
+    const picked = pickDueFluxContext(state, "2026-05-26");
+    expect(picked).toEqual({ rule: "shape", isNot: true });
   });
 });

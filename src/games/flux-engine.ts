@@ -1,5 +1,5 @@
 import { defined } from "../shared/assert";
-import type { Grade } from "../shared/fsrs";
+import { type Grade, getCard, isDue } from "../shared/fsrs";
 import { rng } from "../shared/rng";
 
 export type Rule = "color" | "shape" | "size" | "fill";
@@ -217,26 +217,31 @@ export function createFluxState(stage: number): FluxState {
 
 /* ---------- trial generation ---------- */
 
-export function generateTrial(state: FluxState): Trial {
+export function generateTrial(state: FluxState, today?: string): Trial {
   const isWarmUp = state.trialCount < WARM_UP_TRIALS;
 
   // Handle rule switching (only after warm-up)
   if (!isWarmUp) {
     state.trialsUntilSwitch--;
     if (state.trialsUntilSwitch <= 0) {
-      state.rule = pickNextRule(state);
+      const dueCtx =
+        today !== undefined ? pickDueFluxContext(state, today) : null;
+      if (dueCtx !== null) {
+        state.rule = dueCtx.rule;
+        state.isNot = dueCtx.isNot;
+      } else {
+        state.rule = pickNextRule(state);
+        // NOT activation: only when no due-bias drove rule selection.
+        const sp = defined(STAGE_PARAMS[state.stage]);
+        state.isNot =
+          sp.notAllowed && state.switchCount + 1 >= 6 && rng() < 0.3;
+      }
       state.trialsUntilSwitch = rollSwitchCount(state.stage);
       state.noGoUnlocked = true;
       state.switchCount++;
 
-      // NOT activation + progressive rule unlock
+      // Progressive rule unlock (independent of NOT decision)
       const sp = defined(STAGE_PARAMS[state.stage]);
-      if (sp.notAllowed && state.switchCount >= 6 && rng() < 0.3) {
-        state.isNot = true;
-      } else {
-        state.isNot = false;
-      }
-
       const maxRules = sp.rules.length;
       if (
         state.unlockedRuleCount < maxRules &&
@@ -447,6 +452,54 @@ export function bpmToMs(bpm: number): number {
  */
 export function fluxClassKey(rule: Rule, isNot: boolean): string {
   return `flux:${isNot ? "not_" : ""}${rule}`;
+}
+
+/* ---------- due-bias rule selection ---------- */
+
+export interface FluxContext {
+  rule: Rule;
+  isNot: boolean;
+}
+
+/**
+ * Enumerate every (rule, isNot) context the user can legitimately face
+ * at the current stage given their current unlock progress. NOT-variants
+ * only appear once the stage allows them.
+ */
+export function enumerateFluxContexts(state: FluxState): FluxContext[] {
+  const sp = defined(STAGE_PARAMS[state.stage]);
+  const available = sp.rules.slice(0, state.unlockedRuleCount);
+  const out: FluxContext[] = [];
+  for (const r of available) {
+    out.push({ rule: r, isNot: false });
+    if (sp.notAllowed) out.push({ rule: r, isNot: true });
+  }
+  return out;
+}
+
+/**
+ * Pick a due (rule, isNot) context from the user's unlocked pool, or
+ * null when nothing is currently due. Excludes the active rule so a
+ * switch still feels like a switch (no immediate self-repeat).
+ */
+export function pickDueFluxContext(
+  state: FluxState,
+  today: string,
+): FluxContext | null {
+  const candidates = enumerateFluxContexts(state).filter(
+    (c) => c.rule !== state.rule,
+  );
+  const due = candidates.filter((c) =>
+    isDue(getCard(fluxClassKey(c.rule, c.isNot)), today),
+  );
+  if (due.length === 0) return null;
+  // Tie-break by overdue distance: smallest nextDue first.
+  due.sort((a, b) => {
+    const da = getCard(fluxClassKey(a.rule, a.isNot)).nextDue;
+    const db = getCard(fluxClassKey(b.rule, b.isNot)).nextDue;
+    return da.localeCompare(db);
+  });
+  return defined(due[0]);
 }
 
 /**

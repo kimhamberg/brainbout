@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import {
   applyTransform,
+  bucketForStage,
   classifyResponse,
   crownClassKey,
   deriveCrownGrade,
@@ -10,6 +11,7 @@ import {
   getStageParams,
   type Piece,
   perturbOnePiece,
+  pickDueCrownTransform,
   pieceBucket,
   piecesToFen,
   renderResultHtml,
@@ -505,5 +507,96 @@ describe("deriveCrownGrade", () => {
   test("correct + RT ≥ 3500ms → hard", () => {
     expect(deriveCrownGrade(true, 3500)).toBe("hard");
     expect(deriveCrownGrade(true, 9999)).toBe("hard");
+  });
+});
+
+describe("bucketForStage", () => {
+  test("stage 1 → few", () => expect(bucketForStage(1)).toBe("few"));
+  test("stage 2 → mid", () => expect(bucketForStage(2)).toBe("mid"));
+  test("stage 3 → many", () => expect(bucketForStage(3)).toBe("many"));
+});
+
+describe("pickDueCrownTransform", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  test("returns null when stage's pool has no due card (all scheduled in future)", () => {
+    setRng(() => 0);
+    // Stage 1 only has rot180; if it's scheduled in the future, nothing due.
+    localStorage.setItem(
+      "brainbout:crown:few:rot180",
+      JSON.stringify({ s: 5, nextDue: "2027-01-01", d: 5 }),
+    );
+    expect(pickDueCrownTransform(1, "2026-05-26")).toBeNull();
+  });
+
+  test("returns a transform when at least one in-stage card is due", () => {
+    setRng(() => 0);
+    // Stage 1 only has rot180. Schedule it past today.
+    localStorage.setItem(
+      "brainbout:crown:few:rot180",
+      JSON.stringify({ s: 5, nextDue: "2026-05-25", d: 5 }),
+    );
+    expect(pickDueCrownTransform(1, "2026-05-26")).toBe("rot180");
+  });
+
+  test("never-reviewed cards are treated as due (empty nextDue)", () => {
+    setRng(() => 0);
+    // No localStorage entry → card has nextDue=""; isDue → true.
+    expect(pickDueCrownTransform(1, "2026-05-26")).toBe("rot180");
+  });
+
+  test("skips cards whose nextDue is in the future", () => {
+    setRng(() => 0);
+    localStorage.setItem(
+      "brainbout:crown:mid:rot90",
+      JSON.stringify({ s: 5, nextDue: "2027-01-01", d: 5 }),
+    );
+    localStorage.setItem(
+      "brainbout:crown:mid:rot180",
+      JSON.stringify({ s: 5, nextDue: "2027-01-01", d: 5 }),
+    );
+    localStorage.setItem(
+      "brainbout:crown:mid:rot270",
+      JSON.stringify({ s: 5, nextDue: "2027-01-01", d: 5 }),
+    );
+    expect(pickDueCrownTransform(2, "2026-05-26")).toBeNull();
+  });
+});
+
+describe("generateTrial with due-bias (today passed)", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  test("transform is the due one when only one is due", () => {
+    // Stage 2 transforms: rot90, rot180, rot270. Mark only rot270 due
+    // (the others scheduled in the future).
+    localStorage.setItem(
+      "brainbout:crown:mid:rot90",
+      JSON.stringify({ s: 5, nextDue: "2027-01-01", d: 5 }),
+    );
+    localStorage.setItem(
+      "brainbout:crown:mid:rot180",
+      JSON.stringify({ s: 5, nextDue: "2027-01-01", d: 5 }),
+    );
+    // rot270 left blank → due via empty nextDue.
+    setRng(() => 0);
+    const trial = generateTrial(2, undefined, "2026-05-26");
+    expect(trial.transform).toBe("rot270");
+  });
+
+  test("without today, behaviour matches non-bias path (no localStorage access)", () => {
+    // Even with rot90 explicitly due, omitting today disables bias.
+    localStorage.setItem(
+      "brainbout:crown:mid:rot270",
+      JSON.stringify({ s: 5, nextDue: "2027-01-01", d: 5 }),
+    );
+    setRng(() => 0);
+    const a = generateTrial(2);
+    setRng(() => 0);
+    const b = generateTrial(2);
+    expect(a.transform).toBe(b.transform);
   });
 });

@@ -349,7 +349,7 @@ export const createFluxBlock: BlockFactory = (opts): BlockHandle => {
     }
 
     const prevRule = state.rule;
-    currentTrial = generateTrial(state);
+    currentTrial = generateTrial(state, todayString());
     trialRule = state.rule;
     trialIsNot = state.isNot;
     ruleJustSwitched = prevRule !== state.rule;

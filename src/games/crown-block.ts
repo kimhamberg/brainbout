@@ -153,7 +153,7 @@ export const createCrownBlock: BlockFactory = (opts): BlockHandle => {
       finish("completed");
       return;
     }
-    currentTrial = generateTrial(stage);
+    currentTrial = generateTrial(stage, undefined, todayString());
     trialStartMs = Date.now();
     inputLocked = false;
     renderPlaying();
