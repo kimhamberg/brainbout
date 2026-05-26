@@ -1,5 +1,7 @@
 /** Pure, side-effect-free Lex helpers — testable without DOM or storage. */
 
+import { rng as defaultRng } from "../shared/rng";
+
 export function maxMasteryForStage(stage: number): number {
   if (stage >= 3) return 2; // naked cloze
   if (stage >= 2) return 1; // hinted cloze
@@ -43,10 +45,7 @@ export function commonLetters(a: string, b: string): number {
  * Fisher–Yates shuffle in-place. RNG is injected so callers can seed it.
  * Returns the same array to allow chaining; the original is mutated.
  */
-export function shuffleArray<T>(
-  arr: T[],
-  rng: () => number = Math.random,
-): T[] {
+export function shuffleArray<T>(arr: T[], rng: () => number = defaultRng): T[] {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(rng() * (i + 1));
     const ai = arr[i] as T;

@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import crown from "../games/crown.html";
 import cycle from "../games/cycle.html";
+import daily from "../games/daily.html";
 import flux from "../games/flux.html";
 import lex from "../games/lex.html";
 import index from "../index.html";
@@ -15,6 +16,7 @@ const server = Bun.serve({
     "/": index,
     "/games/crown.html": crown,
     "/games/cycle.html": cycle,
+    "/games/daily.html": daily,
     "/games/flux.html": flux,
     "/games/lex.html": lex,
   },

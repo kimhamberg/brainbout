@@ -14,6 +14,7 @@ const result = await Bun.build({
     join(ROOT, "index.html"),
     join(ROOT, "games/crown.html"),
     join(ROOT, "games/cycle.html"),
+    join(ROOT, "games/daily.html"),
     join(ROOT, "games/flux.html"),
     join(ROOT, "games/lex.html"),
   ],

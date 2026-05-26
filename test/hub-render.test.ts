@@ -25,6 +25,7 @@ function makeState(over: Partial<HubState> = {}): HubState {
     sessionsToday: 0,
     totalSessions: 0,
     cards: GAMES.map((g) => makeCard({ game: g })),
+    dailyScore: null,
     ...over,
   };
 }
@@ -139,9 +140,9 @@ describe("renderHubHtml: stats bar", () => {
   test("stats-bar wrapper always present", () => {
     expect(renderHubHtml(makeState())).toContain('<div class="hub-stats-bar">');
   });
-  test("empty stats-bar is properly closed before cycle CTA", () => {
+  test("empty stats-bar is properly closed before daily CTA", () => {
     expect(renderHubHtml(makeState())).toContain(
-      '<div class="hub-stats-bar"></div><a href="games/cycle.html" class="cycle-cta"',
+      '<div class="hub-stats-bar"></div><a href="games/daily.html" class="daily-cta',
     );
   });
 });

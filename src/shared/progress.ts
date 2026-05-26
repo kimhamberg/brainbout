@@ -85,6 +85,43 @@ export function recordCheckmate(elo: number): void {
   safeSet(key("checkmates", String(elo)), String(count + 1));
 }
 
+/* ─── daily challenge ────────────────────────────────────────────────── */
+
+/** Score recorded for a daily-challenge run on the given date, or null. */
+export function getDaily(date: string): number | null {
+  const val = localStorage.getItem(key("daily", date));
+  return val === null ? null : Number(val);
+}
+
+/**
+ * Record (and persist the best of) today's daily-challenge score. Replays
+ * on the same date keep the best, never overwrite with a lower score.
+ */
+export function recordDaily(date: string, score: number): void {
+  const prev = getDaily(date);
+  if (prev === null || score > prev) {
+    safeSet(key("daily", date), String(score));
+  }
+}
+
+/**
+ * Return the last `days` calendar days of daily-challenge scores (newest
+ * first). Missing days appear as null so the caller can render a gap.
+ */
+export function getDailyHistory(
+  today: string,
+  days: number,
+): Array<{ date: string; score: number | null }> {
+  const out: Array<{ date: string; score: number | null }> = [];
+  const d = new Date(`${today}T00:00:00`);
+  for (let i = 0; i < days; i++) {
+    const date = formatDate(d);
+    out.push({ date, score: getDaily(date) });
+    d.setDate(d.getDate() - 1);
+  }
+  return out;
+}
+
 export function getStreak(today: string): number {
   let streak = 0;
   const d = new Date(`${today}T00:00:00`);

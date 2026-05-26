@@ -4,11 +4,14 @@ import {
   GAMES,
   getBest,
   getCheckmates,
+  getDaily,
+  getDailyHistory,
   getSessionsToday,
   getStreak,
   getTodayBest,
   getTotalSessions,
   recordCheckmate,
+  recordDaily,
   recordSessionScore,
   todayString,
 } from "../src/shared/progress";
@@ -189,5 +192,40 @@ describe("storage quota tolerance", () => {
     } finally {
       Storage.prototype.setItem = original;
     }
+  });
+});
+
+describe("daily challenge", () => {
+  it("getDaily returns null for an unrecorded date", () => {
+    expect(getDaily("2026-05-26")).toBeNull();
+  });
+
+  it("recordDaily persists score and keeps the best on replay", () => {
+    recordDaily("2026-05-26", 100);
+    recordDaily("2026-05-26", 150);
+    recordDaily("2026-05-26", 80);
+    expect(getDaily("2026-05-26")).toBe(150);
+  });
+
+  it("getDailyHistory returns newest first, fills gaps with null", () => {
+    recordDaily("2026-05-26", 100);
+    recordDaily("2026-05-24", 50);
+    const hist = getDailyHistory("2026-05-26", 4);
+    expect(hist.map((r) => r.date)).toEqual([
+      "2026-05-26",
+      "2026-05-25",
+      "2026-05-24",
+      "2026-05-23",
+    ]);
+    expect(hist[0]?.score).toBe(100);
+    expect(hist[1]?.score).toBeNull();
+    expect(hist[2]?.score).toBe(50);
+    expect(hist[3]?.score).toBeNull();
+  });
+
+  it("recordDaily does not pollute other date entries", () => {
+    recordDaily("2026-05-26", 100);
+    expect(getDaily("2026-05-25")).toBeNull();
+    expect(getDaily("2026-05-27")).toBeNull();
   });
 });

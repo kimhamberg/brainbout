@@ -15,6 +15,7 @@ import {
   GAMES,
   type GameId,
   getBest,
+  getDaily,
   getSessionsToday,
   getStreak,
   getTotalSessions,
@@ -102,11 +103,13 @@ export function init(): void {
   }
 
   function buildState(): HubState {
+    const today = todayString();
     return {
-      streak: getStreak(todayString()),
+      streak: getStreak(today),
       sessionsToday: getSessionsToday(),
       totalSessions: getTotalSessions(),
       cards: buildCards(),
+      dailyScore: getDaily(today),
     };
   }
 
@@ -183,9 +186,10 @@ export function init(): void {
       return;
     }
 
+    const dailyCta = target.closest<HTMLAnchorElement>("a.daily-cta");
     const cycleCta = target.closest<HTMLAnchorElement>("a.cycle-cta");
     const card = target.closest<HTMLAnchorElement>("a.game-card");
-    const link = cycleCta ?? card;
+    const link = dailyCta ?? cycleCta ?? card;
     if (!link) {
       return;
     }

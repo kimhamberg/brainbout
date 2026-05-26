@@ -3,7 +3,9 @@ import { GAMES, type GameId } from "./shared/progress";
 import type { Readiness } from "./shared/stages";
 
 export const CYCLE_COMPLETED = "cycle";
+export const DAILY_COMPLETED = "daily";
 const CYCLE_URL = "games/cycle.html";
+const DAILY_URL = "games/daily.html";
 
 export interface GameMeta {
   label: string;
@@ -57,6 +59,7 @@ export interface HubState {
   sessionsToday: number;
   totalSessions: number;
   cards: HubCardState[];
+  dailyScore: number | null;
 }
 
 function renderStatsBar(streak: number, sessionsToday: number): string {
@@ -117,12 +120,29 @@ function renderCycleCta(): string {
   </a>`;
 }
 
+function renderDailyCta(dailyScore: number | null): string {
+  const done = dailyScore !== null;
+  const sub = done
+    ? `Done today · ${String(dailyScore)} pts · play again for fun`
+    : "Same trials all day · self-vs-self";
+  const playLabel = done ? "Replay" : "Play";
+  return `<a href="${DAILY_URL}" class="daily-cta${done ? " is-done" : ""}" data-daily-cta>
+    <span class="daily-cta-badge">${done ? "✓" : "★"}</span>
+    <span class="daily-cta-body">
+      <span class="daily-cta-title">Daily Challenge</span>
+      <span class="daily-cta-sub">${sub}</span>
+    </span>
+    <span class="daily-cta-play">${playLabel}</span>
+  </a>`;
+}
+
 function renderDrillHeader(): string {
   return `<div class="hub-section-head">Drill · single game</div>`;
 }
 
 export function renderHubHtml(state: HubState): string {
   let html = renderStatsBar(state.streak, state.sessionsToday);
+  html += renderDailyCta(state.dailyScore);
   html += renderCycleCta();
   html += renderDrillHeader();
   html += `<div class="game-list">`;
@@ -154,5 +174,7 @@ export function isKnownGame(value: string): value is GameId {
 }
 
 export function isCompletableSession(value: string): boolean {
-  return value === CYCLE_COMPLETED || isKnownGame(value);
+  return (
+    value === CYCLE_COMPLETED || value === DAILY_COMPLETED || isKnownGame(value)
+  );
 }

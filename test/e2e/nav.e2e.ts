@@ -102,6 +102,43 @@ test("game pages load directly (deep link)", async ({ page }) => {
   expectClean(trap);
 });
 
+test.describe("daily", () => {
+  test("hub exposes Daily CTA pointing at daily.html", async ({ page }) => {
+    const trap = attachErrorTrap(page);
+    await page.goto("/");
+    const cta = page.locator("a.daily-cta");
+    await expect(cta).toBeVisible();
+    await expect(cta).toHaveAttribute("href", /games\/daily\.html$/u);
+    await expect(cta).toContainText(/daily challenge/iu);
+    expectClean(trap);
+  });
+
+  test("daily page loads with stepper + today tagline", async ({ page }) => {
+    const trap = attachErrorTrap(page);
+    await page.goto("/games/daily.html");
+    await expect(page.locator(".daily-tagline")).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.locator(".cycle-stepper")).toBeVisible();
+    await expect(page.locator(".cycle-step")).toHaveCount(3);
+    expectClean(trap);
+  });
+
+  test("quit ends the daily run and shows summary with history strip", async ({
+    page,
+  }) => {
+    const trap = attachErrorTrap(page);
+    await page.goto("/games/daily.html");
+    await expect(page.locator(".cycle-stepper")).toBeVisible({
+      timeout: 15_000,
+    });
+    await page.locator("#quit-btn").click();
+    await expect(page.locator(".cycle-summary")).toBeVisible({ timeout: 2000 });
+    await expect(page.locator(".daily-history")).toBeVisible();
+    expectClean(trap);
+  });
+});
+
 test.describe("cycle", () => {
   test("hub exposes Start Cycle CTA pointing at cycle.html", async ({
     page,

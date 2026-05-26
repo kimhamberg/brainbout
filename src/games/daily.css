@@ -1,0 +1,58 @@
+/* Daily challenge: same shell as Cycle plus a 7-day history strip. */
+
+.daily-history {
+  display: flex;
+  gap: 0.25rem;
+  justify-content: center;
+
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.daily-history-cell {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0;
+  align-items: center;
+
+  padding: 0.25rem 0;
+  border-radius: 8px;
+
+  background: var(--ctp-surface0);
+
+&.is-today {
+  background: color-mix(in srgb, var(--ctp-yellow) 18%, var(--ctp-surface0));
+}
+
+&.is-empty {
+  opacity: 0.45;
+}
+}
+
+.daily-history-day {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--ctp-text);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.daily-history-score {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--ctp-text);
+}
+
+.daily-history-empty {
+  font-size: 0.75rem;
+  color: var(--ctp-overlay0);
+}
+
+.daily-tagline {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ctp-text);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
