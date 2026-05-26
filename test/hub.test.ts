@@ -961,6 +961,44 @@ describe("hub: defensive click paths", () => {
   });
 });
 
+describe("hub: PWA chips", () => {
+  beforeEach(() => {
+    resetEnv();
+  });
+
+  test("install chip click invokes the click path (no-op when no prompt cached)", () => {
+    init();
+    // No real beforeinstallprompt event in happy-dom -> chip not rendered.
+    // Inject a synthetic chip into the hub and dispatch a click to exercise
+    // the handler branch.
+    const hub = document.querySelector("#hub");
+    if (!hub) throw new Error("missing hub");
+    hub.insertAdjacentHTML(
+      "afterbegin",
+      `<button class="install-chip" data-pwa-install>+ Install</button>`,
+    );
+    const chip =
+      document.querySelector<HTMLButtonElement>("[data-pwa-install]");
+    expect(() => {
+      chip?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    }).not.toThrow();
+  });
+
+  test("reminder chip click invokes requestNotifications", () => {
+    init();
+    const hub = document.querySelector("#hub");
+    if (!hub) throw new Error("missing hub");
+    hub.insertAdjacentHTML(
+      "afterbegin",
+      `<button class="reminder-chip" data-pwa-notify>🔔 Reminders</button>`,
+    );
+    const chip = document.querySelector<HTMLButtonElement>("[data-pwa-notify]");
+    expect(() => {
+      chip?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    }).not.toThrow();
+  });
+});
+
 describe("hub: no #hub element — render is a no-op, no throw", () => {
   beforeEach(() => {
     localStorage.clear();

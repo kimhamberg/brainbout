@@ -26,6 +26,7 @@ function makeState(over: Partial<HubState> = {}): HubState {
     totalSessions: 0,
     cards: GAMES.map((g) => makeCard({ game: g })),
     dailyScore: null,
+    pwa: { canInstall: false, notifications: "unsupported" },
     ...over,
   };
 }
@@ -144,6 +145,38 @@ describe("renderHubHtml: stats bar", () => {
     expect(renderHubHtml(makeState())).toContain(
       '<div class="hub-stats-bar"></div><a href="games/daily.html" class="daily-cta',
     );
+  });
+
+  test("install chip shown when pwa.canInstall = true", () => {
+    const out = renderHubHtml(
+      makeState({
+        pwa: { canInstall: true, notifications: "unsupported" },
+      }),
+    );
+    expect(out).toContain("data-pwa-install");
+    expect(out).toContain("+ Install");
+  });
+
+  test("reminder chip shown when notifications = default", () => {
+    const out = renderHubHtml(
+      makeState({
+        pwa: { canInstall: false, notifications: "default" },
+      }),
+    );
+    expect(out).toContain("data-pwa-notify");
+    expect(out).toContain("Reminders");
+  });
+
+  test("no install chip when canInstall = false", () => {
+    expect(renderHubHtml(makeState())).not.toContain("data-pwa-install");
+  });
+
+  test("no reminder chip when notifications != default", () => {
+    expect(
+      renderHubHtml(
+        makeState({ pwa: { canInstall: false, notifications: "granted" } }),
+      ),
+    ).not.toContain("data-pwa-notify");
   });
 });
 

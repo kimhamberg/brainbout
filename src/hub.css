@@ -115,6 +115,39 @@
   color: var(--ctp-peach);
 }
 
+.install-chip,
+.reminder-chip {
+  cursor: pointer;
+
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--ctp-mauve);
+  border-radius: 6px;
+
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ctp-text);
+
+  background: var(--ctp-surface0);
+
+  transition:
+    transform var(--dur-150) ease,
+    background-color var(--dur-150) ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    background: color-mix(in srgb, var(--ctp-mauve) 12%, var(--ctp-surface0));
+  }
+}
+
+.reminder-chip {
+  border-color: var(--ctp-blue);
+
+  &:hover {
+    background: color-mix(in srgb, var(--ctp-blue) 12%, var(--ctp-surface0));
+  }
+}
+
 @keyframes card-enter {
   from {
     transform: translateY(12px);

@@ -21,6 +21,14 @@ import {
   getTotalSessions,
   todayString,
 } from "./shared/progress";
+import {
+  canInstall,
+  maybeFireDailyReminder,
+  notificationStatus,
+  promptInstall,
+  requestNotifications,
+  watchInstallability,
+} from "./shared/pwa";
 import { advance, getStage, readiness, retreat } from "./shared/stages";
 import { initTheme, wireToggle } from "./shared/theme";
 
@@ -110,6 +118,10 @@ export function init(): void {
       totalSessions: getTotalSessions(),
       cards: buildCards(),
       dailyScore: getDaily(today),
+      pwa: {
+        canInstall: canInstall(),
+        notifications: notificationStatus(),
+      },
     };
   }
 
@@ -174,6 +186,26 @@ export function init(): void {
       return;
     }
 
+    const installChip = target.closest<HTMLButtonElement>("[data-pwa-install]");
+    if (installChip !== null) {
+      e.preventDefault();
+      e.stopPropagation();
+      void promptInstall().then(() => {
+        render();
+      });
+      return;
+    }
+
+    const notifyChip = target.closest<HTMLButtonElement>("[data-pwa-notify]");
+    if (notifyChip !== null) {
+      e.preventDefault();
+      e.stopPropagation();
+      void requestNotifications().then(() => {
+        render();
+      });
+      return;
+    }
+
     const retBtn = target.closest<HTMLButtonElement>(".retreat-btn");
     if (retBtn !== null) {
       e.preventDefault();
@@ -228,4 +260,6 @@ export function init(): void {
   initTheme();
   wireToggle();
   mountHubIcon();
+  watchInstallability(render);
+  void maybeFireDailyReminder({ dailyDone: getDaily(todayString()) !== null });
 }

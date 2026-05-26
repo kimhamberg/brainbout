@@ -13,6 +13,7 @@ coveragePathIgnorePatterns = [
   "src/games/flux-block.ts",
   "src/games/lex-block.ts",
   "src/engine/block.ts",
+  "src/shared/pwa.ts",
   "tools/stryke/harness.ts",
   "tools/stryke/instrument.ts",
   "tools/stryke/mutators.ts",

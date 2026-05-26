@@ -60,15 +60,29 @@ export interface HubState {
   totalSessions: number;
   cards: HubCardState[];
   dailyScore: number | null;
+  pwa: {
+    canInstall: boolean;
+    notifications: "unsupported" | "default" | "granted" | "denied";
+  };
 }
 
-function renderStatsBar(streak: number, sessionsToday: number): string {
+function renderStatsBar(
+  streak: number,
+  sessionsToday: number,
+  pwa: HubState["pwa"],
+): string {
   let html = `<div class="hub-stats-bar">`;
   if (streak > 0) {
     html += `<span class="streak-badge">${String(streak)}-day streak</span>`;
   }
   if (sessionsToday > 0) {
     html += `<span class="sessions-badge">${String(sessionsToday)} session${sessionsToday === 1 ? "" : "s"} today</span>`;
+  }
+  if (pwa.canInstall) {
+    html += `<button class="install-chip" data-pwa-install>+ Install</button>`;
+  }
+  if (pwa.notifications === "default") {
+    html += `<button class="reminder-chip" data-pwa-notify>🔔 Reminders</button>`;
   }
   html += "</div>";
   return html;
@@ -141,7 +155,7 @@ function renderDrillHeader(): string {
 }
 
 export function renderHubHtml(state: HubState): string {
-  let html = renderStatsBar(state.streak, state.sessionsToday);
+  let html = renderStatsBar(state.streak, state.sessionsToday, state.pwa);
   html += renderDailyCta(state.dailyScore);
   html += renderCycleCta();
   html += renderDrillHeader();

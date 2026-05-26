@@ -1283,3 +1283,24 @@ describe("pickDueFluxContext", () => {
     expect(picked).toEqual({ rule: "shape", isNot: true });
   });
 });
+
+describe("generateTrial: rule-switch with due-bias (today passed)", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it("uses due context when one is available on switch", () => {
+    const state = createFluxState(1);
+    state.trialCount = WARM_UP_TRIALS;
+    state.unlockedRuleCount = 3;
+    state.trialsUntilSwitch = 1;
+    state.rule = "color";
+    // Mark shape due (no entry → empty nextDue → due); push size into future.
+    localStorage.setItem(
+      "brainbout:flux:size",
+      JSON.stringify({ s: 5, nextDue: "2027-01-01" }),
+    );
+    generateTrial(state, "2026-05-26");
+    expect(state.rule as string).toBe("shape");
+  });
+});
