@@ -1,0 +1,200 @@
+/* Cycle session: stepper at top, current-block area below. */
+
+.cycle-stepper {
+  position: sticky;
+  z-index: 0;
+  top: 0;
+
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+
+  background: var(--ctp-base);
+}
+
+.cycle-step {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--ctp-surface1);
+  border-radius: 16px;
+
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ctp-text);
+
+  background: var(--ctp-surface0);
+
+  transition:
+    color var(--dur-150) ease,
+    border-color var(--dur-150) ease,
+    background-color var(--dur-150) ease;
+
+  &.is-done {
+    color: var(--ctp-text);
+    background: color-mix(in srgb, var(--step-accent, var(--ctp-mauve)) 14%, var(--ctp-surface0));
+  }
+
+  &.is-active {
+    border-color: var(--step-accent, var(--ctp-mauve));
+    color: var(--ctp-text);
+    background: color-mix(in srgb, var(--step-accent, var(--ctp-mauve)) 22%, var(--ctp-base));
+  }
+}
+
+.cycle-step-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 16px;
+  background: var(--step-accent, var(--ctp-mauve));
+}
+
+.cycle-slot {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Inter-block transition card. Brief flash announcing the next mechanic. */
+.cycle-transition {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+
+  padding: 2rem 2.5rem;
+  border: 1px solid var(--step-accent, var(--ctp-mauve));
+  border-radius: 16px;
+
+  background: var(--ctp-surface0);
+  box-shadow: var(--ctp-shadow);
+
+  animation: cycle-pop 800ms ease;
+}
+
+.cycle-transition-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--ctp-subtext0);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.cycle-transition-name {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--step-accent, var(--ctp-mauve));
+}
+
+@keyframes cycle-pop {
+  0% {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+
+  20% {
+    transform: scale(1.02);
+    opacity: 1;
+  }
+
+  80% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+}
+
+@media (--motion-reduce) {
+  .cycle-transition {
+    animation-duration: 1ms;
+  }
+}
+
+/* Final summary: per-block tiles + totals. */
+.cycle-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+
+  width: 100%;
+  max-width: min(400px, 95vw);
+}
+
+.cycle-summary-totals {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.cycle-summary-points {
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ctp-text);
+}
+
+.cycle-summary-points-label {
+  font-size: 0.875rem;
+  color: var(--ctp-subtext0);
+}
+
+.cycle-block-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.cycle-block-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  align-items: center;
+
+  padding: 0.75rem 0.5rem;
+  border: 1px solid var(--tile-accent, var(--ctp-surface1));
+  border-radius: 8px;
+
+  background: var(--ctp-surface0);
+}
+
+.cycle-block-tile-name {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--tile-accent, var(--ctp-text));
+  text-transform: uppercase;
+}
+
+.cycle-block-tile-points {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--ctp-text);
+}
+
+.cycle-block-tile-meta {
+  font-size: 0.75rem;
+  color: var(--ctp-subtext0);
+}
+
+.cycle-summary-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  width: 100%;
+}

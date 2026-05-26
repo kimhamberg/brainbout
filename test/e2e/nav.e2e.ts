@@ -101,3 +101,58 @@ test("game pages load directly (deep link)", async ({ page }) => {
   }
   expectClean(trap);
 });
+
+test.describe("cycle", () => {
+  test("hub exposes Start Cycle CTA pointing at cycle.html", async ({
+    page,
+  }) => {
+    const trap = attachErrorTrap(page);
+    await page.goto("/");
+    const cta = page.locator("a.cycle-cta");
+    await expect(cta).toBeVisible();
+    await expect(cta).toHaveAttribute("href", /games\/cycle\.html$/u);
+    await expect(cta).toContainText(/start cycle/iu);
+    expectClean(trap);
+  });
+
+  test("hub → cycle navigates and renders the stepper", async ({ page }) => {
+    const trap = attachErrorTrap(page);
+    await page.goto("/");
+    await page.locator("a.cycle-cta").click();
+    await page.waitForURL(/games\/cycle\.html$/u, { timeout: 5000 });
+    await expect(page).toHaveTitle(/cycle/iu);
+    await expect(page.locator(".cycle-stepper")).toBeVisible();
+    await expect(page.locator(".cycle-step")).toHaveCount(3);
+    expectClean(trap);
+  });
+
+  test("cycle page loads directly and the first block (Lex) is active", async ({
+    page,
+  }) => {
+    const trap = attachErrorTrap(page);
+    await page.goto("/games/cycle.html");
+    await expect(page.locator(".cycle-stepper")).toBeVisible({
+      timeout: 15_000,
+    });
+    // First step active = Lex; Lex block renders the crossword grid.
+    await expect(page.locator(".cycle-step.is-active")).toContainText(/lex/iu);
+    await expect(page.locator(".xw-grid")).toBeVisible({ timeout: 15_000 });
+    expectClean(trap);
+  });
+
+  test("quit ends the cycle and shows the combined summary", async ({
+    page,
+  }) => {
+    const trap = attachErrorTrap(page);
+    await page.goto("/games/cycle.html");
+    await expect(page.locator(".cycle-stepper")).toBeVisible({
+      timeout: 15_000,
+    });
+    await page.locator("#quit-btn").click();
+    await expect(page.locator(".cycle-summary")).toBeVisible({ timeout: 2000 });
+    await expect(page.locator(".cycle-block-tile")).toHaveCount(3);
+    await expect(page.locator("#again-btn")).toBeVisible();
+    await expect(page.locator("#back-btn")).toBeVisible();
+    expectClean(trap);
+  });
+});

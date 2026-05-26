@@ -66,6 +66,7 @@ const SRC_EXCLUDES: string[] = [
   "src/games/crown.ts",
   "src/games/flux.ts",
   "src/games/lex.ts",
+  "src/games/cycle.ts",
   "src/games/crown-block.ts",
   "src/games/flux-block.ts",
   "src/games/lex-block.ts",

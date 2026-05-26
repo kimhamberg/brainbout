@@ -3,6 +3,7 @@ import {
   GAME_META,
   type HubCardState,
   type HubState,
+  isCompletableSession,
   isKnownGame,
   renderHubHtml,
   renderPopoverHtml,
@@ -71,7 +72,7 @@ export function init(): void {
   // hub via ?completed=<game>; URL is cleaned so refresh doesn't double-count.
   const params = new URLSearchParams(window.location.search);
   const completedParam = params.get("completed");
-  if (completedParam !== null && isKnownGame(completedParam)) {
+  if (completedParam !== null && isCompletableSession(completedParam)) {
     completeSession();
     window.history.replaceState({}, "", window.location.pathname);
   }
@@ -158,26 +159,29 @@ export function init(): void {
       return;
     }
 
+    const cycleCta = target.closest<HTMLAnchorElement>("a.cycle-cta");
     const card = target.closest<HTMLAnchorElement>("a.game-card");
-    if (!card) {
+    const link = cycleCta ?? card;
+    if (!link) {
       return;
     }
 
     e.preventDefault();
-    const href = card.getAttribute("href");
+    const href = link.getAttribute("href");
     // stryke-ignore-next-line: happy-dom swallows `window.location.href = ""` and hangs
     if (href === null || href === "") {
       return;
     }
 
-    card.classList.add("pressed");
+    link.classList.add("pressed");
 
     setTimeout(() => {
       document.querySelector(".app")?.classList.add("exiting");
 
       const overlay = document.createElement("div");
       overlay.className = "page-transition";
-      const accent = card.style.getPropertyValue("--accent");
+      const accent =
+        link.style.getPropertyValue("--accent") || "var(--ctp-mauve)";
       overlay.style.setProperty("--transition-color", accent);
       document.body.appendChild(overlay);
 

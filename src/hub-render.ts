@@ -1,6 +1,9 @@
-import { GAME_ICONS } from "./shared/icons";
+import { BRAIN_PATHS, GAME_ICONS, iconSvg } from "./shared/icons";
 import { GAMES, type GameId } from "./shared/progress";
 import type { Readiness } from "./shared/stages";
+
+export const CYCLE_COMPLETED = "cycle";
+const CYCLE_URL = "games/cycle.html";
 
 export interface GameMeta {
   label: string;
@@ -102,8 +105,26 @@ function renderFooter(totalSessions: number): string {
   return `<div class="hub-footer">${String(totalSessions)} session${totalSessions === 1 ? "" : "s"} completed</div>`;
 }
 
+function renderCycleCta(): string {
+  const icon = iconSvg(BRAIN_PATHS, { size: 32, stroke: "currentColor" });
+  return `<a href="${CYCLE_URL}" class="cycle-cta" data-cycle-cta>
+    <span class="cycle-cta-icon">${icon}</span>
+    <span class="cycle-cta-body">
+      <span class="cycle-cta-title">Start Cycle</span>
+      <span class="cycle-cta-sub">Lex → Crown → Flux · ~3 min</span>
+    </span>
+    <span class="cycle-cta-play">Play</span>
+  </a>`;
+}
+
+function renderDrillHeader(): string {
+  return `<div class="hub-section-head">Drill · single game</div>`;
+}
+
 export function renderHubHtml(state: HubState): string {
   let html = renderStatsBar(state.streak, state.sessionsToday);
+  html += renderCycleCta();
+  html += renderDrillHeader();
   html += `<div class="game-list">`;
   for (let i = 0; i < state.cards.length; i++) {
     const card = state.cards[i];
@@ -130,4 +151,8 @@ export function renderPopoverHtml(
 
 export function isKnownGame(value: string): value is GameId {
   return (GAMES as readonly string[]).includes(value);
+}
+
+export function isCompletableSession(value: string): boolean {
+  return value === CYCLE_COMPLETED || isKnownGame(value);
 }

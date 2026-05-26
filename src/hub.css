@@ -141,6 +141,86 @@
   margin-bottom: 1rem;
 }
 
+.cycle-cta {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+
+  width: 100%;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--ctp-mauve);
+  border-radius: 16px;
+
+  color: var(--ctp-text);
+  text-decoration: none;
+
+  background: var(--ctp-mantle);
+  box-shadow: var(--ctp-shadow);
+
+  transition:
+    transform var(--dur-150) ease,
+    box-shadow var(--dur-150) ease,
+    background-color var(--dur-150) ease;
+
+&:hover {
+  transform: translateY(-2px);
+  background:
+    color-mix(in srgb, var(--ctp-mauve) 8%, var(--ctp-mantle));
+  box-shadow: var(--ctp-shadow-lg);
+}
+}
+
+.cycle-cta-icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+
+  color: var(--ctp-mauve);
+}
+
+.cycle-cta-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0;
+}
+
+.cycle-cta-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--ctp-text);
+}
+
+.cycle-cta-sub {
+  font-size: 0.75rem;
+  color: var(--ctp-text);
+}
+
+.cycle-cta-play {
+  flex-shrink: 0;
+
+  padding: 0.5rem 1rem;
+  border-radius: 16px;
+
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #fff;
+
+  background: var(--ctp-mauve);
+}
+
+.hub-section-head {
+  margin: 0 0 0.5rem;
+
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--ctp-subtext0);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
 .game-card-top {
   display: flex;
   gap: 0.5rem;

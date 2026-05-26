@@ -139,9 +139,9 @@ describe("renderHubHtml: stats bar", () => {
   test("stats-bar wrapper always present", () => {
     expect(renderHubHtml(makeState())).toContain('<div class="hub-stats-bar">');
   });
-  test("empty stats-bar is properly closed before game-list opens", () => {
+  test("empty stats-bar is properly closed before cycle CTA", () => {
     expect(renderHubHtml(makeState())).toContain(
-      '<div class="hub-stats-bar"></div><div class="game-list">',
+      '<div class="hub-stats-bar"></div><a href="games/cycle.html" class="cycle-cta"',
     );
   });
 });
