@@ -165,6 +165,7 @@ export function init(): void {
 
     e.preventDefault();
     const href = card.getAttribute("href");
+    // stryke-ignore-next-line: happy-dom swallows `window.location.href = ""` and hangs
     if (href === null || href === "") {
       return;
     }

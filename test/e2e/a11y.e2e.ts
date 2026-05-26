@@ -5,7 +5,7 @@ const PAGES: Array<{ name: string; url: string; ready: string }> = [
   { name: "hub", url: "/", ready: "a.game-card" },
   { name: "crown", url: "/games/crown.html", ready: ".cg-wrap" },
   { name: "flux", url: "/games/flux.html", ready: ".flux-btn" },
-  { name: "lex", url: "/games/lex.html", ready: ".cloze-input" },
+  { name: "lex", url: "/games/lex.html", ready: ".xw-grid" },
 ];
 
 for (const { name, url, ready } of PAGES) {

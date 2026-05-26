@@ -461,6 +461,12 @@
     }
   }
 
+  &.xw-cursor {
+    color: var(--ctp-base);
+    background: color-mix(in srgb, var(--ctp-blue) 50%, var(--ctp-base));
+    box-shadow: 0 0 0 2px var(--ctp-blue);
+  }
+
   &.xw-typing-correct {
     color: var(--ctp-green);
   }
@@ -476,12 +482,36 @@
 }
 
 .xw-clues {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
 
   width: 100%;
   max-width: min(400px, 95vw);
+
+  @media (--viewport-md) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.xw-clue-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.xw-clue-head {
+  margin-bottom: 0.25rem;
+
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--ctp-subtext0);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+
+  &.xw-bonus-head {
+    color: var(--ctp-peach);
+  }
 }
 
 .xw-clue {
@@ -509,7 +539,7 @@
     flex-shrink: 0;
     min-width: 3.5rem;
     font-weight: 700;
-    color: var(--ctp-subtext0);
+    color: var(--ctp-text);
   }
 
   & .xw-clue-text {
@@ -536,16 +566,6 @@
   }
 }
 
-.xw-bonus-header {
-  margin-top: 0.5rem;
-
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--ctp-peach);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
 .xw-hint {
   font-size: 0.875rem;
   color: var(--ctp-subtext0);
@@ -556,6 +576,110 @@
   font-weight: 700;
   color: var(--game-accent, var(--ctp-blue));
   letter-spacing: 0.025em;
+}
+
+/* Sticky active-clue bar shown above the grid while solving. */
+.xw-bar {
+  position: sticky;
+  z-index: 10;
+  top: 0;
+
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+
+  width: 100%;
+  max-width: min(400px, 95vw);
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--ctp-surface1);
+  border-radius: 6px;
+
+  background: var(--ctp-surface0);
+  box-shadow: var(--ctp-shadow);
+}
+
+.xw-bar-tag {
+  flex-shrink: 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--ctp-text);
+}
+
+.xw-bar-clue {
+  flex: 1;
+
+  min-width: 0;
+
+  font-size: 0.875rem;
+  line-height: 1.375;
+  color: var(--ctp-text);
+}
+
+.xw-bar-submit {
+  cursor: pointer;
+
+  flex-shrink: 0;
+
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--game-accent, var(--ctp-blue));
+  border-radius: 6px;
+
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fff;
+
+  background: var(--game-accent, var(--ctp-blue));
+
+  transition:
+    box-shadow var(--dur-150) ease,
+    transform var(--dur-100) ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--ctp-shadow);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+/* Hidden input that captures key events on mobile so the soft keyboard pops. */
+#xw-capture {
+  pointer-events: none;
+
+  position: absolute;
+  top: -100vh;
+  left: -100vw;
+
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+
+  font-size: 16px;
+  color: transparent;
+
+  opacity: 0;
+  background: transparent;
+}
+
+.xw-reveal-card,
+.xw-bonus-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+
+  width: 100%;
+  max-width: min(400px, 95vw);
+  padding: 1rem;
+  border-radius: 8px;
+
+  background: var(--ctp-surface0);
+  box-shadow: var(--ctp-shadow);
 }
 
 .xw-prompt-actions {

@@ -7,4 +7,13 @@ coveragePathIgnorePatterns = [
   "src/games/crown.ts",
   "src/games/flux.ts",
   "src/games/lex.ts",
+  "src/games/crown-block.ts",
+  "src/games/flux-block.ts",
+  "src/games/lex-block.ts",
+  "src/engine/block.ts",
+  "tools/stryke/harness.ts",
+  "tools/stryke/instrument.ts",
+  "tools/stryke/mutators.ts",
+  "tools/stryke/runner.ts",
+  "tools/stryke/types.ts",
 ]

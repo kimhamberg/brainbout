@@ -99,36 +99,34 @@ test.describe("Flux gameplay", () => {
 /* ─── Lex ──────────────────────────────────────────────────────────────── */
 
 test.describe("Lex gameplay (FSRS-style recall)", () => {
-  test("renders definition cue + a typed-answer input after dict loads", async ({
+  test("renders crossword grid + active clue bar after dict loads", async ({
     page,
   }) => {
     const trap = attachErrorTrap(page);
     await page.goto("/games/lex.html");
-    await expect(page.locator(".cue-text")).toBeVisible({ timeout: 15_000 });
-    await expect(page.locator("#cloze-input")).toBeVisible();
+    await expect(page.locator(".xw-grid")).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator(".xw-bar-clue")).toBeVisible();
+    await expect(page.locator("#xw-submit")).toBeVisible();
     expectClean(trap);
   });
 
-  test("pressing Enter on empty input reveals the answer + 4 grade buttons", async ({
+  test("pressing Enter reveals the answer + 4 grade buttons", async ({
     page,
   }) => {
     const trap = attachErrorTrap(page);
     await page.goto("/games/lex.html");
-    await expect(page.locator("#cloze-input")).toBeVisible({ timeout: 15_000 });
-    await page.locator("#cloze-input").press("Enter");
+    await expect(page.locator(".xw-grid")).toBeVisible({ timeout: 15_000 });
+    await page.keyboard.press("Enter");
     await expect(page.locator(".reveal-answer")).toBeVisible({ timeout: 1500 });
     await expect(page.locator(".grade-btn")).toHaveCount(4);
     expectClean(trap);
   });
 
-  test("typing the correct word marks the suggested grade as 'good'", async ({
-    page,
-  }) => {
+  test("pressing Enter surfaces a suggested grade chip", async ({ page }) => {
     const trap = attachErrorTrap(page);
     await page.goto("/games/lex.html");
-    await expect(page.locator(".cue-text")).toBeVisible({ timeout: 15_000 });
-    // Grab the target word the page exposes via the FSRS storage (or skip)
-    await page.locator("#cloze-input").press("Enter");
+    await expect(page.locator(".xw-grid")).toBeVisible({ timeout: 15_000 });
+    await page.keyboard.press("Enter");
     await expect(page.locator(".grade-btn.suggested").first()).toBeVisible({
       timeout: 1500,
     });
@@ -140,7 +138,7 @@ test.describe("Lex gameplay (FSRS-style recall)", () => {
   }) => {
     const trap = attachErrorTrap(page);
     await page.goto("/games/lex.html");
-    await expect(page.locator("#cloze-input")).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator(".xw-grid")).toBeVisible({ timeout: 15_000 });
     await page.locator("#quit-btn").click();
     await expect(page.locator(".result")).toBeVisible({ timeout: 2000 });
     await expect(page.locator("#again-btn")).toBeVisible();

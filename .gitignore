@@ -4,6 +4,7 @@ dist/
 coverage/
 reports/
 .stryker-tmp/
+.stryke-tmp/
 *.local
 *.apk
 .claude/

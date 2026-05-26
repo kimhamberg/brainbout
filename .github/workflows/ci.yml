@@ -92,3 +92,17 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  mutation-fast:
+    name: Mutation (stryke)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: bun run test:mutation:fast
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: stryke-report
+          path: reports/stryke.json
+          retention-days: 7

@@ -1,35 +1,12 @@
+import type { BlockHandle } from "../engine/block";
 import { BASE } from "../shared/base";
 import { mountAppIcon, mountQuitButton } from "../shared/icons";
-import { recordSessionScore } from "../shared/progress";
+import { getBest, recordSessionScore } from "../shared/progress";
 import * as sound from "../shared/sounds";
-import { getStage, recordResult } from "../shared/stages";
+import { recordResult } from "../shared/stages";
 import { initTheme, wireToggle } from "../shared/theme";
-import {
-  type ButtonSide,
-  bpmToMs,
-  createFluxState,
-  evaluateResponse,
-  type FluxState,
-  generateTrial,
-  getMultiplier,
-  getRuleLabels,
-  getStreakLabel,
-  type Rule,
-  type Trial,
-  updateAdaptation,
-} from "./flux-engine";
-import {
-  computeResultVm,
-  ringClass as computeRingClass,
-  RING_CIRCUMFERENCE,
-  RING_RADIUS,
-  renderResultHtml,
-  ringOffset,
-  shapeHtml,
-  streakBadgeHtml,
-} from "./flux-render";
-
-/* ---------- DOM ---------- */
+import { createFluxBlock } from "./flux-block";
+import { computeResultVm, renderResultHtml } from "./flux-render";
 
 function getEl(id: string): HTMLElement {
   const el = document.getElementById(id);
@@ -40,321 +17,18 @@ function getEl(id: string): HTMLElement {
 }
 const game = getEl("game");
 
-/* ---------- state ---------- */
-
-let state: FluxState;
-let currentTrial: Trial | null = null;
-let trialRule: Rule = "color";
-let trialIsNot = false;
-let ruleJustSwitched = false;
-let trialTimeout: ReturnType<typeof setTimeout> | null = null;
-let inputLocked = false;
-let gameOver = false;
-let totalTrials = 0;
-let correctTrials = 0;
-let responded = false;
-
-/* ---------- render ---------- */
-
-function streakHtml(): string {
-  return streakBadgeHtml(
-    state.streak,
-    getMultiplier(state.streak),
-    getStreakLabel(state.streak),
-  );
-}
-
-function renderPlaying(): void {
-  if (!currentTrial) {
-    return;
-  }
-
-  const [leftLabel, rightLabel] = getRuleLabels(trialRule, trialIsNot);
-  const ruleText = trialIsNot
-    ? `NOT ${trialRule.toUpperCase()}`
-    : trialRule.toUpperCase();
-  const ruleCueClass = trialIsNot ? "rule-cue not-active" : "rule-cue";
-
-  // Ring now visualises remaining HP (was: time remaining).
-  const offset = ringOffset(state.hp, state.maxHp);
-  const ringCls = computeRingClass(state.hp, state.hp <= 1 ? "climax" : "flow");
-
-  const switchHtml = ruleJustSwitched ? `<div class="switch-ring"></div>` : "";
-
-  game.innerHTML = `
-    <div class="${ringCls}">
-      <svg width="96" height="96" viewBox="0 0 96 96">
-        <circle class="track" cx="48" cy="48" r="${String(RING_RADIUS)}" />
-        <circle class="progress" cx="48" cy="48" r="${String(RING_RADIUS)}"
-          stroke-dasharray="${String(RING_CIRCUMFERENCE)}"
-          stroke-dashoffset="${String(offset)}" />
-      </svg>
-      <div class="timer-text">${String(state.hp)}♥</div>
-    </div>
-    <div class="${ruleCueClass}">${ruleText}</div>
-    ${switchHtml}
-    <div class="shape-stage">
-      ${shapeHtml(currentTrial)}
-    </div>
-    ${streakHtml()}
-    <div class="flux-buttons">
-      <button class="flux-btn" data-side="left">
-        <span class="btn-label">${leftLabel}</span>
-      </button>
-      <button class="flux-btn" data-side="right">
-        <span class="btn-label">${rightLabel}</span>
-      </button>
-    </div>
-    <div class="flux-feedback" id="feedback"></div>
-    <div class="score-display">Score: ${String(state.score)}</div>
-  `;
-}
-
-/* ---------- particles ---------- */
-
-function spawnParticles(color: string): void {
-  const container = document.createElement("div");
-  container.className = "particles";
-  for (let i = 0; i < 5; i++) {
-    const p = document.createElement("div");
-    p.className = "particle";
-    p.style.background = color;
-    p.style.left = "50%";
-    p.style.top = "50%";
-    container.appendChild(p);
-  }
-  const shape = game.querySelector(".shape");
-  if (shape) {
-    shape.parentElement?.insertBefore(container, shape.nextSibling);
-    setTimeout(() => {
-      container.remove();
-    }, 500);
-  }
-}
-
-/* ---------- feedback ---------- */
-
-function showFeedback(correct: boolean, message: string, golden = false): void {
-  const feedback = document.querySelector("#feedback");
-  if (feedback) {
-    if (correct && golden) {
-      feedback.classList.add("correct-golden");
-    } else {
-      feedback.classList.add(correct ? "correct" : "wrong");
-    }
-    feedback.textContent = message;
-  }
-}
-
-function applyJuice(
-  correct: boolean,
-  side: ButtonSide | null,
-  isNoGo: boolean,
-): void {
-  if (isNoGo) {
-    if (correct) {
-      game.classList.add("juice-nogo-correct");
-    } else {
-      game.classList.add("juice-nogo-fail");
-    }
-  } else if (correct && side) {
-    game.classList.add(
-      side === "left" ? "juice-correct-left" : "juice-correct-right",
-    );
-    spawnParticles("var(--ctp-green)");
-  } else {
-    game.classList.add("juice-wrong");
-    game.classList.add("dim-flash");
-  }
-
-  setTimeout(() => {
-    game.classList.remove(
-      "juice-correct-left",
-      "juice-correct-right",
-      "juice-wrong",
-      "juice-nogo-correct",
-      "juice-nogo-fail",
-      "dim-flash",
-    );
-  }, 500);
-}
-
-/* ---------- response handling ---------- */
-
-function handleResponse(pressed: ButtonSide | null): void {
-  if (gameOver || inputLocked || !currentTrial) {
-    return;
-  }
-  inputLocked = true;
-  responded = true;
-
-  if (trialTimeout !== null) {
-    clearTimeout(trialTimeout);
-    trialTimeout = null;
-  }
-
-  const result = evaluateResponse(
-    currentTrial,
-    trialRule,
-    trialIsNot,
-    state.streak,
-    pressed,
-  );
-  state.score += result.totalPoints;
-  totalTrials++;
-
-  if (result.correct) {
-    correctTrials++;
-    if (result.isGolden) {
-      sound.playGoldenChime();
-    } else if (currentTrial.isNoGo) {
-      sound.playNogoDissolve();
-    } else {
-      sound.playCorrectBurst();
-    }
-    showFeedback(
-      true,
-      result.feedback || `+${String(result.totalPoints)}`,
-      result.isGolden === true,
-    );
-    updateAdaptation(state, true);
-    if (state.streak >= 3) {
-      sound.playStreakUp();
-    }
-  } else {
-    if (result.noGoFail) {
-      sound.playNogoFail();
-    } else {
-      sound.playWrongCrack();
-    }
-    showFeedback(false, result.feedback);
-    updateAdaptation(state, false);
-    state.hp = Math.max(0, state.hp - 1);
-  }
-
-  applyJuice(result.correct, pressed, currentTrial.isNoGo);
-
-  // Update score + HP display
-  const scoreEl = game.querySelector(".score-display");
-  if (scoreEl) {
-    scoreEl.textContent = `Score: ${String(state.score)}`;
-  }
-  updateHpRing();
-
-  if (state.hp <= 0) {
-    gameOver = true;
-    showResult();
-    return;
-  }
-
-  // Advance to next trial after brief feedback delay
-  const feedbackMs = result.correct ? 250 : 450;
-  advanceTimeout = setTimeout(() => {
-    if (!gameOver) {
-      nextTrial();
-    }
-  }, feedbackMs);
-}
-
-/* ---------- trial flow ---------- */
-
-let advanceTimeout: ReturnType<typeof setTimeout> | null = null;
-
-function nextTrial(): void {
-  if (gameOver) {
-    return;
-  }
-
-  // Clear stale juice classes so the new shape doesn't inherit exit animations
-  game.classList.remove(
-    "juice-correct-left",
-    "juice-correct-right",
-    "juice-wrong",
-    "juice-nogo-correct",
-    "juice-nogo-fail",
-    "dim-flash",
-  );
-
-  // Clear any pending advance from a previous trial
-  if (advanceTimeout !== null) {
-    clearTimeout(advanceTimeout);
-    advanceTimeout = null;
-  }
-
-  const prevRule = state.rule;
-  currentTrial = generateTrial(state);
-  trialRule = state.rule;
-  trialIsNot = state.isNot;
-  ruleJustSwitched = prevRule !== state.rule;
-  inputLocked = false;
-  responded = false;
-
-  if (ruleJustSwitched) {
-    sound.playSwitchWhoosh();
-  }
-
-  renderPlaying();
-
-  // Timeout: if no response within the beat window, count as miss
-  if (trialTimeout !== null) {
-    clearTimeout(trialTimeout);
-  }
-  trialTimeout = setTimeout(() => {
-    if (!(responded || gameOver)) {
-      handleResponse(null);
-    }
-  }, bpmToMs(state.bpm));
-}
-
-function stopTrials(): void {
-  if (trialTimeout !== null) {
-    clearTimeout(trialTimeout);
-    trialTimeout = null;
-  }
-  if (advanceTimeout !== null) {
-    clearTimeout(advanceTimeout);
-    advanceTimeout = null;
-  }
-}
-
-/* ---------- HP ring update ---------- */
-
-function updateHpRing(): void {
-  const progress = game.querySelector<SVGCircleElement>(
-    ".timer-ring .progress",
-  );
-  const text = game.querySelector(".timer-text");
-  const ring = game.querySelector(".timer-ring");
-
-  if (progress) {
-    const fraction = state.hp / state.maxHp;
-    const offset = RING_CIRCUMFERENCE * (1 - fraction);
-    progress.setAttribute("stroke-dashoffset", String(offset));
-  }
-
-  if (text) {
-    text.textContent = `${String(state.hp)}♥`;
-  }
-
-  if (ring) {
-    ring.classList.toggle("low", state.hp <= 2);
-    ring.classList.toggle("climax", state.hp <= 1);
-  }
-}
-
-/* ---------- result screen ---------- */
+let handle: BlockHandle | null = null;
 
 function animateCountUp(el: HTMLElement, target: number): void {
   const duration = 1500;
   const start = performance.now();
   function frame(now: number): void {
     const progress = Math.min((now - start) / duration, 1);
-    const eased = 1 - (1 - progress) ** 3; // ease-out cubic
+    const eased = 1 - (1 - progress) ** 3;
     el.textContent = String(Math.round(target * eased));
     if (progress < 1) {
       requestAnimationFrame(frame);
     } else {
-      // Add pulse to Play Again button
       const btn = game.querySelector("#again-btn");
       if (btn) {
         btn.classList.add("pulse");
@@ -364,118 +38,58 @@ function animateCountUp(el: HTMLElement, target: number): void {
   requestAnimationFrame(frame);
 }
 
-function getBest(key: string): number | null {
-  const val = localStorage.getItem(`brainbout:${key}:best`);
-  if (val === null) {
-    return null;
-  }
-  const n = Number.parseInt(val, 10);
-  return Number.isNaN(n) ? null : n;
-}
-
-function saveBest(key: string, score: number): void {
-  const prev = getBest(key);
-  if (prev === null || score > prev) {
-    localStorage.setItem(`brainbout:${key}:best`, String(score));
-  }
-}
-
-function showResult(): void {
-  gameOver = true;
-  stopTrials();
-  sound.stopBgm();
-
-  const finalScore = state.score;
-  recordSessionScore("flux", finalScore);
-
-  const accuracy = totalTrials > 0 ? correctTrials / totalTrials : 0;
-  recordResult("flux", accuracy);
-
+function startBlock(): void {
   const previousBest = getBest("flux");
-  const vm = computeResultVm({
-    finalScore,
-    previousBest,
-    subtitle: `points · survived ${String(totalTrials)} trial${totalTrials === 1 ? "" : "s"}`,
-    peakStreak: state.peakStreak,
-    peakStreakLabel: getStreakLabel(state.peakStreak),
-    peakStreakMult: getMultiplier(state.peakStreak),
-    correctTrials,
-    totalTrials,
+  handle = createFluxBlock({
+    container: game,
+    onComplete: (outcome) => {
+      handle = null;
+      recordSessionScore("flux", outcome.points);
+      recordResult("flux", outcome.accuracy);
+
+      const meta = outcome.meta as {
+        peakStreak: number;
+        peakStreakLabel: string;
+        peakStreakMult: number;
+      };
+      const vm = computeResultVm({
+        finalScore: outcome.points,
+        previousBest,
+        subtitle: `points · survived ${String(outcome.trials)} trial${outcome.trials === 1 ? "" : "s"}`,
+        peakStreak: meta.peakStreak,
+        peakStreakLabel: meta.peakStreakLabel,
+        peakStreakMult: meta.peakStreakMult,
+        correctTrials: outcome.correct,
+        totalTrials: outcome.trials,
+      });
+
+      game.innerHTML = renderResultHtml(vm);
+
+      const scoreEl = game.querySelector<HTMLElement>(".final-score");
+      if (scoreEl) {
+        animateCountUp(scoreEl, outcome.points);
+      }
+      sound.playVictory();
+    },
   });
-
-  saveBest("flux", finalScore);
-
-  game.innerHTML = renderResultHtml(vm);
-
-  const scoreEl = game.querySelector<HTMLElement>(".final-score");
-  if (scoreEl) {
-    animateCountUp(scoreEl, finalScore);
-  }
-
-  sound.playVictory();
 }
-
-/* ---------- game start ---------- */
-
-function startGame(): void {
-  const stage = getStage("flux");
-  state = createFluxState(stage);
-  currentTrial = null;
-  inputLocked = false;
-  gameOver = false;
-  totalTrials = 0;
-  correctTrials = 0;
-  responded = false;
-
-  stopTrials();
-  nextTrial();
-  sound.startBgm();
-}
-
-/* ---------- input ---------- */
 
 game.addEventListener("click", (e) => {
   const target = (e.target as HTMLElement).closest<HTMLElement>("button");
-  if (!target) {
-    return;
-  }
-
-  if (target.classList.contains("flux-btn")) {
-    const side = target.dataset.side as ButtonSide | undefined;
-    if (side) {
-      handleResponse(side);
-    }
-  } else if (target.id === "again-btn") {
-    startGame();
+  if (!target) return;
+  if (target.id === "again-btn") {
+    startBlock();
   } else if (target.id === "back-btn") {
     window.location.href = `${BASE}?completed=flux`;
   }
 });
 
 mountQuitButton(() => {
-  if (!gameOver) {
-    gameOver = true;
-    stopTrials();
-    showResult();
-  }
+  handle?.abort();
 });
 
-document.addEventListener("keydown", (e) => {
-  if (gameOver || inputLocked) {
-    return;
-  }
-  if (e.key === "ArrowLeft") {
-    e.preventDefault();
-    handleResponse("left");
-  } else if (e.key === "ArrowRight") {
-    e.preventDefault();
-    handleResponse("right");
-  }
-});
+startBlock();
 
-/* ---------- init ---------- */
-
-startGame();
 initTheme();
 wireToggle();
 mountAppIcon("flux", "var(--ctp-red)");

@@ -25,6 +25,7 @@ export const GAME_ICONS: Record<GameId, string> = {
 export function mountAppIcon(game: GameId, stroke: string): void {
   const slot = document.querySelector(".app-title");
   if (slot) {
+    // stryke-ignore-next-line: mutating "afterbegin" → "" hangs happy-dom
     slot.insertAdjacentHTML(
       "afterbegin",
       iconSvg(GAME_PATHS[game], { size: 20, stroke }),

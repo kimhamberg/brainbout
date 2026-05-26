@@ -44,13 +44,38 @@ describe("boardLayout", () => {
     expect(boardLayout("katt")).toEqual(boardLayout("katt"));
   });
   test("different words usually differ", () => {
-    // Not a strict guarantee but extremely likely across the dict.
     const a = JSON.stringify(boardLayout("katt"));
     const b = JSON.stringify(boardLayout("hund"));
     expect(a).not.toBe(b);
   });
   test("case insensitive seed", () => {
     expect(boardLayout("Katt")).toEqual(boardLayout("katt"));
+  });
+  // Pin specific outputs so RNG arithmetic / hash transformations / probability
+  // bucket boundaries can't drift without us noticing.
+  test("known layouts (exact)", () => {
+    expect(boardLayout("katt")).toEqual([null, null, null, "DL"]);
+    expect(boardLayout("hus")).toEqual(["TL", null, "TL"]);
+    expect(boardLayout("a")).toEqual(["DL"]);
+    expect(boardLayout("ab")).toEqual(["TL", "DW"]);
+    expect(boardLayout("abcabc")).toEqual([null, null, null, null, "TW", null]);
+    expect(boardLayout("vidunderlig")).toEqual([
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      "TL",
+      "DL",
+      "TW",
+      "TW",
+    ]);
+  });
+  test("toUpperCase variant produces the same layout as toLowerCase", () => {
+    // Catches a swapped-case bug inside the seed.
+    expect(boardLayout("KATT")).toEqual(boardLayout("katt"));
   });
 });
 
@@ -76,6 +101,19 @@ describe("scoreWord", () => {
   test("DW + TL stacks: word mult applies after letter mult", () => {
     // letters: 3 + 4*3 + 1 = 16; word ×2 = 32
     expect(scoreWord("hus", ["DW", "TL", null])).toBe(32);
+  });
+  test("all four multiplier types at once stack correctly", () => {
+    // word=hus(3,4,1) layout=[DL,TL,DW,TW] but only 3 letters; reuse hus
+    //   letters: 3*2 + 4*3 + 1     = 19    (DW + TW = word ×2×3 = 6 ⇒ score 114)
+    // But layout has 4 entries and word has 3 letters → only first 3 apply.
+    // Verify a 3-cell variant:
+    expect(scoreWord("hus", ["DL", "TL", "DW"])).toBe(38);
+  });
+  test("4-cell word verifies upper loop boundary", () => {
+    // katt: k=4, a=1, t=1, t=1 → base 7; with TW on last cell: 7×3 = 21
+    expect(scoreWord("katt", [null, null, null, "TW"])).toBe(21);
+    // Without trailing multiplier: 7
+    expect(scoreWord("katt", [null, null, null, null])).toBe(7);
   });
 });
 
