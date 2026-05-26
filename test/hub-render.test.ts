@@ -27,6 +27,8 @@ function makeState(over: Partial<HubState> = {}): HubState {
     cards: GAMES.map((g) => makeCard({ game: g })),
     dailyScore: null,
     pwa: { canInstall: false, notifications: "unsupported" },
+    streakCap: 99,
+    freezesRemaining: 2,
     ...over,
   };
 }
@@ -114,11 +116,32 @@ describe("renderHubHtml: stats bar", () => {
     const out = renderHubHtml(makeState({ streak: 1 }));
     expect(out).toContain('<span class="streak-badge">1-day streak</span>');
   });
-  test("streak badge value matches input exactly", () => {
-    for (const s of [1, 2, 7, 100]) {
+  test("streak badge value matches input exactly (under the cap)", () => {
+    for (const s of [1, 2, 7, 50, 99]) {
       const out = renderHubHtml(makeState({ streak: s }));
       expect(out).toContain(`>${String(s)}-day streak<`);
     }
+  });
+
+  test("streak badge collapses to '99+' once the cap is crossed", () => {
+    expect(renderHubHtml(makeState({ streak: 100 }))).toContain(
+      ">99+-day streak<",
+    );
+    expect(renderHubHtml(makeState({ streak: 365 }))).toContain(
+      ">99+-day streak<",
+    );
+  });
+
+  test("freeze badge shown only when streak is alive AND freezes remain", () => {
+    expect(
+      renderHubHtml(makeState({ streak: 5, freezesRemaining: 2 })),
+    ).toContain("freeze-badge");
+    expect(
+      renderHubHtml(makeState({ streak: 0, freezesRemaining: 2 })),
+    ).not.toContain("freeze-badge");
+    expect(
+      renderHubHtml(makeState({ streak: 5, freezesRemaining: 0 })),
+    ).not.toContain("freeze-badge");
   });
   test("no sessions-today badge when 0", () => {
     expect(renderHubHtml(makeState({ sessionsToday: 0 }))).not.toContain(

@@ -7,6 +7,16 @@ export const DAILY_COMPLETED = "daily";
 const CYCLE_URL = "games/cycle.html";
 const DAILY_URL = "games/daily.html";
 
+export type EvidenceLevel = "strong" | "moderate" | "near-only";
+
+export interface EvidenceBlurb {
+  level: EvidenceLevel;
+  /** Plain-English claim. Names the cognitive target + the transfer scope. */
+  claim: string;
+  /** Short citation pointer (meta-analysis or canonical paper). */
+  citation: string;
+}
+
 export interface GameMeta {
   label: string;
   url: string;
@@ -14,6 +24,7 @@ export interface GameMeta {
   tagline: string;
   threshold: number;
   stages: [string, string, string];
+  evidence: EvidenceBlurb;
 }
 
 export const GAME_META: Record<GameId, GameMeta> = {
@@ -28,6 +39,13 @@ export const GAME_META: Record<GameId, GameMeta> = {
       "90/180/270° · 5-7 pieces",
       "± mirror · 8-12 pieces",
     ],
+    evidence: {
+      level: "moderate",
+      claim:
+        "Mental rotation speed. Near transfer to related spatial tasks; far transfer to general intelligence not established.",
+      citation:
+        "Uttal 2013 meta g=0.47; npj Science of Learning 2025 (90-day retention).",
+    },
   },
   flux: {
     label: "Flux",
@@ -36,6 +54,13 @@ export const GAME_META: Record<GameId, GameMeta> = {
     tagline: "Think fast, switch faster",
     threshold: 0.8,
     stages: ["Relaxed · 2s", "Brisk · 1.5s", "Intense · 1.2s"],
+    evidence: {
+      level: "near-only",
+      claim:
+        "Response inhibition + rule-switching. Improvements on similar tasks; no proven transfer to general cognition.",
+      citation:
+        "Gobet & Sala 2023 (cognitive training meta); response-inhibition reviews 2022.",
+    },
   },
   lex: {
     label: "Lex",
@@ -44,7 +69,23 @@ export const GAME_META: Record<GameId, GameMeta> = {
     tagline: "Build your vocabulary",
     threshold: 0.8,
     stages: ["Multiple choice", "Hinted cloze", "Free recall"],
+    evidence: {
+      level: "strong",
+      claim:
+        "Long-term vocabulary retention via spaced retrieval. Strong direct evidence; this is what the words actually do.",
+      citation:
+        "Cepeda 2006 meta g≈0.5; FSRS empirics 20–30% fewer reviews than SM-2.",
+    },
   },
+};
+
+export const HONESTY_DISCLAIMER =
+  "No app makes you generally smarter. Goal: durable near-transfer in three skills + replace passive scrolling.";
+
+const EVIDENCE_LABEL: Record<EvidenceLevel, string> = {
+  strong: "Strong evidence",
+  moderate: "Moderate evidence · near transfer",
+  "near-only": "Near transfer only",
 };
 
 export interface HubCardState {
@@ -64,16 +105,27 @@ export interface HubState {
     canInstall: boolean;
     notifications: "unsupported" | "default" | "granted" | "denied";
   };
+  /** Max display value for streak — past this point the number stops mattering. */
+  streakCap: number;
+  /** Freezes remaining this ISO week (Duolingo-style 2-per-week buffer). */
+  freezesRemaining: number;
 }
 
 function renderStatsBar(
   streak: number,
   sessionsToday: number,
   pwa: HubState["pwa"],
+  streakCap: number,
+  freezesRemaining: number,
 ): string {
   let html = `<div class="hub-stats-bar">`;
   if (streak > 0) {
-    html += `<span class="streak-badge">${String(streak)}-day streak</span>`;
+    const display =
+      streak > streakCap ? `${String(streakCap)}+` : String(streak);
+    html += `<span class="streak-badge">${display}-day streak</span>`;
+  }
+  if (streak > 0 && freezesRemaining > 0) {
+    html += `<span class="freeze-badge" title="Free skip days remaining this week">🛡 ${String(freezesRemaining)}</span>`;
   }
   if (sessionsToday > 0) {
     html += `<span class="sessions-badge">${String(sessionsToday)} session${sessionsToday === 1 ? "" : "s"} today</span>`;
@@ -155,7 +207,13 @@ function renderDrillHeader(): string {
 }
 
 export function renderHubHtml(state: HubState): string {
-  let html = renderStatsBar(state.streak, state.sessionsToday, state.pwa);
+  let html = renderStatsBar(
+    state.streak,
+    state.sessionsToday,
+    state.pwa,
+    state.streakCap,
+    state.freezesRemaining,
+  );
   html += renderDailyCta(state.dailyScore);
   html += renderCycleCta();
   html += renderDrillHeader();
@@ -171,15 +229,29 @@ export function renderHubHtml(state: HubState): string {
   return html;
 }
 
+function escapeAttr(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 export function renderPopoverHtml(
   meta: GameMeta,
   currentStage: number,
 ): string {
   let html = "";
+  html += `<div class="evidence-row evidence-${meta.evidence.level}">
+    <span class="evidence-tag">${escapeAttr(EVIDENCE_LABEL[meta.evidence.level])}</span>
+    <span class="evidence-claim">${escapeAttr(meta.evidence.claim)}</span>
+    <span class="evidence-cite">${escapeAttr(meta.evidence.citation)}</span>
+  </div>`;
   for (let s = 1; s <= meta.stages.length; s++) {
     const current = s === currentStage ? " current" : "";
     html += `<div class="stage-row${current}"><span class="stage-row-num">${String(s)}</span><span>${meta.stages[s - 1]}</span></div>`;
   }
+  html += `<div class="evidence-disclaimer">${escapeAttr(HONESTY_DISCLAIMER)}</div>`;
   return html;
 }
 

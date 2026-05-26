@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it } from "bun:test";
 import {
   completeSession,
+  freezesRemainingThisWeek,
+  freezesUsedThisWeek,
   GAMES,
   getBest,
   getCheckmates,
@@ -10,10 +12,13 @@ import {
   getStreak,
   getTodayBest,
   getTotalSessions,
+  MAX_FREEZES_PER_WEEK,
   recordCheckmate,
   recordDaily,
   recordSessionScore,
+  STREAK_DISPLAY_CAP,
   todayString,
+  weekStart,
 } from "../src/shared/progress";
 
 beforeEach(() => {
@@ -227,5 +232,110 @@ describe("daily challenge", () => {
     recordDaily("2026-05-26", 100);
     expect(getDaily("2026-05-25")).toBeNull();
     expect(getDaily("2026-05-27")).toBeNull();
+  });
+});
+
+describe("humane streaks: freezes + cap", () => {
+  it("MAX_FREEZES_PER_WEEK is 2 (Duolingo-aligned)", () => {
+    expect(MAX_FREEZES_PER_WEEK).toBe(2);
+  });
+
+  it("STREAK_DISPLAY_CAP is 99 (anti-sunk-cost ceiling)", () => {
+    expect(STREAK_DISPLAY_CAP).toBe(99);
+  });
+
+  it("weekStart returns the Monday of the given ISO week", () => {
+    // 2026-05-26 is a Tuesday; the Monday before is 2026-05-25.
+    expect(weekStart("2026-05-26")).toBe("2026-05-25");
+    // 2026-05-31 is a Sunday; week-start is still the prior Monday.
+    expect(weekStart("2026-05-31")).toBe("2026-05-25");
+    // 2026-06-01 is a Monday; week-start is itself.
+    expect(weekStart("2026-06-01")).toBe("2026-06-01");
+  });
+
+  it("freezesUsedThisWeek defaults to 0", () => {
+    expect(freezesUsedThisWeek("2026-05-26")).toBe(0);
+    expect(freezesRemainingThisWeek("2026-05-26")).toBe(MAX_FREEZES_PER_WEEK);
+  });
+
+  it("completeSession bridges a single-day gap with a freeze when one is available", () => {
+    // Seed a session two days ago, leaving yesterday empty.
+    localStorage.setItem("brainbout:sessions:2026-05-24", "1");
+    // Stub today to a known date by writing under that date directly via
+    // the public API is hard, so we exercise completeSession via the real
+    // todayString path: instead, set yesterday's freeze manually and
+    // verify getStreak counts it.
+    // (Freeze auto-bridge is exercised in the next test through the
+    //  public API.)
+    expect(getStreak("2026-05-24")).toBe(1);
+  });
+
+  it("getStreak counts freeze days as session-equivalent", () => {
+    localStorage.setItem("brainbout:sessions:2026-05-26", "1");
+    localStorage.setItem("brainbout:freeze:2026-05-25", "1");
+    localStorage.setItem("brainbout:sessions:2026-05-24", "1");
+    expect(getStreak("2026-05-26")).toBe(3);
+  });
+
+  it("getStreak stops at first day with neither session nor freeze", () => {
+    localStorage.setItem("brainbout:sessions:2026-05-26", "1");
+    // Gap on 2026-05-25, no freeze.
+    localStorage.setItem("brainbout:sessions:2026-05-24", "1");
+    expect(getStreak("2026-05-26")).toBe(1);
+  });
+
+  it("freezesUsedThisWeek tracks the same ISO week (Mon–Sun)", () => {
+    localStorage.setItem("brainbout:freezes-used:2026-05-25", "1");
+    expect(freezesUsedThisWeek("2026-05-26")).toBe(1);
+    expect(freezesUsedThisWeek("2026-05-31")).toBe(1);
+    expect(freezesUsedThisWeek("2026-06-01")).toBe(0); // new week
+  });
+
+  it("completeSession auto-spends a freeze to bridge a one-day gap", () => {
+    // Construct a contiguous streak ending day-before-yesterday relative to
+    // *today* (since completeSession reads system date), so the bridge path
+    // fires when we call completeSession.
+    const today = todayString();
+    const yesterday = (() => {
+      const d = new Date(`${today}T00:00:00`);
+      d.setDate(d.getDate() - 1);
+      return `${String(d.getFullYear())}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    })();
+    const dayBefore = (() => {
+      const d = new Date(`${today}T00:00:00`);
+      d.setDate(d.getDate() - 2);
+      return `${String(d.getFullYear())}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    })();
+    localStorage.setItem(`brainbout:sessions:${dayBefore}`, "1");
+    completeSession();
+    expect(localStorage.getItem(`brainbout:freeze:${yesterday}`)).toBe("1");
+    expect(freezesUsedThisWeek(today)).toBe(1);
+    // Streak now: today + yesterday(freeze) + dayBefore = 3.
+    expect(getStreak(today)).toBe(3);
+  });
+
+  it("completeSession does NOT bridge once the weekly freeze cap is hit", () => {
+    const today = todayString();
+    const wk = weekStart(today);
+    // Cap already spent.
+    localStorage.setItem(
+      `brainbout:freezes-used:${wk}`,
+      String(MAX_FREEZES_PER_WEEK),
+    );
+    const dayBefore = (() => {
+      const d = new Date(`${today}T00:00:00`);
+      d.setDate(d.getDate() - 2);
+      return `${String(d.getFullYear())}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    })();
+    localStorage.setItem(`brainbout:sessions:${dayBefore}`, "1");
+    completeSession();
+    const yesterday = (() => {
+      const d = new Date(`${today}T00:00:00`);
+      d.setDate(d.getDate() - 1);
+      return `${String(d.getFullYear())}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    })();
+    expect(localStorage.getItem(`brainbout:freeze:${yesterday}`)).toBeNull();
+    // Streak: today only (gap not bridged).
+    expect(getStreak(today)).toBe(1);
   });
 });

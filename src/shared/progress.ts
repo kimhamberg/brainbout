@@ -69,6 +69,11 @@ export function completeSession(): void {
   const today = todayString();
 
   const todayCount = getSessionsToday();
+  if (todayCount === 0) {
+    // First session of the day — bridge a 1-day gap with a freeze if
+    // available, so a single missed day does not snap the streak.
+    tryBridgeWithFreeze(today);
+  }
   safeSet(key("sessions", today), String(todayCount + 1));
 
   const total = getTotalSessions();
@@ -122,14 +127,69 @@ export function getDailyHistory(
   return out;
 }
 
+/* ─── humane streaks ─────────────────────────────────────────────────── */
+
+/**
+ * Maximum freezes a user can spend in a single ISO week (Mon–Sun).
+ * Duolingo data shows freeze affordances cut burnout without killing
+ * streak motivation; we cap at 2 to keep the loyalty-loop honest.
+ */
+export const MAX_FREEZES_PER_WEEK = 2;
+
+/** Hard cap on the visible streak — past this point the number stops mattering. */
+export const STREAK_DISPLAY_CAP = 99;
+
+function previousDay(date: string): string {
+  const d = new Date(`${date}T00:00:00`);
+  d.setDate(d.getDate() - 1);
+  return formatDate(d);
+}
+
+/** Monday-of-week date string, used as the week-bucket key for freezes. */
+export function weekStart(date: string): string {
+  const d = new Date(`${date}T00:00:00`);
+  const dow = d.getDay() === 0 ? 7 : d.getDay(); // ISO: Sunday = 7
+  d.setDate(d.getDate() - (dow - 1));
+  return formatDate(d);
+}
+
+function hasSession(date: string): boolean {
+  const v = localStorage.getItem(key("sessions", date));
+  return v !== null && Number(v) >= 1;
+}
+
+function hasFreeze(date: string): boolean {
+  return localStorage.getItem(key("freeze", date)) !== null;
+}
+
+export function freezesUsedThisWeek(date: string): number {
+  const v = localStorage.getItem(key("freezes-used", weekStart(date)));
+  return v === null ? 0 : Number(v);
+}
+
+export function freezesRemainingThisWeek(date: string): number {
+  return Math.max(0, MAX_FREEZES_PER_WEEK - freezesUsedThisWeek(date));
+}
+
+function tryBridgeWithFreeze(today: string): void {
+  const yesterday = previousDay(today);
+  if (hasSession(yesterday) || hasFreeze(yesterday)) return;
+  const dayBefore = previousDay(yesterday);
+  if (!(hasSession(dayBefore) || hasFreeze(dayBefore))) return;
+  if (freezesUsedThisWeek(today) >= MAX_FREEZES_PER_WEEK) return;
+  safeSet(key("freeze", yesterday), "1");
+  const wk = weekStart(today);
+  safeSet(key("freezes-used", wk), String(freezesUsedThisWeek(today) + 1));
+}
+
 export function getStreak(today: string): number {
   let streak = 0;
   const d = new Date(`${today}T00:00:00`);
-  let val = localStorage.getItem(key("sessions", formatDate(d)));
-  while (val !== null && Number(val) >= 1) {
+  let date = formatDate(d);
+  while (hasSession(date) || hasFreeze(date)) {
     streak++;
     d.setDate(d.getDate() - 1);
-    val = localStorage.getItem(key("sessions", formatDate(d)));
+    date = formatDate(d);
   }
   return streak;
 }

@@ -115,6 +115,17 @@
   color: var(--ctp-peach);
 }
 
+.freeze-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+
+  font-size: 0.875rem;
+  color: var(--ctp-text);
+
+  background: var(--ctp-surface0);
+  box-shadow: var(--ctp-shadow);
+}
+
 .install-chip,
 .reminder-chip {
   cursor: pointer;
@@ -654,14 +665,57 @@
 
   display: flex;
   flex-direction: column;
+  gap: 0.25rem;
 
-  padding: 0.25rem;
-  border-radius: 6px;
+  width: min(320px, 90vw);
+  padding: 0.5rem;
+  border-radius: 8px;
 
   background: var(--ctp-surface1);
   box-shadow: var(--ctp-shadow-lg);
 
   animation: popover-enter var(--dur-150) ease;
+}
+
+.evidence-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+
+  padding: 0.5rem;
+  border-left: 2px solid var(--accent, var(--ctp-text));
+  border-radius: 4px;
+
+  background: var(--ctp-surface0);
+}
+
+.evidence-tag {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--ctp-text);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.evidence-claim {
+  font-size: 0.75rem;
+  line-height: 1.375;
+  color: var(--ctp-text);
+}
+
+.evidence-cite {
+  font-size: 0.75rem;
+  font-style: italic;
+  color: var(--ctp-text);
+}
+
+.evidence-disclaimer {
+  padding: 0.5rem;
+
+  font-size: 0.75rem;
+  line-height: 1.375;
+  color: var(--ctp-text);
+  text-align: center;
 }
 
 .stage-row {

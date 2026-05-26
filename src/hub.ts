@@ -12,6 +12,7 @@ import { getMasteredCountByPrefix } from "./shared/fsrs";
 import { mountHubIcon } from "./shared/icons";
 import {
   completeSession,
+  freezesRemainingThisWeek,
   GAMES,
   type GameId,
   getBest,
@@ -19,6 +20,7 @@ import {
   getSessionsToday,
   getStreak,
   getTotalSessions,
+  STREAK_DISPLAY_CAP,
   todayString,
 } from "./shared/progress";
 import {
@@ -122,6 +124,8 @@ export function init(): void {
         canInstall: canInstall(),
         notifications: notificationStatus(),
       },
+      streakCap: STREAK_DISPLAY_CAP,
+      freezesRemaining: freezesRemainingThisWeek(today),
     };
   }
 

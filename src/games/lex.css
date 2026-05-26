@@ -457,6 +457,7 @@
     background: color-mix(in srgb, var(--ctp-blue) 24%, var(--ctp-base));
 
     & .xw-val {
+      color: var(--ctp-text);
       opacity: 1;
     }
   }
@@ -465,6 +466,11 @@
     color: var(--ctp-base);
     background: color-mix(in srgb, var(--ctp-blue) 50%, var(--ctp-base));
     box-shadow: 0 0 0 2px var(--ctp-blue);
+
+    & .xw-val {
+      color: var(--ctp-text);
+      opacity: 1;
+    }
   }
 
   &.xw-typing-correct {
