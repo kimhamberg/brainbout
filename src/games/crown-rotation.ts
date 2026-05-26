@@ -17,6 +17,7 @@
  *   • Adaptive: piece-count and transform set widen with stage.
  */
 
+import type { Grade } from "../shared/fsrs";
 import { rng as defaultRng } from "../shared/rng";
 
 export type Color = "w" | "b";
@@ -191,6 +192,44 @@ export function classifyResponse(
   pressed: TrialKind,
 ): { correct: boolean } {
   return { correct: pressed === trial.kind };
+}
+
+/* ─── FSRS class signatures ──────────────────────────────────────────── */
+
+export type PieceBucket = "few" | "mid" | "many";
+
+/**
+ * Bucket the piece count into difficulty bands matching the stage groupings:
+ *   3–4 → few, 5–7 → mid, 8–12 → many.
+ *
+ * Buckets keep the FSRS card pool finite (3 buckets × 5 transforms = 15
+ * classes) so the scheduler tracks difficulty *kinds*, not individual
+ * boards.
+ */
+export function pieceBucket(count: number): PieceBucket {
+  if (count <= 4) return "few";
+  if (count <= 7) return "mid";
+  return "many";
+}
+
+/** Stable FSRS key for a Crown trial (`crown:<bucket>:<transform>`). */
+export function crownClassKey(trial: Trial): string {
+  return `crown:${pieceBucket(trial.a.length)}:${trial.transform}`;
+}
+
+/**
+ * Map a Crown response to an FSRS grade.
+ *
+ *   - wrong → "again"
+ *   - correct + RT < 1.8s → "easy" (already automatic)
+ *   - correct + RT < 3.5s → "good"
+ *   - otherwise → "hard"
+ */
+export function deriveCrownGrade(correct: boolean, elapsedMs: number): Grade {
+  if (!correct) return "again";
+  if (elapsedMs < 1800) return "easy";
+  if (elapsedMs < 3500) return "good";
+  return "hard";
 }
 
 /* ─── FEN serialization (for Chessground) ────────────────────────────── */

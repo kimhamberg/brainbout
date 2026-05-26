@@ -583,6 +583,45 @@ describe("hub: singular vs plural game-stat wording", () => {
     )?.textContent;
     expect(stat).toBe("1 word mastered");
   });
+
+  test("crown: best + mastered classes shown together", () => {
+    localStorage.setItem("brainbout:best:crown", "120");
+    localStorage.setItem(
+      "brainbout:crown:few:rot180",
+      JSON.stringify({ s: 35 }),
+    );
+    localStorage.setItem(
+      "brainbout:crown:mid:rot90",
+      JSON.stringify({ s: 60 }),
+    );
+    init();
+    const stat = document.querySelector(
+      'a.game-card[href$="crown.html"] .game-stat',
+    )?.textContent;
+    expect(stat).toBe("Best: 120 pts · 2 classes mastered");
+  });
+
+  test("crown: exactly 1 mastered class uses singular 'class'", () => {
+    localStorage.setItem(
+      "brainbout:crown:few:rot180",
+      JSON.stringify({ s: 40 }),
+    );
+    init();
+    const stat = document.querySelector(
+      'a.game-card[href$="crown.html"] .game-stat',
+    )?.textContent;
+    expect(stat).toBe("1 class mastered");
+  });
+
+  test("flux: mastered rules appears alongside best", () => {
+    localStorage.setItem("brainbout:best:flux", "88");
+    localStorage.setItem("brainbout:flux:color", JSON.stringify({ s: 45 }));
+    init();
+    const stat = document.querySelector(
+      'a.game-card[href$="flux.html"] .game-stat',
+    )?.textContent;
+    expect(stat).toBe("Best: 88 pts · 1 rule mastered");
+  });
 });
 
 describe("hub: stage popover positioning + accent", () => {

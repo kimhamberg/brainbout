@@ -7,7 +7,9 @@ import {
   bpmToMs,
   createFluxState,
   DURATION,
+  deriveFluxGrade,
   evaluateResponse,
+  fluxClassKey,
   GOLDEN_BASE_POINTS,
   generateTrial,
   getMultiplier,
@@ -1137,5 +1139,44 @@ describe("generateTrial deterministic probability gates", () => {
     state.trialsUntilSwitch = 1;
     generateTrial(state);
     expect(state.unlockedRuleCount).toBe(max);
+  });
+});
+
+describe("fluxClassKey", () => {
+  it("formats plain rule as flux:<rule>", () => {
+    expect(fluxClassKey("color", false)).toBe("flux:color");
+    expect(fluxClassKey("shape", false)).toBe("flux:shape");
+    expect(fluxClassKey("size", false)).toBe("flux:size");
+    expect(fluxClassKey("fill", false)).toBe("flux:fill");
+  });
+  it("prefixes NOT-variant with not_", () => {
+    expect(fluxClassKey("color", true)).toBe("flux:not_color");
+    expect(fluxClassKey("shape", true)).toBe("flux:not_shape");
+  });
+  it("rule + NOT combo is unique vs plain rule", () => {
+    expect(fluxClassKey("color", true)).not.toBe(fluxClassKey("color", false));
+  });
+});
+
+describe("deriveFluxGrade", () => {
+  it("wrong → again regardless of RT", () => {
+    expect(deriveFluxGrade(false, 0, 1000)).toBe("again");
+    expect(deriveFluxGrade(false, 99999, 1000)).toBe("again");
+  });
+  it("correct + RT/budget < 0.4 → easy", () => {
+    expect(deriveFluxGrade(true, 0, 1000)).toBe("easy");
+    expect(deriveFluxGrade(true, 399, 1000)).toBe("easy");
+  });
+  it("correct + RT/budget in [0.4, 0.75) → good", () => {
+    expect(deriveFluxGrade(true, 400, 1000)).toBe("good");
+    expect(deriveFluxGrade(true, 749, 1000)).toBe("good");
+  });
+  it("correct + RT/budget ≥ 0.75 → hard", () => {
+    expect(deriveFluxGrade(true, 750, 1000)).toBe("hard");
+    expect(deriveFluxGrade(true, 999, 1000)).toBe("hard");
+  });
+  it("budget ≤ 0 falls back to good (avoid divide-by-zero / NaN)", () => {
+    expect(deriveFluxGrade(true, 100, 0)).toBe("good");
+    expect(deriveFluxGrade(true, 100, -1)).toBe("good");
   });
 });

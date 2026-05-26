@@ -2,16 +2,20 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import {
   applyTransform,
   classifyResponse,
+  crownClassKey,
+  deriveCrownGrade,
   fileRankToSquare,
   generatePieces,
   generateTrial,
   getStageParams,
   type Piece,
   perturbOnePiece,
+  pieceBucket,
   piecesToFen,
   renderResultHtml,
   STAGE_PARAMS,
   squareToFileRank,
+  type Trial,
   transformLabel,
   transformSquare,
 } from "../src/games/crown-rotation";
@@ -438,5 +442,68 @@ describe("renderResultHtml", () => {
     expect(renderResultHtml({ ...base, totalTrials: 2 })).toContain(
       "2 trials<",
     );
+  });
+});
+
+describe("pieceBucket", () => {
+  test("3-4 pieces → few", () => {
+    expect(pieceBucket(3)).toBe("few");
+    expect(pieceBucket(4)).toBe("few");
+  });
+  test("5-7 pieces → mid", () => {
+    expect(pieceBucket(5)).toBe("mid");
+    expect(pieceBucket(6)).toBe("mid");
+    expect(pieceBucket(7)).toBe("mid");
+  });
+  test("8-12 pieces → many", () => {
+    expect(pieceBucket(8)).toBe("many");
+    expect(pieceBucket(10)).toBe("many");
+    expect(pieceBucket(12)).toBe("many");
+  });
+  test("boundary at 4/5", () => {
+    expect(pieceBucket(4)).toBe("few");
+    expect(pieceBucket(5)).toBe("mid");
+  });
+  test("boundary at 7/8", () => {
+    expect(pieceBucket(7)).toBe("mid");
+    expect(pieceBucket(8)).toBe("many");
+  });
+});
+
+describe("crownClassKey", () => {
+  function mk(count: number, transform: Trial["transform"]): Trial {
+    const a: Piece[] = Array.from({ length: count }, (_, i) => ({
+      sq: i,
+      role: "p",
+      color: "w",
+    }));
+    return { a, b: a, transform, kind: "same" };
+  }
+  test("formats as crown:<bucket>:<transform>", () => {
+    expect(crownClassKey(mk(4, "rot180"))).toBe("crown:few:rot180");
+    expect(crownClassKey(mk(6, "rot90"))).toBe("crown:mid:rot90");
+    expect(crownClassKey(mk(10, "mirrorV"))).toBe("crown:many:mirrorV");
+  });
+  test("trial transform appears verbatim", () => {
+    expect(crownClassKey(mk(5, "mirrorH"))).toContain("mirrorH");
+  });
+});
+
+describe("deriveCrownGrade", () => {
+  test("wrong → again", () => {
+    expect(deriveCrownGrade(false, 100)).toBe("again");
+    expect(deriveCrownGrade(false, 100000)).toBe("again");
+  });
+  test("correct + RT < 1800ms → easy", () => {
+    expect(deriveCrownGrade(true, 0)).toBe("easy");
+    expect(deriveCrownGrade(true, 1799)).toBe("easy");
+  });
+  test("correct + RT 1800-3499ms → good", () => {
+    expect(deriveCrownGrade(true, 1800)).toBe("good");
+    expect(deriveCrownGrade(true, 3499)).toBe("good");
+  });
+  test("correct + RT ≥ 3500ms → hard", () => {
+    expect(deriveCrownGrade(true, 3500)).toBe("hard");
+    expect(deriveCrownGrade(true, 9999)).toBe("hard");
   });
 });

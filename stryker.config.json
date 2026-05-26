@@ -16,6 +16,7 @@
     "src/games/lex-logic.ts",
     "src/games/lex-srs.ts",
     "src/shared/assert.ts",
+    "src/shared/fsrs.ts",
     "src/shared/icons.ts",
     "src/shared/progress.ts",
     "src/shared/rng.ts",

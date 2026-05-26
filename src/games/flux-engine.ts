@@ -1,4 +1,5 @@
 import { defined } from "../shared/assert";
+import type { Grade } from "../shared/fsrs";
 import { rng } from "../shared/rng";
 
 export type Rule = "color" | "shape" | "size" | "fill";
@@ -433,6 +434,43 @@ export function getSessionAct(remaining: number): SessionAct {
 
 export function bpmToMs(bpm: number): number {
   return Math.round(60_000 / bpm);
+}
+
+/* ---------- FSRS class signatures ---------- */
+
+/**
+ * A flux "card" is a rule context (rule + NOT variant), not a specific
+ * stimulus. Two trials sharing the same rule context exercise the same
+ * task-switching cost even though their colors/shapes differ.
+ *
+ * 4 rules × 2 NOT variants = 8 classes total.
+ */
+export function fluxClassKey(rule: Rule, isNot: boolean): string {
+  return `flux:${isNot ? "not_" : ""}${rule}`;
+}
+
+/**
+ * Map a Flux response to an FSRS grade.
+ *
+ *   - wrong → "again" (drops stability, ups difficulty)
+ *   - correct + very fast (RT < 40 % of beat) → "easy"
+ *   - correct + comfortable (RT < 75 % of beat) → "good"
+ *   - correct + slow (RT ≥ 75 % of beat) → "hard"
+ *
+ * The beat budget (`bpmToMs(bpm)`) is the wall-clock deadline the user is
+ * already racing in solo mode, so RT/budget is a natural difficulty signal.
+ */
+export function deriveFluxGrade(
+  correct: boolean,
+  elapsedMs: number,
+  budgetMs: number,
+): Grade {
+  if (!correct) return "again";
+  if (budgetMs <= 0) return "good";
+  const frac = elapsedMs / budgetMs;
+  if (frac < 0.4) return "easy";
+  if (frac < 0.75) return "good";
+  return "hard";
 }
 
 /* ---------- adaptive difficulty ---------- */

@@ -1,12 +1,19 @@
 import type { BlockFactory, BlockHandle, BlockOutcome } from "../engine/block";
+import {
+  recordReview as fsrsRecordReview,
+  getMasteredCountByPrefix,
+} from "../shared/fsrs";
+import { todayString } from "../shared/progress";
 import * as sound from "../shared/sounds";
 import { getStage } from "../shared/stages";
 import {
   type ButtonSide,
   bpmToMs,
   createFluxState,
+  deriveFluxGrade,
   evaluateResponse,
   type FluxState,
+  fluxClassKey,
   generateTrial,
   getMultiplier,
   getRuleLabels,
@@ -24,10 +31,13 @@ import {
   streakBadgeHtml,
 } from "./flux-render";
 
+const FLUX_PREFIX = "flux:";
+
 interface FluxBlockMeta extends Record<string, unknown> {
   peakStreak: number;
   peakStreakLabel: string;
   peakStreakMult: number;
+  newlyMastered: number;
 }
 
 export const createFluxBlock: BlockFactory = (opts): BlockHandle => {
@@ -47,6 +57,8 @@ export const createFluxBlock: BlockFactory = (opts): BlockHandle => {
   let totalTrials = 0;
   let correctTrials = 0;
   let responded = false;
+  let trialStartMs = 0;
+  const masteredAtStart = getMasteredCountByPrefix(FLUX_PREFIX);
 
   function streakHtml(): string {
     return streakBadgeHtml(
@@ -215,10 +227,12 @@ export const createFluxBlock: BlockFactory = (opts): BlockHandle => {
     document.removeEventListener("keydown", onKeydown);
     sound.stopBgm();
     const accuracy = totalTrials > 0 ? correctTrials / totalTrials : 0;
+    const masteredNow = getMasteredCountByPrefix(FLUX_PREFIX);
     const meta: FluxBlockMeta = {
       peakStreak: state.peakStreak,
       peakStreakLabel: getStreakLabel(state.peakStreak),
       peakStreakMult: getMultiplier(state.peakStreak),
+      newlyMastered: Math.max(0, masteredNow - masteredAtStart),
     };
     onComplete({
       kind: "flux",
@@ -244,6 +258,7 @@ export const createFluxBlock: BlockFactory = (opts): BlockHandle => {
       trialTimeout = null;
     }
 
+    const elapsed = Date.now() - trialStartMs;
     const result = evaluateResponse(
       currentTrial,
       trialRule,
@@ -253,6 +268,11 @@ export const createFluxBlock: BlockFactory = (opts): BlockHandle => {
     );
     state.score += result.totalPoints;
     totalTrials++;
+    fsrsRecordReview(
+      fluxClassKey(trialRule, trialIsNot),
+      deriveFluxGrade(result.correct, elapsed, bpmToMs(state.bpm)),
+      todayString(),
+    );
 
     if (result.correct) {
       correctTrials++;
@@ -335,6 +355,7 @@ export const createFluxBlock: BlockFactory = (opts): BlockHandle => {
     ruleJustSwitched = prevRule !== state.rule;
     inputLocked = false;
     responded = false;
+    trialStartMs = Date.now();
 
     if (ruleJustSwitched) {
       sound.playSwitchWhoosh();

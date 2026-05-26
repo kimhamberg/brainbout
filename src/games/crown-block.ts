@@ -6,16 +6,25 @@ import "../shared/board-theme.css";
 import { Chessground } from "@lichess-org/chessground";
 import type { Api } from "@lichess-org/chessground/api";
 import type { BlockFactory, BlockHandle, BlockOutcome } from "../engine/block";
+import {
+  recordReview as fsrsRecordReview,
+  getMasteredCountByPrefix,
+} from "../shared/fsrs";
+import { todayString } from "../shared/progress";
 import * as sound from "../shared/sounds";
 import { getStage } from "../shared/stages";
 import {
   classifyResponse,
+  crownClassKey,
+  deriveCrownGrade,
   generateTrial,
   piecesToFen,
   type Trial,
   type TrialKind,
   transformLabel,
 } from "./crown-rotation";
+
+const CROWN_PREFIX = "crown:";
 
 const DEFAULT_TRIALS = 20;
 const TRIAL_BUDGET_MS = 8000;
@@ -26,6 +35,7 @@ const SPEED_THRESHOLD_MS = 2500;
 interface CrownBlockMeta extends Record<string, unknown> {
   peakStreak: number;
   avgResponseMs: number;
+  newlyMastered: number;
 }
 
 export const createCrownBlock: BlockFactory = (opts): BlockHandle => {
@@ -48,6 +58,7 @@ export const createCrownBlock: BlockFactory = (opts): BlockHandle => {
   let boardB: Api | null = null;
   let trialTimeout: ReturnType<typeof setTimeout> | null = null;
   let advanceTimeout: ReturnType<typeof setTimeout> | null = null;
+  const masteredAtStart = getMasteredCountByPrefix(CROWN_PREFIX);
 
   function getEl(id: string): HTMLElement {
     const el = container.querySelector<HTMLElement>(`#${id}`);
@@ -117,9 +128,11 @@ export const createCrownBlock: BlockFactory = (opts): BlockHandle => {
     container.removeEventListener("click", onClick);
     const trials = trialIndex;
     const accuracy = trials === 0 ? 0 : totalCorrect / trials;
+    const masteredNow = getMasteredCountByPrefix(CROWN_PREFIX);
     const meta: CrownBlockMeta = {
       peakStreak,
       avgResponseMs: trials === 0 ? 0 : totalResponseMs / trials,
+      newlyMastered: Math.max(0, masteredNow - masteredAtStart),
     };
     onComplete({
       kind: "crown",
@@ -162,6 +175,11 @@ export const createCrownBlock: BlockFactory = (opts): BlockHandle => {
     const elapsed = Date.now() - trialStartMs;
     const { correct } = classifyResponse(currentTrial, pressed);
     totalResponseMs += elapsed;
+    fsrsRecordReview(
+      crownClassKey(currentTrial),
+      deriveCrownGrade(correct, elapsed),
+      todayString(),
+    );
 
     if (correct) {
       totalCorrect++;

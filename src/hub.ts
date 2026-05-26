@@ -8,6 +8,7 @@ import {
   renderHubHtml,
   renderPopoverHtml,
 } from "./hub-render";
+import { getMasteredCountByPrefix } from "./shared/fsrs";
 import { mountHubIcon } from "./shared/icons";
 import {
   completeSession,
@@ -22,14 +23,37 @@ import {
 import { advance, getStage, readiness, retreat } from "./shared/stages";
 import { initTheme, wireToggle } from "./shared/theme";
 
+function formatPair(
+  best: number | null,
+  mastered: number,
+  singular: string,
+  plural: string,
+): string | null {
+  const parts: string[] = [];
+  if (best !== null) parts.push(`Best: ${String(best)} pts`);
+  if (mastered > 0) {
+    const noun = mastered === 1 ? singular : plural;
+    parts.push(`${String(mastered)} ${noun} mastered`);
+  }
+  return parts.length === 0 ? null : parts.join(" · ");
+}
+
 function crownStat(): string | null {
-  const best = getBest("crown");
-  return best === null ? null : `Best: ${String(best)} pts`;
+  return formatPair(
+    getBest("crown"),
+    getMasteredCountByPrefix("crown:"),
+    "class",
+    "classes",
+  );
 }
 
 function fluxStat(): string | null {
-  const best = getBest("flux");
-  return best === null ? null : `Best: ${String(best)} pts`;
+  return formatPair(
+    getBest("flux"),
+    getMasteredCountByPrefix("flux:"),
+    "rule",
+    "rules",
+  );
 }
 
 function lexStat(): string | null {
