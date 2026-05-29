@@ -10,7 +10,7 @@
  * "flux".
  */
 
-import { Graphics } from "pixi.js";
+import { Container, Graphics } from "pixi.js";
 import type {
   BlockEndReason,
   BlockHandle,
@@ -40,6 +40,7 @@ import {
 } from "../juice";
 import { createStage } from "../pixi-stage";
 import { browserScheduler, TrialClock } from "../trial-clock";
+import { type BackdropHandle, drawBackdrop } from "./backdrop";
 
 export interface MeadowOptions {
   container: HTMLElement;
@@ -179,7 +180,10 @@ export function createMeadowBlock(opts: MeadowOptions): BlockHandle {
   }
 
   void (async () => {
-    const { app } = await createStage(stageHost, { width: W, height: H });
+    const { app, atlas } = await createStage(stageHost, {
+      width: W,
+      height: H,
+    });
     if (ended) {
       // aborted while createStage was in flight — tear down, don't wire up.
       app.destroy({ removeView: true }, { children: true });
@@ -196,6 +200,20 @@ export function createMeadowBlock(opts: MeadowOptions): BlockHandle {
       app.ticker.stop();
       app.destroy({ removeView: true }, { children: true });
     };
+
+    // living backdrop (behind the stimulus) + a foreground container the
+    // per-beat wipe/shake act on, so the backdrop survives + never shakes.
+    const bd: BackdropHandle = drawBackdrop(app, atlas, {
+      width: W,
+      height: H,
+      groundY: H - 16,
+      sky: [0x4d4632, 0x5b4d38],
+      trees: 2, // edge trees only — keep the centre stimulus clear
+      rng: seededRng("meadow-bd"),
+      reduce,
+    });
+    const fg = new Container();
+    app.stage.addChild(fg);
 
     // ── post-grade juice (cosmetic; never during the RT window) ──
     const fx: { p: Particle; g: Graphics }[] = [];
@@ -215,13 +233,15 @@ export function createMeadowBlock(opts: MeadowOptions): BlockHandle {
       for (const p of burst) {
         const g = new Graphics().circle(0, 0, p.size).fill({ color });
         g.position.set(p.x, p.y);
-        app.stage.addChild(g);
+        fg.addChild(g);
         fx.push({ p, g });
       }
     }
     app.ticker.add((t) => {
       const dt = t.deltaMS;
-      app.stage.x = shake > 0 ? Math.sin(shake * 50) * 5 * shake : 0;
+      // ambient backdrop motion — gated OUT of the measured RT window (guardrail)
+      if (!clock?.frozen) bd.tick(dt);
+      fg.x = shake > 0 ? Math.sin(shake * 50) * 5 * shake : 0;
       if (shake > 0) shake = Math.max(0, shake - dt / 240);
       for (let i = fx.length - 1; i >= 0; i--) {
         const f = fx[i];
@@ -237,6 +257,7 @@ export function createMeadowBlock(opts: MeadowOptions): BlockHandle {
     });
 
     function showBeat(): void {
+      shake = 0; // clear any leftover miss-shake so fg can't move during the RT window
       const prevRule = flux.rule;
       const prevNot = flux.isNot;
       const t = generateTrial(flux, today); // may switch the rule
@@ -267,10 +288,10 @@ export function createMeadowBlock(opts: MeadowOptions): BlockHandle {
         if (ended) return; // a queued post-paint frame must not touch a dead app
         for (const f of fx) f.g.destroy(); // retire last beat's burst
         fx.length = 0;
-        app.stage.removeChildren();
+        fg.removeChildren();
         const g = new Graphics();
         drawShape(g, t, W / 2, H / 2);
-        app.stage.addChild(g);
+        fg.addChild(g);
       };
       const arm = (): void => {
         if (ended) return;

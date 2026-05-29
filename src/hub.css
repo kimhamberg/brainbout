@@ -739,3 +739,45 @@
 .stage-row-num {
   font-weight: 600;
 }
+
+/* --- Living ground: a green-grass over brown-dirt band beneath the hub, so the
+   home screen is rooted in the world instead of floating on a flat dashboard.
+   Pure CSS (zero bundle cost), shown instantly + as the reduced-motion / no-pixi
+   fallback; the lazy #hub-diorama strip (z 10) overlays it. Sits behind .app
+   (z 20). --- */
+body::after {
+  pointer-events: none;
+  content: "";
+
+  position: fixed;
+  z-index: 0;
+  inset: auto 0 0;
+
+  height: 4rem;
+
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--world-sky) 20%,
+    var(--world-grass) 45%,
+    var(--world-soil)
+  );
+}
+
+/* --- Lazy pixi ambient strip: a breathing garden footer (trees, residents,
+   pollen). Fixed full-width at the bottom, above the CSS band, behind content. --- */
+#hub-diorama {
+  pointer-events: none;
+
+  position: fixed;
+  z-index: 10;
+  inset: auto 0 0;
+
+  display: flex;
+  justify-content: center;
+
+  & canvas {
+    display: block;
+    image-rendering: pixelated;
+  }
+}

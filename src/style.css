@@ -39,6 +39,11 @@
   --ctp-shadow-lg: 0 4px 12px rgb(35 38 52 / 0.3);
   --ctp-focus-ring: 0 0 0 2px rgb(140 170 238 / 0.5);
   --ctp-glow: rgb(65 69 89 / 0.5);
+
+  /* solarpunk world ground — green plants + brown dirt (live-world palette) */
+  --world-sky: #3a4636;
+  --world-grass: #8fb96a;
+  --world-soil: #6b5135;
 }
 
 /* Catppuccin Latte (light) */
@@ -63,6 +68,11 @@
   --ctp-shadow-lg: 0 4px 12px rgb(172 176 190 / 0.35);
   --ctp-focus-ring: 0 0 0 2px rgb(30 102 245 / 0.4);
   --ctp-glow: rgb(204 208 218 / 0.6);
+
+  /* solarpunk world ground — green plants + brown dirt (live-world palette) */
+  --world-sky: #cfe0c4;
+  --world-grass: #79b34a;
+  --world-soil: #8a6a45;
 }
 
 * {
@@ -87,6 +97,9 @@ body {
 }
 
 .app {
+  position: relative;
+  z-index: 20;
+
   max-width: 480px;
   margin: 0 auto;
   padding: 1rem;

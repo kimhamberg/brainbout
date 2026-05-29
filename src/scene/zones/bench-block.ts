@@ -8,7 +8,7 @@
  * "crown").
  */
 
-import { Graphics, type Sprite } from "pixi.js";
+import { Container, Graphics, type Sprite } from "pixi.js";
 import type {
   BlockEndReason,
   BlockHandle,
@@ -36,6 +36,7 @@ import {
 } from "../juice";
 import { createStage } from "../pixi-stage";
 import { browserScheduler, TrialClock } from "../trial-clock";
+import { type BackdropHandle, drawBackdrop } from "./backdrop";
 
 export interface BenchOptions {
   container: HTMLElement;
@@ -130,12 +131,26 @@ export function createBenchBlock(opts: BenchOptions): BlockHandle {
       app.destroy({ removeView: true }, { children: true });
     };
 
+    // living backdrop (behind the boards) + a foreground container the per-trial
+    // wipe/shake act on, so the backdrop survives across trials and never shakes.
+    const bd: BackdropHandle = drawBackdrop(app, atlas, {
+      width: W,
+      height: H,
+      groundY: H - 12,
+      sky: [0x3c4f63, 0x4a5a55],
+      trees: 0, // the two boards fill the width — keep ground + pollen only
+      rng: seededRng(`bench-bd:${seedBase}`),
+      reduce,
+    });
+    const fg = new Container();
+    app.stage.addChild(fg);
+
     function renderBoard(pieces: readonly Piece[], x0: number): void {
       const frame = new Graphics()
         .rect(x0, 8, BOARD, BOARD)
         .fill({ color: 0x232634 })
         .stroke({ color: 0x51576d, width: 1 });
-      app.stage.addChild(frame);
+      fg.addChild(frame);
       for (const p of pieces) {
         const { file, rank } = squareToFileRank(p.sq);
         const sp: Sprite = atlas.sprite(`bench:${p.role}`, 0.5, 0.5);
@@ -143,7 +158,7 @@ export function createBenchBlock(opts: BenchOptions): BlockHandle {
         sp.x = x0 + file * CELL + CELL / 2;
         sp.y = 8 + (7 - rank) * CELL + CELL / 2;
         if (p.color === "b") sp.tint = 0x8aa0d0; // cool tint distinguishes black
-        app.stage.addChild(sp);
+        fg.addChild(sp);
       }
     }
 
@@ -163,7 +178,7 @@ export function createBenchBlock(opts: BenchOptions): BlockHandle {
       for (const p of burst) {
         const g = new Graphics().circle(0, 0, p.size).fill({ color });
         g.position.set(p.x, p.y);
-        app.stage.addChild(g);
+        fg.addChild(g);
         fx.push({ p, g });
       }
     }
@@ -172,7 +187,7 @@ export function createBenchBlock(opts: BenchOptions): BlockHandle {
       if (ended) return; // a queued post-paint frame must not touch a dead app
       for (const f of fx) f.g.destroy(); // retire last trial's burst
       fx.length = 0;
-      app.stage.removeChildren();
+      fg.removeChildren();
       renderBoard(t.a, 8); // parent footprint
       renderBoard(t.b, 8 + BOARD + GAP); // grown specimen (already transformed)
     }
@@ -181,6 +196,7 @@ export function createBenchBlock(opts: BenchOptions): BlockHandle {
     let currentTrial: Trial | null = null;
 
     function showTrial(): void {
+      shake = 0; // clear any leftover miss-shake so fg can't move during the RT window
       const t = generateTrial(
         stage,
         seededRng(`${seedBase}:${String(state.trial)}`),
@@ -263,7 +279,9 @@ export function createBenchBlock(opts: BenchOptions): BlockHandle {
 
     app.ticker.add((t) => {
       const dt = t.deltaMS;
-      app.stage.x = shake > 0 ? Math.sin(shake * 50) * 6 * shake : 0;
+      // ambient backdrop motion — gated OUT of the measured RT window (guardrail)
+      if (!clock?.frozen) bd.tick(dt);
+      fg.x = shake > 0 ? Math.sin(shake * 50) * 6 * shake : 0;
       if (shake > 0) shake = Math.max(0, shake - dt / 260);
       for (let i = fx.length - 1; i >= 0; i--) {
         const f = fx[i];

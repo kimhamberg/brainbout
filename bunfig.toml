@@ -4,12 +4,14 @@ coverageReporter = ["text", "lcov"]
 coverageThreshold = { lines = 0.99, functions = 1.0, statements = 0.99 }
 coveragePathIgnorePatterns = [
   "src/hub.entry.ts",
+  "src/hub-diorama.ts",
   "src/engine/block.ts",
   "src/shared/pwa.ts",
   "src/scene/pixi-stage.ts",
   "src/scene/verdant-demo.ts",
   "src/scene/grove-demo.ts",
   "src/scene/zones/grove-block.ts",
+  "src/scene/zones/backdrop.ts",
   "src/scene/bench-demo.ts",
   "src/scene/zones/bench-block.ts",
   "src/scene/meadow-demo.ts",

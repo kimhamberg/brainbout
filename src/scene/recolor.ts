@@ -73,8 +73,10 @@ export function hueRotate(
 }
 
 /**
- * Dormant / "moonlit" variant (R6): desaturate and pull hue toward cool teal so
- * a sleeping resident reads as hushed twilight — not grey-dead, not awake.
+ * Dormant variant (R6): desaturate and pull hue toward warm earthy brown so a
+ * sleeping resident reads as dormant/dry (a wilted seed waiting to be woken) —
+ * earthy and organic, not grey-dead and not ghostly-teal. Keeps green+brown the
+ * dominant world palette even for asleep residents.
  */
 export function moonlit(src: Uint8ClampedArray): Uint8ClampedArray {
   const out = new Uint8ClampedArray(src.length);
@@ -83,8 +85,11 @@ export function moonlit(src: Uint8ClampedArray): Uint8ClampedArray {
     out[i + 3] = a;
     if (a === 0) continue;
     const [h, s, l] = rgbToHsl(src[i] ?? 0, src[i + 1] ?? 0, src[i + 2] ?? 0);
-    const coolH = h + (220 - h) * 0.5; // blend halfway toward teal-blue
-    const [r, g, b] = hslToRgb(coolH, s * 0.4, Math.min(1, l * 0.95 + 0.05));
+    // collapse 70% toward ~32° earthy brown along the SHORTEST arc, so cool
+    // hues (teal/lavender kingdoms) also land brown rather than olive-green.
+    const dh = ((((32 - h) % 360) + 540) % 360) - 180;
+    const warmH = h + dh * 0.7;
+    const [r, g, b] = hslToRgb(warmH, s * 0.4, Math.min(1, l * 0.9 + 0.04));
     out[i] = r;
     out[i + 1] = g;
     out[i + 2] = b;

@@ -50,14 +50,18 @@ const common = {
   define: { __BB_BASE__: JSON.stringify(BASE) },
 } as const;
 
-// Two builds sharing one outdir. The trainer pages are pixi-free and ship as a
-// single chunk each (no splitting overhead). The verdant pages enable
-// `splitting` so each entry dynamically import()s its render layer — pixi
-// code-splits into a shared on-demand chunk, kept OUT of every boot shell
-// (audit VH-6, asserted by the bundle-size gate's BOOT column).
+// Two splitting builds sharing one outdir, kept SEPARATE on purpose: a single
+// combined build lets Bun's cross-entry shared-chunk heuristic hoist pixi into
+// the hub's EAGER boot graph (pixi is shared by the hub strip + the verdant
+// pages). Isolating the hub build keeps its dynamic import("./hub-diorama")
+// genuinely lazy, so pixi stays OUT of the hub boot shell (audit VH-6, asserted
+// by the bundle-size gate's BOOT column). Both builds enable `splitting` so each
+// entry's pixi render layer code-splits into an on-demand chunk. (pixi is
+// duplicated across the two builds' chunks — the cost of the clean boot split.)
 const trainer = await Bun.build({
   entrypoints: [join(ROOT, "index.html")],
   ...common,
+  splitting: true,
 });
 const verdant = await Bun.build({
   entrypoints: [

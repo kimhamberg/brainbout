@@ -16,7 +16,12 @@ const DIST = join(import.meta.dirname ?? ".", "..", "dist");
 // APP is a tight tripwire — a pixi.js leak would jump a page to ~160KB.
 // VERDANT sits near the audit's 200KB target (full graph incl. the lazy pixi).
 const VERDANT_BUDGET = 210; // pixi-bearing render pages (full transitive graph)
-const APP_BUDGET = 60; // shipped trainer pages — pixi must stay OUT
+// The hub (index.html) lazy-loads ONE small pixi ambient strip, so its FULL
+// graph legitimately includes the on-demand pixi chunk — but it gets its OWN,
+// tighter budget (not VERDANT's), so it still trips on a SECOND pixi copy or
+// real bloat. The BOOT column below proves pixi stays OUT of its EAGER shell.
+const HUB_BUDGET = 200; // index.html: pixi-free boot + one lazy pixi strip (~178KB)
+const APP_BUDGET = 60; // any pixi-free trainer page — pixi must stay OUT entirely
 // EAGER boot shell (static imports only): pixi (~120KB gz) must NOT be here —
 // it's loaded on demand via import("pixi.js") in pixi-stage. This is the gate
 // that proves the lazy-load (VH-6); if pixi ever leaks back into a static
@@ -104,11 +109,15 @@ const BOOT_EXEMPT = (name: string): boolean => name.endsWith("verdant.html");
 
 for (const html of htmls) {
   const name = html.slice(DIST.length + 1);
-  const isVerdant = name.includes("verdant");
   const graph = jsGraph(html);
   const kb = gzipKB(graph);
   const bootKb = gzipKB(jsGraph(html, false)); // static-only = the boot shell
-  const budget = isVerdant ? VERDANT_BUDGET : APP_BUDGET;
+  const budget =
+    name === "index.html"
+      ? HUB_BUDGET
+      : name.includes("verdant")
+        ? VERDANT_BUDGET
+        : APP_BUDGET;
   const bootOver = !BOOT_EXEMPT(name) && bootKb > BOOT_BUDGET;
   const over = kb > budget || bootOver;
   if (over) failed = true;

@@ -22,7 +22,7 @@
     "csstools/value-no-unknown-custom-properties": [
       true,
       {
-        "importFrom": ["src/style.css", "src/shared/board-theme.css"]
+        "importFrom": ["src/style.css"]
       }
     ],
     "plugin/declaration-block-no-ignored-properties": true,

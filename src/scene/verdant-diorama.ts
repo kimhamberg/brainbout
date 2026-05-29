@@ -13,6 +13,7 @@ import type { VocabDeck } from "../content/deck";
 import { speciesFor } from "../content/species";
 import { seededRng } from "../shared/rng";
 import { createStage, type Stage } from "./pixi-stage";
+import { drawBackdrop } from "./zones/backdrop";
 
 const W = 560;
 const H = 320;
@@ -46,18 +47,21 @@ export async function renderDiorama(
   }
   const bobbers: Bob[] = [];
   const groundY = H - 30;
+  const reduce =
+    typeof matchMedia === "function" &&
+    matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  // ── ground band ──
-  for (let gx = 0; gx <= W; gx += 24) {
-    const a = atlas.sprite("tile:grass-soil:15", 0, 0);
-    a.x = gx;
-    a.y = groundY;
-    world.addChild(a);
-    const b = atlas.sprite("tile:grass-soil:15", 0, 0);
-    b.x = gx;
-    b.y = groundY + 24;
-    world.addChild(b);
-  }
+  // ── living backdrop: sky + grass-over-soil ground band + drifting pollen.
+  //    trees:0 here — the diorama keeps its own growth-stage showcase below ──
+  const bd = drawBackdrop(app, atlas, {
+    width: W,
+    height: H,
+    groundY,
+    sky: [0x35424a, 0x3a4636],
+    trees: 0,
+    rng: seededRng("verdant-bd"),
+    reduce,
+  });
 
   // ── growth-tree showcase, back row ──
   for (let s = 0; s <= 5; s++) {
@@ -97,6 +101,7 @@ export async function renderDiorama(
   let t = 0;
   app.ticker.add((tick: Ticker) => {
     t += tick.deltaMS;
+    bd.tick(tick.deltaMS);
     for (const b of bobbers) {
       b.sprite.y = b.baseY + Math.sin(t * b.freq + b.phase) * b.amp;
     }

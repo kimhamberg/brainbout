@@ -11,7 +11,7 @@
  * BlockOutcome (kind "lex"). Self-paced; the wake fires only AFTER the grade.
  */
 
-import { Graphics, type Sprite } from "pixi.js";
+import { Container, Graphics, type Sprite } from "pixi.js";
 import type { VocabDeck } from "../../content/deck";
 import { speciesFor } from "../../content/species";
 import type {
@@ -39,6 +39,7 @@ import {
   particleAlpha,
 } from "../juice";
 import { createStage } from "../pixi-stage";
+import { drawBackdrop } from "./backdrop";
 
 export interface GroveOptions {
   container: HTMLElement;
@@ -162,6 +163,27 @@ export function createGroveBlock(opts: GroveOptions): BlockHandle {
     const pending = [...queue];
     const lapses = new Map<string, number>();
 
+    // living backdrop (behind everything) + a persistent `parked` row where
+    // woken residents settle (so the grove visibly fills with life across the
+    // session) + a `fg` container the per-trial wipe acts on (so backdrop +
+    // parked survive). Grove is self-paced (no TrialClock) so sway/pollen run
+    // freely; backdrop honours prefers-reduced-motion internally.
+    const groundY = Math.round(H * 0.82) - 2;
+    const bd = drawBackdrop(app, atlas, {
+      width: W,
+      height: H,
+      groundY,
+      sky: [0x35424a, 0x3a4636],
+      trees: 6,
+      rng: seededRng(`grove-bd:${deckId}`),
+      reduce,
+    });
+    const parked = new Container();
+    const fg = new Container();
+    app.stage.addChild(parked);
+    app.stage.addChild(fg);
+    let parkedCount = 0;
+
     function clearFx(): void {
       for (const f of fx) f.g.destroy();
       fx.length = 0;
@@ -179,7 +201,7 @@ export function createGroveBlock(opts: GroveOptions): BlockHandle {
       for (const p of burst) {
         const g = new Graphics().circle(0, 0, p.size).fill({ color });
         g.position.set(p.x, p.y);
-        app.stage.addChild(g);
+        fg.addChild(g);
         fx.push({ p, g });
       }
     }
@@ -188,15 +210,30 @@ export function createGroveBlock(opts: GroveOptions): BlockHandle {
       const entry = pending[entryIdx];
       if (!entry) return;
       clearFx();
-      app.stage.removeChildren();
+      fg.removeChildren();
       const sp = atlas.speciesSprite(
         speciesFor(deckId, entry, opts.deck.manifest),
         dormant,
       );
       sp.x = W / 2;
       sp.y = H * 0.82;
-      app.stage.addChild(sp);
+      fg.addChild(sp);
       current = sp;
+    }
+
+    // Settle the just-woken resident into the persistent back row so the grove
+    // fills up over the session. Purely visual — never touches tallies/grades.
+    function parkCurrent(): void {
+      if (!current || state.lastGrade === "again") return; // still dormant → skip
+      const i = parkedCount++;
+      const row = Math.floor(i / 8) % 3; // up to 3 stacked rows (matches the 24 cap)
+      current.x = 20 + (i % 8) * 38;
+      current.y = groundY + 16 - row * 13; // back rows sit higher, so they don't overlap
+      current.scale.set(0.7);
+      current.rotation = 0;
+      parked.addChild(current); // reparent out of fg before the next wipe
+      while (parked.children.length > 24) parked.removeChildAt(0).destroy();
+      current = null;
     }
 
     function showResident(): void {
@@ -313,6 +350,7 @@ export function createGroveBlock(opts: GroveOptions): BlockHandle {
 
     function next(): void {
       if (state.phase !== "revealed") return;
+      parkCurrent(); // settle the woken resident into the back row before advancing
       state.trial++;
       if (state.trial >= pending.length) finish("completed");
       else showResident();
@@ -339,6 +377,7 @@ export function createGroveBlock(opts: GroveOptions): BlockHandle {
 
     app.ticker.add((t) => {
       const dt = t.deltaMS;
+      bd.tick(dt); // ambient sway + pollen (self-paced zone — no RT window)
       if (current) {
         if (pop > 0) {
           pop = Math.max(0, pop - dt / 320);
