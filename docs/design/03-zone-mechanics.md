@@ -38,6 +38,20 @@ Autograde: on submit → freeze → capture rt → `suggestGradeFromTyping(typed
 
 Android keyboard ergonomics: reuse the hidden `#xw-capture` input pattern (`autocomplete=off`, `autocapitalize=none`, `autocorrect=off`, `spellcheck=false`); cue + slots in the **top half** of the viewport so the keyboard never occludes them; letter tiles ≥44px above the keyboard line; æøå first-class; submit on Enter or an explicit big button.
 
+### Implemented (`grove-block.ts`) — divergences & post-review fixes (2026-05-29)
+
+The shipped stage-2 cloze is a **first-letter + length mask then free typing** (`f···`), not the letter-bank tiles described above — simpler, same cued-recall intent. An adversarial review of the recall-ramp diff confirmed and fixed:
+
+- **MCQ honesty:** correct pick grades `hard` (recognition < typed `good`), wrong → `again`; option order is salted with `today` so position-memorisation can't substitute for recognition.
+- **Cloze leak guard:** the leading letter is shown only for labels ≥4 chars (the typo budget is 0 for ≤3, so a leaked letter on a short word = copying); shorter words get length-only dots.
+- **Distractors:** `groveOptions` tops up across pos/length to a full 4-way choice on small/skewed decks and drops case/diacritic variants of the target; pos-purity is best-effort.
+- **Lifecycle:** per-block `AbortController` detaches listeners on the long-lived input/submit/next nodes; the Pixi app is `destroy()`-ed on abort/finish (frees the WebGL context, ~16 cap); an `ended` guard tears down a block aborted mid-`createStage`. Enter autorepeat is ignored (`ev.repeat`); input freezes on reveal; `#grove-next` is hidden until an answer is revealed.
+
+**Deferred (still open):**
+- **Stage-promotion signal counts recognition as `woke`.** `BlockOutcome.accuracy = woke/total` treats MCQ `hard` == typed `good`, so a recognition-only learner can climb `readiness()` out of stage 1 without demonstrating production. Fix = weight/gate promotion accuracy by grade quality at MCQ/cloze stages. (Touches `scene-router` → `recordResult` + `stages.ts`.)
+- **No intra-session relearning.** An `again`-graded card is recorded once and not re-queued this session (FSRS defers it ≥1 day). Internally honest; revisit if spaced-within-session retry is wanted.
+- **Systemic Pixi teardown.** `bench-block.ts` / `meadow-block.ts` share the same never-`destroy()`-on-abort leak grove just fixed — apply the same `cleanup`/`AbortController` pattern.
+
 ## 3. Propagation Bench — mental rotation (crown adapter) — HARD CASE
 
 **The trap:** a drag-to-rotate-until-it-fits UI lets the player solve by visual servoing instead of a single mental rotation — destroying the construct.

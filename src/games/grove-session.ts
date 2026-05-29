@@ -5,7 +5,74 @@
  */
 
 import type { DeckEntry, VocabDeck } from "../content/deck";
+import type { Rng } from "../shared/rng";
+import { pickDistractors, shuffleArray } from "./lex-logic";
 import { getCard, getDueWords } from "./lex-srs";
+
+/**
+ * The recall mode for the current curriculum stage (design docs/design/04): a
+ * scaffold from recognition → cued → free recall as stage advances (stages.ts).
+ *   stage 1 → MCQ (recognize the seedling)
+ *   stage 2 → cloze (first-letter + length hint, then type)
+ *   stage 3 → typed (free production — the testing-effect keystone)
+ */
+export type GroveMode = "mcq" | "cloze" | "typed";
+
+export function groveMode(stage: number): GroveMode {
+  if (stage <= 1) return "mcq";
+  if (stage === 2) return "cloze";
+  return "typed";
+}
+
+const normKey = (s: string): string => s.normalize("NFC").toLowerCase();
+
+/**
+ * Up to 4 shuffled MCQ options for a resident: the correct label + up to 3
+ * distractors. Same-pos / similar-length / most-shared-letters first
+ * (pickDistractors); pos-purity is best-effort — on a small or pos-skewed deck
+ * we top up across part-of-speech (and across the length window) so the learner
+ * still sees a full 4-way choice rather than a 1–2-button giveaway. Distractors
+ * that are mere case/diacritic variants of the target are dropped (two
+ * near-identical buttons aren't a real choice). Returns fewer than 4 only when
+ * the deck genuinely lacks that many distinct words.
+ */
+export function groveOptions(
+  entry: DeckEntry,
+  deck: VocabDeck,
+  rng: Rng,
+): string[] {
+  const picks = deck.entries.map((e) => ({
+    word: e.label,
+    length: [...e.label].length,
+    pos: e.pos,
+  }));
+  const target = {
+    word: entry.label,
+    length: [...entry.label].length,
+    pos: entry.pos,
+  };
+  const posPool = picks.filter((p) => p.pos === entry.pos);
+  const want = 3;
+  const used = new Set<string>([normKey(entry.label)]);
+  const distractors: string[] = [];
+  for (const w of pickDistractors(target, posPool, picks, want)) {
+    const k = normKey(w);
+    if (!used.has(k)) {
+      distractors.push(w);
+      used.add(k);
+    }
+  }
+  // top up across pos / length when the same-pos window came up short.
+  for (const p of picks) {
+    if (distractors.length >= want) break;
+    const k = normKey(p.word);
+    if (!used.has(k)) {
+      distractors.push(p.word);
+      used.add(k);
+    }
+  }
+  return shuffleArray([entry.label, ...distractors], rng);
+}
 
 /**
  * Ordered residents to tend this session: previously-seen DUE entries first

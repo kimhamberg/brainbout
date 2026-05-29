@@ -79,13 +79,69 @@
         font-size: 14px;
         color: #a6d189;
       }
+      #grove-options {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
+        max-width: 360px;
+      }
+      .grove-option {
+        background: #8caaee;
+        color: #232634;
+        border: 0;
+        border-radius: 8px;
+        padding: 8px 14px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      #grove-hint {
+        font-size: 20px;
+        letter-spacing: 4px;
+        color: #e5c890;
+        min-height: 24px;
+      }
+      #grove-next {
+        display: none; /* revealed only after an answer is graded */
+        font-size: 12px;
+        background: #51576d;
+        color: #c6d0f5;
+        border: 0;
+        border-radius: 6px;
+        padding: 4px 12px;
+        cursor: pointer;
+      }
+      .stage-pick {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        font-size: 12px;
+        opacity: 0.8;
+      }
+      .stage-pick button {
+        background: #51576d;
+        color: #c6d0f5;
+        border: 0;
+        border-radius: 6px;
+        padding: 3px 10px;
+        cursor: pointer;
+      }
     </style>
   </head>
   <body>
     <div id="grove">
+      <div class="stage-pick">
+        <span>recall:</span>
+        <button id="grove-stage-1" type="button">recognise</button>
+        <button id="grove-stage-2" type="button">cloze</button>
+        <button id="grove-stage-3" type="button">type</button>
+      </div>
       <div id="stage"></div>
       <div id="grove-pos"></div>
       <div id="grove-cue">a dormant resident is waiting…</div>
+      <div id="grove-hint"></div>
+      <div id="grove-options"></div>
       <input
         id="grove-input"
         autocomplete="off"
@@ -96,6 +152,7 @@
         aria-label="Type the resident's name">
       <button id="grove-submit" type="button">Wake</button>
       <div id="grove-reveal"></div>
+      <button id="grove-next" type="button">Next</button>
       <div id="grove-progress"></div>
     </div>
     <div id="grove-summary"></div>

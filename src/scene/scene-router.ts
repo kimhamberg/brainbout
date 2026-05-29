@@ -44,6 +44,8 @@ export interface WalkOptions {
   deck: VocabDeck;
   today?: string;
   groveTrials?: number;
+  /** Recall mode for the Grove leg (1 mcq / 2 cloze / 3 typed). Default 3. */
+  groveStage?: number;
   benchTrials?: number;
   meadowTrials?: number;
   onDone?: (outcomes: BlockOutcome[]) => void;
@@ -132,6 +134,7 @@ export function runWalk(opts: WalkOptions): void {
         deck,
         today,
         maxTrials: opts.groveTrials ?? 3,
+        stage: opts.groveStage ?? 3,
         onComplete,
       });
     } else if (step.zone === "bench") {

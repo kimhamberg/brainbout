@@ -1,8 +1,12 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { normalizeVocabDeck, type RawEntry } from "../src/content/deck";
-import { buildGroveQueue } from "../src/games/grove-session";
+import {
+  buildGroveQueue,
+  groveMode,
+  groveOptions,
+} from "../src/games/grove-session";
 import { recordReview } from "../src/games/lex-srs";
-import { resetRng, setRng } from "../src/shared/rng";
+import { resetRng, seededRng, setRng } from "../src/shared/rng";
 
 beforeEach(() => {
   localStorage.clear();
@@ -43,5 +47,122 @@ describe("buildGroveQueue", () => {
     // ord2 is seen but not due today → it should not lead; fresh fill the queue
     expect(q[0]?.entryId).not.toBe("ord2");
     expect(q.length).toBe(5);
+  });
+});
+
+describe("groveMode", () => {
+  test("ramps recognition → cloze → typed by stage", () => {
+    expect(groveMode(1)).toBe("mcq");
+    expect(groveMode(2)).toBe("cloze");
+    expect(groveMode(3)).toBe("typed");
+  });
+  test("clamps below 1 to mcq and above 3 to typed", () => {
+    expect(groveMode(0)).toBe("mcq");
+    expect(groveMode(-5)).toBe("mcq");
+    expect(groveMode(4)).toBe("typed");
+    expect(groveMode(99)).toBe("typed");
+  });
+});
+
+describe("groveOptions", () => {
+  const target = deck.entries[0];
+  if (!target) throw new Error("deck empty");
+
+  test("returns 4 distinct options including the correct label", () => {
+    const opts = groveOptions(target, deck, seededRng("seed-a"));
+    expect(opts.length).toBe(4);
+    expect(opts).toContain(target.label);
+    expect(new Set(opts).size).toBe(4); // no dupes
+  });
+
+  test("same seed → same order; membership stable across seeds", () => {
+    const a1 = groveOptions(target, deck, seededRng("seed-a"));
+    const a2 = groveOptions(target, deck, seededRng("seed-a"));
+    expect(a1).toEqual(a2);
+    const b = groveOptions(target, deck, seededRng("seed-z"));
+    expect(new Set(b)).toEqual(new Set(a1)); // same members
+  });
+
+  test("shuffle actually consumes the rng — seeds produce >1 distinct order", () => {
+    const orders = new Set(
+      Array.from({ length: 16 }, (_v, i) =>
+        groveOptions(target, deck, seededRng(`s${String(i)}`)).join("|"),
+      ),
+    );
+    expect(orders.size).toBeGreaterThan(1);
+  });
+
+  test("prefers same-pos distractors when available", () => {
+    const mixed = normalizeVocabDeck(
+      [
+        { word: "fugl", pos: "noun", definition: "bird", example: "" },
+        { word: "skog", pos: "noun", definition: "forest", example: "" },
+        { word: "fjell", pos: "noun", definition: "mountain", example: "" },
+        { word: "elv", pos: "noun", definition: "river", example: "" },
+        { word: "løpe", pos: "verb", definition: "to run", example: "" },
+        { word: "hoppe", pos: "verb", definition: "to jump", example: "" },
+      ],
+      "no",
+    );
+    const noun = mixed.entries[0];
+    if (!noun) throw new Error("no entry");
+    const opts = groveOptions(noun, mixed, seededRng("s"));
+    const byLabel = new Map(mixed.entries.map((e) => [e.label, e.pos]));
+    for (const o of opts) expect(byLabel.get(o)).toBe("noun");
+  });
+
+  test("tops up across pos to reach 4 when same-pos peers are scarce", () => {
+    // one adjective among nouns → pos pool can't fill 3; must borrow nouns.
+    const skewed = normalizeVocabDeck(
+      [
+        { word: "rød", pos: "adj", definition: "red", example: "" },
+        { word: "fugl", pos: "noun", definition: "bird", example: "" },
+        { word: "skog", pos: "noun", definition: "forest", example: "" },
+        { word: "blomst", pos: "noun", definition: "flower", example: "" },
+        { word: "katt", pos: "noun", definition: "cat", example: "" },
+      ],
+      "no",
+    );
+    const adj = skewed.entries[0];
+    if (!adj) throw new Error("no entry");
+    const opts = groveOptions(adj, skewed, seededRng("s"));
+    expect(opts.length).toBe(4); // full choice despite a 1-member pos pool
+    expect(opts).toContain("rød");
+    expect(new Set(opts).size).toBe(4);
+  });
+
+  test("returns fewer than 4 only when the deck lacks distinct words", () => {
+    const tiny = normalizeVocabDeck(
+      [
+        { word: "fugl", pos: "noun", definition: "bird", example: "" },
+        { word: "skog", pos: "noun", definition: "forest", example: "" },
+        { word: "elv", pos: "noun", definition: "river", example: "" },
+      ],
+      "no",
+    );
+    const t0 = tiny.entries[0];
+    if (!t0) throw new Error("no entry");
+    const opts = groveOptions(t0, tiny, seededRng("s"));
+    expect(opts.length).toBe(3); // target + 2 — all the deck can offer
+    expect(opts).toContain("fugl");
+    expect(new Set(opts).size).toBe(3); // never duplicates
+  });
+
+  test("drops a distractor that is only a case/diacritic variant of the target", () => {
+    const dup = normalizeVocabDeck(
+      [
+        { word: "Bibel", pos: "noun", definition: "Bible", example: "" },
+        { word: "bibel", pos: "noun", definition: "bible", example: "" },
+        { word: "fugl", pos: "noun", definition: "bird", example: "" },
+        { word: "skog", pos: "noun", definition: "forest", example: "" },
+        { word: "elv", pos: "noun", definition: "river", example: "" },
+      ],
+      "no",
+    );
+    const cap = dup.entries[0]; // "Bibel"
+    if (!cap) throw new Error("no entry");
+    const opts = groveOptions(cap, dup, seededRng("s"));
+    expect(opts).toContain("Bibel");
+    expect(opts).not.toContain("bibel"); // case-variant of the answer excluded
   });
 });

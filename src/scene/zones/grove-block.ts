@@ -1,16 +1,17 @@
 /**
- * GROVE zone (design docs/design/03). Typed-recall: a dormant resident needs
- * you; its gloss + pos are the cue; you TYPE its Norwegian name to wake it
- * (target hidden until after the attempt). Autograded by suggestGradeFromTyping,
- * recorded through FSRS. Produces a BlockOutcome (kind "lex") so it composes
- * behind the engine seam. The cozy art is a per-species hue-rotated template
- * (atlas.speciesSprite) — dormant→awake on a successful wake (grade ≥ hard).
- *
- * Self-paced (typed recall is not RT-graded — Roediger/Karpicke): no trial-clock
- * RT, but the wake animation only fires AFTER the grade is recorded.
+ * GROVE zone (design docs/design/03-04). Typed-recall: a dormant resident shows
+ * its gloss + pos; you name it to wake it (target hidden until after the
+ * attempt), autograded → FSRS → dormant sprite recolours to awake. Now ramped by
+ * the curriculum stage (stages.ts):
+ *   stage 1 → MCQ (recognise the seedling — 4 options)
+ *   stage 2 → cloze (first-letter + length hint, then type)
+ *   stage 3 → typed (free production — the testing-effect keystone)
+ * Recognition (MCQ) grades a correct answer as "hard" (lower stability than a
+ * typed "good") so the scaffold can't masquerade as full recall. Emits
+ * BlockOutcome (kind "lex"). Self-paced; the wake fires only AFTER the grade.
  */
 
-import type { Sprite, Ticker } from "pixi.js";
+import type { Sprite } from "pixi.js";
 import type { VocabDeck } from "../../content/deck";
 import { speciesFor } from "../../content/species";
 import type {
@@ -18,8 +19,15 @@ import type {
   BlockHandle,
   BlockOutcome,
 } from "../../engine/block";
-import { buildGroveQueue } from "../../games/grove-session";
+import {
+  buildGroveQueue,
+  type GroveMode,
+  groveMode,
+  groveOptions,
+} from "../../games/grove-session";
 import { recordReview, suggestGradeFromTyping } from "../../games/lex-srs";
+import { seededRng } from "../../shared/rng";
+import { getStage } from "../../shared/stages";
 import { createStage } from "../pixi-stage";
 
 export interface GroveOptions {
@@ -28,6 +36,8 @@ export interface GroveOptions {
   deckId?: string;
   today?: string;
   maxTrials?: number;
+  /** Override the curriculum stage (else getStage("lex")). */
+  stage?: number;
   onComplete: (outcome: BlockOutcome) => void;
 }
 
@@ -36,6 +46,8 @@ interface GroveState {
   total: number;
   woke: number;
   lastGrade: string;
+  mode: GroveMode;
+  answer: string; // correct label this resident (test hook)
   phase: "answering" | "revealed" | "done";
 }
 
@@ -52,26 +64,37 @@ export function createGroveBlock(opts: GroveOptions): BlockHandle {
   const deckId = opts.deckId ?? "no";
   const today = opts.today ?? new Date().toISOString().slice(0, 10);
   const cap = opts.maxTrials ?? 6;
+  const mode = groveMode(opts.stage ?? getStage("lex"));
   const queue = buildGroveQueue(opts.deck, deckId, today, cap);
 
   const stageHost = el(opts.container, "stage");
   const cueEl = el(opts.container, "grove-cue");
   const posEl = el(opts.container, "grove-pos");
+  const hintEl = el(opts.container, "grove-hint");
   const input = el(opts.container, "grove-input") as HTMLInputElement;
-  const revealEl = el(opts.container, "grove-reveal");
-  const progressEl = el(opts.container, "grove-progress");
   const submitEl = el(opts.container, "grove-submit");
+  const optionsEl = el(opts.container, "grove-options");
+  const revealEl = el(opts.container, "grove-reveal");
+  const nextEl = el(opts.container, "grove-next");
+  const progressEl = el(opts.container, "grove-progress");
 
   const state: GroveState = {
     trial: 0,
     total: queue.length,
     woke: 0,
     lastGrade: "",
+    mode,
+    answer: "",
     phase: "answering",
   };
   let points = 0;
   let ended = false;
-  let stopTicker: (() => void) | null = null;
+  // teardown destroys the Pixi app (frees its WebGL context — browsers cap ~16);
+  // the AbortController detaches every listener bound to the long-lived
+  // input/submit/next nodes so a restarted block can't double-fire on them.
+  let cleanup: (() => void) | null = null;
+  const ac = new AbortController();
+  const { signal } = ac;
   const startMs = performance.now();
   (window as unknown as { __grove?: GroveState }).__grove = state;
 
@@ -80,7 +103,9 @@ export function createGroveBlock(opts: GroveOptions): BlockHandle {
     ended = true;
     state.phase = "done";
     input.disabled = true;
-    stopTicker?.();
+    nextEl.style.display = "none";
+    ac.abort();
+    cleanup?.();
     opts.onComplete({
       kind: "lex",
       endReason: reason,
@@ -89,7 +114,7 @@ export function createGroveBlock(opts: GroveOptions): BlockHandle {
       points,
       accuracy: state.total === 0 ? 0 : state.woke / state.total,
       durationMs: performance.now() - startMs,
-      meta: { woke: state.woke, deckId },
+      meta: { woke: state.woke, deckId, mode },
     });
   }
 
@@ -98,8 +123,14 @@ export function createGroveBlock(opts: GroveOptions): BlockHandle {
       width: W,
       height: H,
     });
-    stopTicker = () => {
+    if (ended) {
+      // aborted while createStage was in flight — tear down, don't wire up.
+      app.destroy({ removeView: true }, { children: true });
+      return;
+    }
+    cleanup = () => {
       app.ticker.stop();
+      app.destroy({ removeView: true }, { children: true });
     };
     let current: Sprite | null = null;
     let pop = 0;
@@ -129,24 +160,77 @@ export function createGroveBlock(opts: GroveOptions): BlockHandle {
       posEl.textContent = entry.pos;
       revealEl.textContent = "";
       revealEl.dataset.grade = "";
-      input.value = "";
-      input.disabled = false;
-      input.focus();
-      state.phase = "answering";
+      state.answer = entry.label;
       progressEl.textContent = `${String(state.trial + 1)} / ${String(state.total)}`;
+      state.phase = "answering";
+
+      // configure UI per mode
+      const showInput = mode !== "mcq";
+      input.style.display = showInput ? "" : "none";
+      submitEl.style.display = showInput ? "" : "none";
+      optionsEl.style.display = mode === "mcq" ? "" : "none";
+      hintEl.style.display = mode === "cloze" ? "" : "none";
+      nextEl.style.display = "none"; // shown only once an answer is revealed
+
+      if (mode === "mcq") {
+        optionsEl.replaceChildren();
+        const options = groveOptions(
+          entry,
+          opts.deck,
+          // salt with today so option positions reshuffle each session — a
+          // returning learner can't memorise "the answer is always button 2".
+          seededRng(`${deckId}:grove-opt:${entry.entryId}:${today}`),
+        );
+        let firstOption: HTMLButtonElement | null = null;
+        for (const label of options) {
+          const b = document.createElement("button");
+          b.className = "grove-option";
+          b.type = "button";
+          b.textContent = label;
+          b.addEventListener(
+            "click",
+            () => {
+              if (state.phase === "answering") submitAnswer(label);
+            },
+            { signal },
+          );
+          optionsEl.appendChild(b);
+          firstOption ??= b;
+        }
+        firstOption?.focus(); // keyboard users land on a control
+      } else {
+        input.value = "";
+        input.disabled = false;
+        if (mode === "cloze") {
+          const chars = [...entry.label];
+          // length-gate the leading-letter reveal: the typo budget is 0 for
+          // len<=3, so leaking the first letter of a short word degenerates to
+          // copying. Words <4 chars get length-only dots, no letter.
+          hintEl.textContent =
+            chars.length >= 4
+              ? `${chars[0] ?? ""}${"·".repeat(chars.length - 1)}`
+              : "·".repeat(chars.length);
+        }
+        input.focus();
+      }
     }
 
-    function answer(): void {
+    function submitAnswer(picked: string): void {
       const entry = queue[state.trial];
       if (!entry || state.phase !== "answering") return;
-      const grade = suggestGradeFromTyping(input.value, entry.label);
+      const grade =
+        mode === "mcq"
+          ? picked === entry.label
+            ? "hard" // recognition < production
+            : "again"
+          : suggestGradeFromTyping(picked, entry.label);
       recordReview(deckId, entry.entryId, grade, today); // grade before cosmetics
       state.lastGrade = grade;
       const woke = grade !== "again";
       if (woke) {
         state.woke++;
-        points += grade === "good" ? 3 : 1;
-        place(state.trial, false); // dormant → awake
+        points += grade === "good" ? 3 : grade === "hard" ? 2 : 1;
+        place(state.trial, false);
         pop = 1;
       }
       const tag =
@@ -157,27 +241,39 @@ export function createGroveBlock(opts: GroveOptions): BlockHandle {
             : " — still drowsing";
       revealEl.textContent = `${woke ? "✿" : "💤"} ${entry.label}${tag}`;
       revealEl.dataset.grade = grade;
-      state.phase = "revealed"; // input stays enabled so Enter advances
+      state.phase = "revealed";
+      input.disabled = true; // freeze the attempt; advance only via Next
+      nextEl.style.display = "inline-block"; // overrides the CSS `display:none`
+      nextEl.focus(); // Enter/Space on the focused button advances
     }
 
-    function step(): void {
-      if (state.phase === "answering") answer();
-      else if (state.phase === "revealed") {
-        state.trial++;
-        if (state.trial >= state.total) finish("completed");
-        else showResident();
-      }
+    function next(): void {
+      if (state.phase !== "revealed") return;
+      state.trial++;
+      if (state.trial >= state.total) finish("completed");
+      else showResident();
     }
 
-    input.addEventListener("keydown", (ev) => {
-      if ((ev as KeyboardEvent).key === "Enter") {
+    input.addEventListener(
+      "keydown",
+      (ev) => {
+        const ke = ev as KeyboardEvent;
+        if (ke.key !== "Enter" || ke.repeat) return; // ignore key autorepeat
         ev.preventDefault();
-        step();
-      }
-    });
-    submitEl.addEventListener("click", step);
+        if (state.phase === "answering") submitAnswer(input.value);
+      },
+      { signal },
+    );
+    submitEl.addEventListener(
+      "click",
+      () => {
+        if (state.phase === "answering") submitAnswer(input.value);
+      },
+      { signal },
+    );
+    nextEl.addEventListener("click", next, { signal });
 
-    app.ticker.add((t: Ticker) => {
+    app.ticker.add((t) => {
       if (current && pop > 0) {
         pop = Math.max(0, pop - t.deltaMS / 220);
         current.scale.set(1 + 0.18 * pop);
