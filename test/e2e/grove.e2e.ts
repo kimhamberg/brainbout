@@ -58,18 +58,22 @@ function attachErrorSink(page: Page): string[] {
 
 const DECK_SIZE = 5;
 
-test("Grove MCQ (stage 1): right pick wakes (hard), wrong pick stays dormant (again)", async ({
+test("Grove MCQ (stage 1): wrong pick stays dormant (again) then RELEARNS this session", async ({
   page,
 }) => {
   const errors = attachErrorSink(page);
   await page.goto("/games/verdant-grove.html", { waitUntil: "load" });
   await waitMode(page, "mcq"); // default stage
 
-  for (let i = 0; i < DECK_SIZE; i++) {
-    const answer = (await probe(page))?.answer ?? "";
-    const rx = new RegExp(`^${answer}$`, "u");
+  // Miss the first resident, then answer everything correctly: the lapsed card
+  // is re-queued and reappears later, so all 5 residents end woken (6 attempts).
+  let i = 0;
+  while (true) {
+    const g = await probe(page);
+    if (!g || g.phase === "done") break;
+    if (i > 12) throw new Error("Grove MCQ session did not terminate");
+    const rx = new RegExp(`^${g.answer ?? ""}$`, "u");
     if (i === 0) {
-      // exercise the WRONG-answer branch on the first resident
       await page
         .locator("#grove-options button", { hasNotText: rx })
         .first()
@@ -89,14 +93,17 @@ test("Grove MCQ (stage 1): right pick wakes (hard), wrong pick stays dormant (ag
       );
     }
     await page.locator("#grove-next").click();
+    i++;
   }
 
-  await expect(page.locator("#grove-summary")).toContainText("woke 4/5");
+  await expect(page.locator("#grove-summary")).toContainText("woke 5/5");
   const d = await done(page);
-  expect(d?.points).toBe(8); // 4 correct × 2 (hard); the miss scores 0
+  expect(d?.correct).toBe(5); // every resident eventually woken
+  expect(d?.trials).toBe(6); // 5 residents + 1 relearn retry of the miss
+  expect(d?.points).toBe(10); // 5 woke × 2 (hard)
   expect(d?.meta?.mode).toBe("mcq");
-  // recognition: 4 correct picks × full credit + 1 miss, /5 = 0.8
-  expect(d?.promotionAccuracy).toBeCloseTo(0.8, 5);
+  // 5 correct credits over 6 attempts — the miss honestly drags promotion down
+  expect(d?.promotionAccuracy).toBeCloseTo(5 / 6, 5);
   expect(errors).toEqual([]);
 });
 

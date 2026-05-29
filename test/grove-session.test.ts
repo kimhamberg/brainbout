@@ -2,8 +2,10 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { normalizeVocabDeck, type RawEntry } from "../src/content/deck";
 import {
   buildGroveQueue,
+  canRelearn,
   groveMode,
   groveOptions,
+  MAX_RELEARN,
   promotionCredit,
 } from "../src/games/grove-session";
 import { recordReview } from "../src/games/lex-srs";
@@ -81,6 +83,19 @@ describe("promotionCredit", () => {
     expect(promotionCredit("mcq", "hard")).toBe(1); // recognition has no partial
     expect(promotionCredit("cloze", "hard")).toBe(0.5);
     expect(promotionCredit("typed", "hard")).toBe(0.5);
+  });
+});
+
+describe("canRelearn", () => {
+  test("allows a spaced retry until the per-session cap, then gives up", () => {
+    expect(canRelearn(0)).toBe(true);
+    expect(canRelearn(MAX_RELEARN - 1)).toBe(true);
+    expect(canRelearn(MAX_RELEARN)).toBe(false);
+    expect(canRelearn(MAX_RELEARN + 3)).toBe(false);
+  });
+  test("honours a custom cap", () => {
+    expect(canRelearn(0, 1)).toBe(true);
+    expect(canRelearn(1, 1)).toBe(false);
   });
 });
 

@@ -36,7 +36,9 @@ function start(stage: number): void {
     stage,
     onComplete: (o) => {
       if (o.endReason !== "aborted" && summary) {
-        summary.textContent = `Rest well — woke ${String(o.correct)}/${String(o.trials)} (${o.endReason}) · ${String(o.points)} pts`;
+        const residents =
+          (o.meta as { residents?: number }).residents ?? o.trials;
+        summary.textContent = `Rest well — woke ${String(o.correct)}/${String(residents)} (${o.endReason}) · ${String(o.points)} pts`;
       }
       (window as unknown as { __groveDone?: unknown }).__groveDone = o;
     },

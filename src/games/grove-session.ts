@@ -43,6 +43,22 @@ export function promotionCredit(mode: GroveMode, grade: string): number {
   return mode === "mcq" ? 1 : 0.5; // "hard"
 }
 
+/**
+ * How many times a lapsed resident may be re-shown WITHIN one session before
+ * we give up on it (the FSRS lapse is already recorded; it returns tomorrow).
+ * A small cap so a miss gets a spaced second chance without looping forever or
+ * letting points be farmed by failing-then-retrying.
+ */
+export const MAX_RELEARN = 2;
+
+/** Whether a resident that just lapsed (`again`) should reappear this session. */
+export function canRelearn(
+  priorLapses: number,
+  max: number = MAX_RELEARN,
+): boolean {
+  return priorLapses < max;
+}
+
 const normKey = (s: string): string => s.normalize("NFC").toLowerCase();
 
 /**

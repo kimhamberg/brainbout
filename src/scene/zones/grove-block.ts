@@ -21,6 +21,7 @@ import type {
 } from "../../engine/block";
 import {
   buildGroveQueue,
+  canRelearn,
   type GroveMode,
   groveMode,
   groveOptions,
@@ -108,17 +109,20 @@ export function createGroveBlock(opts: GroveOptions): BlockHandle {
     nextEl.style.display = "none";
     ac.abort();
     cleanup?.();
+    // denominators are ATTEMPTS (state.trial), so a relearned card that took two
+    // tries honestly lowers accuracy/promotion; `residents` (distinct woken
+    // goal) drives the user-facing "woke X/Y" summary.
     opts.onComplete({
       kind: "lex",
       endReason: reason,
       trials: state.trial,
       correct: state.woke,
       points,
-      accuracy: state.total === 0 ? 0 : state.woke / state.total,
+      accuracy: state.trial === 0 ? 0 : state.woke / state.trial,
       promotionAccuracy:
-        state.total === 0 ? 0 : promotionCreditSum / state.total,
+        state.trial === 0 ? 0 : promotionCreditSum / state.trial,
       durationMs: performance.now() - startMs,
-      meta: { woke: state.woke, deckId, mode },
+      meta: { woke: state.woke, deckId, mode, residents: state.total },
     });
   }
 
@@ -138,9 +142,13 @@ export function createGroveBlock(opts: GroveOptions): BlockHandle {
     };
     let current: Sprite | null = null;
     let pop = 0;
+    // working queue: a lapsed resident is re-appended for a spaced retry this
+    // session (capped per card), so distinct entries can outnumber `total`.
+    const pending = [...queue];
+    const lapses = new Map<string, number>();
 
     function place(entryIdx: number, dormant: boolean): void {
-      const entry = queue[entryIdx];
+      const entry = pending[entryIdx];
       if (!entry) return;
       app.stage.removeChildren();
       const sp = atlas.speciesSprite(
@@ -154,7 +162,7 @@ export function createGroveBlock(opts: GroveOptions): BlockHandle {
     }
 
     function showResident(): void {
-      const entry = queue[state.trial];
+      const entry = pending[state.trial];
       if (!entry) {
         finish("completed");
         return;
@@ -165,7 +173,7 @@ export function createGroveBlock(opts: GroveOptions): BlockHandle {
       revealEl.textContent = "";
       revealEl.dataset.grade = "";
       state.answer = entry.label;
-      progressEl.textContent = `${String(state.trial + 1)} / ${String(state.total)}`;
+      progressEl.textContent = `${String(state.trial + 1)} / ${String(pending.length)}`;
       state.phase = "answering";
 
       // configure UI per mode
@@ -220,7 +228,7 @@ export function createGroveBlock(opts: GroveOptions): BlockHandle {
     }
 
     function submitAnswer(picked: string): void {
-      const entry = queue[state.trial];
+      const entry = pending[state.trial];
       if (!entry || state.phase !== "answering") return;
       const grade =
         mode === "mcq"
@@ -237,6 +245,12 @@ export function createGroveBlock(opts: GroveOptions): BlockHandle {
         points += grade === "good" ? 3 : grade === "hard" ? 2 : 1;
         place(state.trial, false);
         pop = 1;
+      } else {
+        // intra-session relearning: re-queue the lapsed resident for a spaced
+        // retry later this session (capped), so a miss isn't lost until tomorrow.
+        const prior = lapses.get(entry.entryId) ?? 0;
+        if (canRelearn(prior)) pending.push(entry);
+        lapses.set(entry.entryId, prior + 1);
       }
       const tag =
         grade === "good"
@@ -255,7 +269,7 @@ export function createGroveBlock(opts: GroveOptions): BlockHandle {
     function next(): void {
       if (state.phase !== "revealed") return;
       state.trial++;
-      if (state.trial >= state.total) finish("completed");
+      if (state.trial >= pending.length) finish("completed");
       else showResident();
     }
 

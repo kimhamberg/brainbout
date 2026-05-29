@@ -47,10 +47,8 @@ The shipped stage-2 cloze is a **first-letter + length mask then free typing** (
 - **Distractors:** `groveOptions` tops up across pos/length to a full 4-way choice on small/skewed decks and drops case/diacritic variants of the target; pos-purity is best-effort.
 - **Lifecycle:** per-block `AbortController` detaches listeners on the long-lived input/submit/next nodes; the Pixi app is `destroy()`-ed on abort/finish (frees the WebGL context, ~16 cap); an `ended` guard tears down a block aborted mid-`createStage`. Enter autorepeat is ignored (`ev.repeat`); input freezes on reveal; `#grove-next` is hidden until an answer is revealed.
 
-**Deferred (still open):**
-- **No intra-session relearning.** An `again`-graded card is recorded once and not re-queued this session (FSRS defers it ≥1 day). Internally honest; revisit if spaced-within-session retry is wanted.
-
 **Resolved:**
+- **Intra-session relearning.** A lapsed (`again`) resident is re-appended to the working queue for a spaced retry later the same session, capped at `MAX_RELEARN=2` per card (`canRelearn`) so it can't loop or be point-farmed. The FSRS lapse is still recorded. Accuracy/promotion denominators are ATTEMPTS, so a card that took two tries honestly drags the metrics down; the user-facing "woke X/Y" counts distinct residents (`meta.residents`).
 - **Grade-quality-weighted stage promotion.** `BlockOutcome` now carries `promotionAccuracy`; the router feeds *that* (not raw `accuracy`) into `recordResult`. Grove weights each trial via `promotionCredit(mode, grade)`: exact answers full credit; a correct MCQ pick full (recognition gates the next rung); a typo-within-budget (`hard`) cloze/typed answer **half** — so you can't graduate to free production on consistently sloppy cued recall. Crown/Flux omit the field → raw `accuracy` (their `hard` is correct-under-pressure, not a scaffold). The stage = input-mode scaffold that fades as each rung is proven; the *mastery* claim (words known) stays FSRS-driven, separate from stage.
 - **Systemic Pixi teardown** — `grove-block.ts`, `bench-block.ts` and `meadow-block.ts` all use the per-block `cleanup`/`AbortController` pattern (`app.destroy()` + listener detach on abort/finish, `ended` guard after `await createStage`, queued-frame guards; Meadow also clears its beat/switch timers).
 
