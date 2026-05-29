@@ -45,6 +45,7 @@ The shipped stage-2 cloze is a **first-letter + length mask then free typing** (
 - **MCQ honesty:** correct pick grades `hard` (recognition < typed `good`), wrong → `again`; option order is salted with `today` so position-memorisation can't substitute for recognition.
 - **Cloze leak guard:** the leading letter is shown only for labels ≥4 chars (the typo budget is 0 for ≤3, so a leaked letter on a short word = copying); shorter words get length-only dots.
 - **Distractors:** `groveOptions` tops up across pos/length to a full 4-way choice on small/skewed decks and drops case/diacritic variants of the target; pos-purity is best-effort.
+- **Real deck:** Grove + the Walk load the committed `public/dict-no.json` (~20k entries) via `loadVocabDeck` (fetch + `normalizeVocabDeck`), with a tiny built-in fallback if the fetch fails. `buildGroveQueue` now surfaces FRESH entries by `rank` (shortest/easiest first, Q1 seeding order) rather than file order. The 1.8MB dict is fetched at runtime — not bundled — so the JS budget is unaffected (verdant pages ≈166KB gz < 210KB).
 - **Lifecycle:** per-block `AbortController` detaches listeners on the long-lived input/submit/next nodes; the Pixi app is `destroy()`-ed on abort/finish (frees the WebGL context, ~16 cap); an `ended` guard tears down a block aborted mid-`createStage`. Enter autorepeat is ignored (`ev.repeat`); input freezes on reveal; `#grove-next` is hidden until an answer is revealed.
 
 **Resolved:**

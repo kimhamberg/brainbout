@@ -13,18 +13,32 @@ test("Walk: Grove → Bench → Meadow flows as one session and tallies a summar
 
   await page.goto("/games/verdant-walk.html", { waitUntil: "load" });
 
-  // ── GROVE leg (2 residents) ──
+  // ── GROVE leg (2 residents, typed mode) — driven by the probe so it's
+  // deck-agnostic (real dict-no.json), advancing via the Next button ──
+  interface G {
+    phase: string;
+    answer?: string;
+  }
   await page.waitForFunction(
-    () => (window as unknown as { __groveReady?: boolean }).__groveReady,
+    () => {
+      const g = (window as unknown as { __grove?: G }).__grove;
+      return g?.phase === "answering" && !!g.answer;
+    },
     { timeout: 15_000 },
   );
-  const labels = ["fugl", "skog"];
-  for (let i = 0; i < 2; i++) {
-    const input = page.locator("#grove-input");
-    await expect(input).toBeEnabled();
-    await input.fill(labels[i] ?? "x");
-    await input.press("Enter"); // grade + reveal
-    await input.press("Enter"); // advance
+  for (let guard = 0; guard < 12; guard++) {
+    const g = await page.evaluate(
+      () => (window as unknown as { __grove?: G }).__grove,
+    );
+    if (!g || g.phase === "done") break;
+    if (g.phase === "answering") {
+      const input = page.locator("#grove-input");
+      await expect(input).toBeEnabled();
+      await input.fill(g.answer ?? "");
+      await input.press("Enter"); // grade + reveal
+    } else {
+      await page.locator("#grove-next").click(); // advance
+    }
   }
 
   // ── BENCH leg (2 trials) — mounts after the walk transition ──

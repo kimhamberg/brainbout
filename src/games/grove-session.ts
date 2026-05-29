@@ -130,8 +130,8 @@ export function buildGroveQueue(
       if (e) seenDue.push(e);
     }
   }
-  const fresh = deck.entries.filter(
-    (e) => getCard(deckId, e.entryId).reps === 0,
-  );
+  const fresh = deck.entries
+    .filter((e) => getCard(deckId, e.entryId).reps === 0)
+    .sort((a, b) => a.rank - b.rank); // shortest/easiest first (Q1 seeding order)
   return [...seenDue, ...fresh].slice(0, cap);
 }

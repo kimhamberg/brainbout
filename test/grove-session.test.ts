@@ -51,6 +51,20 @@ describe("buildGroveQueue", () => {
     expect(q[0]?.entryId).not.toBe("ord2");
     expect(q.length).toBe(5);
   });
+
+  test("fresh entries surface by rank (shortest first), not file order", () => {
+    const mixed = normalizeVocabDeck(
+      [
+        { word: "elephant", pos: "noun", definition: "", example: "" }, // band 2
+        { word: "ab", pos: "noun", definition: "", example: "" }, // band 0
+        { word: "cat", pos: "noun", definition: "", example: "" }, // band 0
+        { word: "house", pos: "noun", definition: "", example: "" }, // band 1
+      ],
+      "no",
+    );
+    const q = buildGroveQueue(mixed, "no", "2026-05-29", 4);
+    expect(q.map((e) => e.entryId)).toEqual(["ab", "cat", "house", "elephant"]);
+  });
 });
 
 describe("groveMode", () => {
