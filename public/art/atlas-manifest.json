@@ -1,0 +1,11 @@
+{
+  "seed": "verdant-hollow-v1",
+  "atlases": [
+    {
+      "file": "atlas.png",
+      "sha256": "0759cff89597a18fb440aa55c1d2521b5b9241b4b567bbeb8fdbe02532d23fe3",
+      "frames": 78
+    }
+  ],
+  "digest": "367382f664e131cec73140c695f5f10b5f64244d4772ca0247e7c77490c1a2db"
+}
