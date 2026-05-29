@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Brainbout — Meadow &amp; Weather (Phase 4)</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        background: #292c3c;
+        color: #c6d0f5;
+        font-family: system-ui, sans-serif;
+      }
+      #meadow {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+      #stage {
+        image-rendering: pixelated;
+        transform: scale(2);
+        transform-origin: top center;
+        margin-bottom: 180px;
+        border-radius: 4px;
+        overflow: hidden;
+        box-shadow: 0 8px 40px #0006;
+      }
+      #stage canvas {
+        display: block;
+        image-rendering: pixelated;
+      }
+      #meadow-hp {
+        color: #e78284;
+        letter-spacing: 2px;
+      }
+      #meadow-rule {
+        font-size: 14px;
+        opacity: 0.85;
+      }
+      .meadow-btns {
+        display: flex;
+        gap: 8px;
+      }
+      .meadow-btns button {
+        padding: 8px 16px;
+        border-radius: 8px;
+        border: 0;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        color: #232634;
+      }
+      #meadow-left {
+        background: #8caaee;
+      }
+      #meadow-right {
+        background: #a6d189;
+      }
+      #meadow-hold {
+        background: #babbf1;
+      }
+      .meadow-btns button:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+      #meadow-reveal {
+        min-height: 20px;
+        font-size: 14px;
+        cursor: pointer;
+      }
+      #meadow-next {
+        font-size: 12px;
+        background: #51576d;
+        color: #c6d0f5;
+        border: 0;
+        border-radius: 6px;
+        padding: 4px 12px;
+        cursor: pointer;
+      }
+      #meadow-progress {
+        font-size: 12px;
+        opacity: 0.6;
+      }
+      #meadow-summary {
+        font-size: 14px;
+        color: #a6d189;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="meadow">
+      <div id="meadow-hp">♥♥♥♥♥</div>
+      <div id="stage"></div>
+      <div id="meadow-rule">a stir in the meadow…</div>
+      <div class="meadow-btns">
+        <button id="meadow-left" type="button" disabled>◀</button>
+        <button id="meadow-hold" type="button" disabled>leave it</button>
+        <button id="meadow-right" type="button" disabled>▶</button>
+      </div>
+      <div id="meadow-reveal"></div>
+      <button id="meadow-next" type="button">Next</button>
+      <div id="meadow-progress"></div>
+    </div>
+    <div id="meadow-summary"></div>
+    <script type="module" src="/src/scene/meadow-demo.ts"></script>
+  </body>
+</html>

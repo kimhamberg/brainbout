@@ -7,6 +7,7 @@ import lex from "../games/lex.html";
 import verdant from "../games/verdant.html";
 import verdantBench from "../games/verdant-bench.html";
 import verdantGrove from "../games/verdant-grove.html";
+import verdantMeadow from "../games/verdant-meadow.html";
 import index from "../index.html";
 import { assetFetch, COOP_COEP_HEADERS } from "./serve";
 
@@ -25,6 +26,7 @@ const server = Bun.serve({
     "/games/verdant.html": verdant,
     "/games/verdant-grove.html": verdantGrove,
     "/games/verdant-bench.html": verdantBench,
+    "/games/verdant-meadow.html": verdantMeadow,
   },
   fetch: assetFetch(ROOT, { headers: COOP_COEP_HEADERS }),
 });
