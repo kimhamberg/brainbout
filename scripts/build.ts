@@ -1,7 +1,36 @@
+import { createHash } from "node:crypto";
 import { cpSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import process from "node:process";
 import { Glob } from "bun";
+
+/**
+ * A strict Content-Security-Policy injected into the SHIPPED HTML only (not
+ * source — the dev server's HMR would trip a hash-only script-src). Inline
+ * <script>s (the theme FOUC-setter) are allowlisted by sha256; pixi runs without
+ * eval via `pixi.js/unsafe-eval`; Google Fonts (Montserrat) is allowed.
+ */
+function cspFor(html: string): string {
+  const hashes = [...html.matchAll(/<script>([\s\S]*?)<\/script>/gu)].map(
+    (m) =>
+      `'sha256-${createHash("sha256")
+        .update(m[1] ?? "")
+        .digest("base64")}'`,
+  );
+  const scriptSrc = ["'self'", ...hashes].join(" ");
+  return [
+    "default-src 'self'",
+    `script-src ${scriptSrc}`,
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "img-src 'self' data:",
+    "font-src 'self' https://fonts.gstatic.com",
+    "connect-src 'self'",
+    "worker-src 'self' blob:",
+    "manifest-src 'self'",
+    "base-uri 'none'",
+    "object-src 'none'",
+  ].join("; ");
+}
 
 const ROOT = join(import.meta.dirname, "..");
 const DIST = join(ROOT, "dist");
@@ -11,6 +40,11 @@ rmSync(DIST, { recursive: true, force: true });
 
 const common = {
   outdir: DIST,
+  // Pin the root so HTML output paths mirror the entrypoints relative to the
+  // repo (games/*.html → dist/games/*.html). Without this, the verdant-only
+  // build's common ancestor is games/, flattening the pages to dist root — and
+  // the hub links games/verdant-walk.html, which would then 404 in prod.
+  root: ROOT,
   minify: true,
   publicPath: BASE,
   define: { __BB_BASE__: JSON.stringify(BASE) },
@@ -54,11 +88,12 @@ for (const result of [trainer, verdant]) {
 const glob = new Glob("**/*.html");
 for (const rel of glob.scanSync({ cwd: DIST, onlyFiles: true })) {
   const path = join(DIST, rel);
-  const before = readFileSync(path, "utf-8");
-  const after = before.replaceAll(`${BASE}../`, BASE);
-  if (after !== before) {
-    writeFileSync(path, after);
-  }
+  const patched = readFileSync(path, "utf-8").replaceAll(`${BASE}../`, BASE);
+  const withCsp = patched.replace(
+    /(<meta charset[^>]*>)/iu,
+    `$1\n    <meta http-equiv="Content-Security-Policy" content="${cspFor(patched)}">`,
+  );
+  writeFileSync(path, withCsp);
 }
 
 cpSync(join(ROOT, "public"), DIST, { recursive: true });

@@ -8,6 +8,10 @@
  * / a cached RenderTexture — never a live per-sprite filter (VH-3).
  */
 
+// CSP-safe shader sync: replaces pixi's `new Function` codegen so a strict
+// Content-Security-Policy (no 'unsafe-eval') still runs the renderer. Rides the
+// lazy pixi chunk, so the boot shell is unaffected.
+import "pixi.js/unsafe-eval";
 import {
   Application,
   Assets,
