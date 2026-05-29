@@ -4,6 +4,7 @@ import cycle from "../games/cycle.html";
 import daily from "../games/daily.html";
 import flux from "../games/flux.html";
 import lex from "../games/lex.html";
+import verdant from "../games/verdant.html";
 import index from "../index.html";
 import { assetFetch, COOP_COEP_HEADERS } from "./serve";
 
@@ -19,6 +20,7 @@ const server = Bun.serve({
     "/games/daily.html": daily,
     "/games/flux.html": flux,
     "/games/lex.html": lex,
+    "/games/verdant.html": verdant,
   },
   fetch: assetFetch(ROOT, { headers: COOP_COEP_HEADERS }),
 });

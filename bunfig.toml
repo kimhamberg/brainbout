@@ -14,6 +14,8 @@ coveragePathIgnorePatterns = [
   "src/games/lex-block.ts",
   "src/engine/block.ts",
   "src/shared/pwa.ts",
+  "src/scene/pixi-stage.ts",
+  "src/scene/verdant-demo.ts",
   "tools/stryke/harness.ts",
   "tools/stryke/instrument.ts",
   "tools/stryke/mutators.ts",

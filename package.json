@@ -29,7 +29,8 @@
   },
   "dependencies": {
     "@lichess-org/chessground": "^10.0.2",
-    "crossword-layout-generator": "^0.1.1"
+    "crossword-layout-generator": "^0.1.1",
+    "pixi.js": "^8.18.1"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.3",

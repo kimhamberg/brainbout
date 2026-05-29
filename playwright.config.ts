@@ -10,6 +10,15 @@ export default defineConfig({
   use: {
     baseURL: "http://localhost:5173",
     trace: "retain-on-failure",
+    // Allow software-WebGL (SwiftShader) in headless CI so the PixiJS render
+    // path (Verdant Hollow) can be exercised without a GPU.
+    launchOptions: {
+      args: [
+        "--enable-unsafe-swiftshader",
+        "--use-gl=angle",
+        "--use-angle=swiftshader",
+      ],
+    },
   },
   projects: [
     { name: "chromium", use: devices["Desktop Chrome"] },

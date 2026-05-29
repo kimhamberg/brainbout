@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <script>
+      (function () {
+        var t = localStorage.getItem("theme");
+        if (!t)
+          t = matchMedia("(prefers-color-scheme:light)").matches
+            ? "latte"
+            : "frappe";
+        document.documentElement.dataset.theme = t;
+      })();
+    </script>
+    <title>Brainbout — Verdant Hollow (render spike)</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        background: #292c3c;
+        color: #c6d0f5;
+        font-family: system-ui, sans-serif;
+      }
+      #stage {
+        image-rendering: pixelated;
+        transform: scale(2);
+        transform-origin: center;
+        box-shadow: 0 8px 40px #0006;
+        border-radius: 4px;
+        overflow: hidden;
+      }
+      #stage canvas {
+        display: block;
+        image-rendering: pixelated;
+      }
+      #status {
+        margin-top: 40px;
+        font-size: 13px;
+        opacity: 0.75;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="stage"></div>
+    <div id="status">loading…</div>
+    <script type="module" src="/src/scene/verdant-demo.ts"></script>
+  </body>
+</html>
