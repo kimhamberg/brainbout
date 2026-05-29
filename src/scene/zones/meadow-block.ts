@@ -125,7 +125,12 @@ export function createMeadowBlock(opts: MeadowOptions): BlockHandle {
   };
   let points = 0;
   let ended = false;
-  let stopTicker: (() => void) | null = null;
+  // teardown clears the pending beat/switch timers + frees the Pixi WebGL
+  // context (browsers cap ~16); the AbortController detaches listeners on the
+  // long-lived sort/hold/next nodes so a re-mounted block can't double-fire.
+  let cleanup: (() => void) | null = null;
+  const ac = new AbortController();
+  const { signal } = ac;
   const switchRts: number[] = [];
   const repeatRts: number[] = [];
   let falseAlarms = 0;
@@ -143,7 +148,8 @@ export function createMeadowBlock(opts: MeadowOptions): BlockHandle {
     ended = true;
     state.phase = "done";
     setButtons(false);
-    stopTicker?.();
+    ac.abort();
+    cleanup?.();
     opts.onComplete({
       kind: "flux",
       endReason: reason,
@@ -158,13 +164,22 @@ export function createMeadowBlock(opts: MeadowOptions): BlockHandle {
 
   void (async () => {
     const { app } = await createStage(stageHost, { width: W, height: H });
-    stopTicker = () => {
-      app.ticker.stop();
-    };
+    if (ended) {
+      // aborted while createStage was in flight — tear down, don't wire up.
+      app.destroy({ removeView: true }, { children: true });
+      return;
+    }
     let clock: TrialClock | null = null;
     let current: Trial | null = null;
     let isSwitch = false;
     let beatTimer: ReturnType<typeof setTimeout> | null = null;
+    let switchTimer: ReturnType<typeof setTimeout> | null = null;
+    cleanup = () => {
+      if (beatTimer !== null) clearTimeout(beatTimer);
+      if (switchTimer !== null) clearTimeout(switchTimer);
+      app.ticker.stop();
+      app.destroy({ removeView: true }, { children: true });
+    };
 
     function showBeat(): void {
       const prevRule = flux.rule;
@@ -192,12 +207,14 @@ export function createMeadowBlock(opts: MeadowOptions): BlockHandle {
       setButtons(false);
 
       const render = (): void => {
+        if (ended) return; // a queued post-paint frame must not touch a dead app
         app.stage.removeChildren();
         const g = new Graphics();
         drawShape(g, t, W / 2, H / 2);
         app.stage.addChild(g);
       };
       const arm = (): void => {
+        if (ended) return;
         setButtons(true);
         const budget = Math.max(bpmToMs(flux.bpm), 1800);
         beatTimer = setTimeout(() => {
@@ -208,7 +225,8 @@ export function createMeadowBlock(opts: MeadowOptions): BlockHandle {
       // A switch is telegraphed (CSI) BEFORE the stimulus paints, so the cue's
       // prep time isn't charged as RT.
       if (isSwitch) {
-        setTimeout(() => {
+        switchTimer = setTimeout(() => {
+          if (ended) return;
           clock = new TrialClock(browserScheduler());
           clock.armTrial(render, arm);
         }, CSI_MS);
@@ -263,17 +281,31 @@ export function createMeadowBlock(opts: MeadowOptions): BlockHandle {
       }
     }
 
-    leftBtn.addEventListener("click", () => {
-      respond("left");
+    leftBtn.addEventListener(
+      "click",
+      () => {
+        respond("left");
+      },
+      { signal },
+    );
+    rightBtn.addEventListener(
+      "click",
+      () => {
+        respond("right");
+      },
+      { signal },
+    );
+    holdBtn.addEventListener(
+      "click",
+      () => {
+        respond(null);
+      },
+      { signal },
+    );
+    revealEl.addEventListener("click", step, { signal });
+    el(opts.container, "meadow-next").addEventListener("click", step, {
+      signal,
     });
-    rightBtn.addEventListener("click", () => {
-      respond("right");
-    });
-    holdBtn.addEventListener("click", () => {
-      respond(null);
-    });
-    revealEl.addEventListener("click", step);
-    el(opts.container, "meadow-next").addEventListener("click", step);
 
     hpEl.textContent = "♥".repeat(state.hp);
     showBeat();

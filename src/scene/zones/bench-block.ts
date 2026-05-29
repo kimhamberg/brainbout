@@ -75,7 +75,12 @@ export function createBenchBlock(opts: BenchOptions): BlockHandle {
   const state: BenchState = { trial: 0, total, correct: 0, phase: "judging" };
   let points = 0;
   let ended = false;
-  let stopTicker: (() => void) | null = null;
+  // teardown frees the Pixi WebGL context (browsers cap ~16); the
+  // AbortController detaches listeners on the long-lived judge/next nodes so a
+  // re-mounted block can't double-fire on them.
+  let cleanup: (() => void) | null = null;
+  const ac = new AbortController();
+  const { signal } = ac;
   const rtByTransform: Record<string, number[]> = {};
   const startMs = performance.now();
   (window as unknown as { __bench?: BenchState }).__bench = state;
@@ -86,7 +91,8 @@ export function createBenchBlock(opts: BenchOptions): BlockHandle {
     state.phase = "done";
     sameBtn.disabled = true;
     movedBtn.disabled = true;
-    stopTicker?.();
+    ac.abort();
+    cleanup?.();
     opts.onComplete({
       kind: "crown",
       endReason: reason,
@@ -104,8 +110,14 @@ export function createBenchBlock(opts: BenchOptions): BlockHandle {
       width: W,
       height: H,
     });
-    stopTicker = () => {
+    if (ended) {
+      // aborted while createStage was in flight — tear down, don't wire up.
+      app.destroy({ removeView: true }, { children: true });
+      return;
+    }
+    cleanup = () => {
       app.ticker.stop();
+      app.destroy({ removeView: true }, { children: true });
     };
 
     function renderBoard(pieces: readonly Piece[], x0: number): void {
@@ -126,6 +138,7 @@ export function createBenchBlock(opts: BenchOptions): BlockHandle {
     }
 
     function renderTrial(t: Trial): void {
+      if (ended) return; // a queued post-paint frame must not touch a dead app
       app.stage.removeChildren();
       renderBoard(t.a, 8); // parent footprint
       renderBoard(t.b, 8 + BOARD + GAP); // grown specimen (already transformed)
@@ -152,6 +165,7 @@ export function createBenchBlock(opts: BenchOptions): BlockHandle {
           renderTrial(t);
         },
         () => {
+          if (ended) return;
           sameBtn.disabled = false;
           movedBtn.disabled = false;
         },
@@ -190,14 +204,24 @@ export function createBenchBlock(opts: BenchOptions): BlockHandle {
       }
     }
 
-    sameBtn.addEventListener("click", (ev) => {
-      if (state.phase === "judging") judge("same", ev);
+    sameBtn.addEventListener(
+      "click",
+      (ev) => {
+        if (state.phase === "judging") judge("same", ev);
+      },
+      { signal },
+    );
+    movedBtn.addEventListener(
+      "click",
+      (ev) => {
+        if (state.phase === "judging") judge("different", ev);
+      },
+      { signal },
+    );
+    revealEl.addEventListener("click", step, { signal });
+    el(opts.container, "bench-next").addEventListener("click", step, {
+      signal,
     });
-    movedBtn.addEventListener("click", (ev) => {
-      if (state.phase === "judging") judge("different", ev);
-    });
-    revealEl.addEventListener("click", step);
-    el(opts.container, "bench-next").addEventListener("click", step);
 
     showTrial();
     (window as unknown as { __benchReady?: boolean }).__benchReady = true;

@@ -50,7 +50,8 @@ The shipped stage-2 cloze is a **first-letter + length mask then free typing** (
 **Deferred (still open):**
 - **Stage-promotion signal counts recognition as `woke`.** `BlockOutcome.accuracy = woke/total` treats MCQ `hard` == typed `good`, so a recognition-only learner can climb `readiness()` out of stage 1 without demonstrating production. Fix = weight/gate promotion accuracy by grade quality at MCQ/cloze stages. (Touches `scene-router` → `recordResult` + `stages.ts`.)
 - **No intra-session relearning.** An `again`-graded card is recorded once and not re-queued this session (FSRS defers it ≥1 day). Internally honest; revisit if spaced-within-session retry is wanted.
-- **Systemic Pixi teardown.** `bench-block.ts` / `meadow-block.ts` share the same never-`destroy()`-on-abort leak grove just fixed — apply the same `cleanup`/`AbortController` pattern.
+
+**Resolved:** Pixi teardown is now systemic — `grove-block.ts`, `bench-block.ts` and `meadow-block.ts` all use the per-block `cleanup`/`AbortController` pattern (`app.destroy()` + listener detach on abort/finish, `ended` guard after `await createStage`, queued-frame guards; Meadow also clears its beat/switch timers).
 
 ## 3. Propagation Bench — mental rotation (crown adapter) — HARD CASE
 
