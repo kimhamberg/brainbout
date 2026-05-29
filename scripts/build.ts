@@ -22,14 +22,7 @@ const common = {
 // code-splits into a shared on-demand chunk, kept OUT of every boot shell
 // (audit VH-6, asserted by the bundle-size gate's BOOT column).
 const trainer = await Bun.build({
-  entrypoints: [
-    join(ROOT, "index.html"),
-    join(ROOT, "games/crown.html"),
-    join(ROOT, "games/cycle.html"),
-    join(ROOT, "games/daily.html"),
-    join(ROOT, "games/flux.html"),
-    join(ROOT, "games/lex.html"),
-  ],
+  entrypoints: [join(ROOT, "index.html")],
   ...common,
 });
 const verdant = await Bun.build({

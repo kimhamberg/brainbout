@@ -30,8 +30,6 @@
     "check:size": "bun scripts/bundle-size.ts"
   },
   "dependencies": {
-    "@lichess-org/chessground": "^10.0.2",
-    "crossword-layout-generator": "^0.1.1",
     "pixi.js": "^8.18.1"
   },
   "devDependencies": {

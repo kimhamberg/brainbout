@@ -134,13 +134,10 @@ test("instrumented files always reparse cleanly (round-trip)", () => {
   // config mutates and re-parses the instrumented output.
   const root = process.cwd();
   const mutate = [
-    "src/games/lex-board.ts",
-    "src/games/lex-crossword.ts",
     "src/games/lex-logic.ts",
     "src/games/lex-srs.ts",
     "src/games/crown-rotation.ts",
     "src/games/flux-engine.ts",
-    "src/games/flux-render.ts",
     "src/shared/assert.ts",
     "src/shared/base.ts",
     "src/shared/rng.ts",

@@ -60,19 +60,7 @@ export interface StrykeReport {
 /** Source files we never mutate. Entry files mount DOM/register listeners
  * on import — their side effects break the harness or burn the wallclock.
  * Declaration files have no runtime code. */
-const SRC_EXCLUDES: string[] = [
-  ".d.ts",
-  ".entry.ts",
-  "src/games/crown.ts",
-  "src/games/flux.ts",
-  "src/games/lex.ts",
-  "src/games/cycle.ts",
-  "src/games/daily.ts",
-  "src/games/crown-block.ts",
-  "src/games/flux-block.ts",
-  "src/games/lex-block.ts",
-  "src/engine/block.ts",
-];
+const SRC_EXCLUDES: string[] = [".d.ts", ".entry.ts", "src/engine/block.ts"];
 const TEST_EXCLUDES: string[] = [
   "stryke-self.test.ts",
   "property.test.ts",
