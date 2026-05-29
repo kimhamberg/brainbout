@@ -121,3 +121,13 @@ jobs:
             echo "::error::public/art is not reproducible from gen:art on the pinned Bun. Run 'bun run gen:art && git add public/art' and update EXPECTED_DIGEST in test/bake-atlas.test.ts."
             exit 1
           fi
+
+  bundle:
+    name: Bundle size (gzip budgets)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: bun run build
+      - name: Per-page gzip JS within budget (pixi must not leak into trainer pages)
+        run: bun run check:size

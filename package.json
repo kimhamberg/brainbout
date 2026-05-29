@@ -26,7 +26,8 @@
     "screenshot": "bun scripts/screenshot.ts",
     "download:dict": "bun scripts/download-dictionaries.ts",
     "gen:icons": "bun scripts/gen-icons.ts",
-    "gen:art": "bun scripts/bake-atlas.ts"
+    "gen:art": "bun scripts/bake-atlas.ts",
+    "check:size": "bun scripts/bundle-size.ts"
   },
   "dependencies": {
     "@lichess-org/chessground": "^10.0.2",
