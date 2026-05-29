@@ -22,6 +22,8 @@ coveragePathIgnorePatterns = [
   "src/scene/zones/bench-block.ts",
   "src/scene/meadow-demo.ts",
   "src/scene/zones/meadow-block.ts",
+  "src/scene/scene-router.ts",
+  "src/scene/verdant-walk.ts",
   "scripts/bake-atlas.ts",
   "scripts/bake/raster.ts",
   "scripts/bake/palette.ts",

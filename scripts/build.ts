@@ -21,6 +21,7 @@ const result = await Bun.build({
     join(ROOT, "games/verdant-grove.html"),
     join(ROOT, "games/verdant-bench.html"),
     join(ROOT, "games/verdant-meadow.html"),
+    join(ROOT, "games/verdant-walk.html"),
   ],
   outdir: DIST,
   minify: true,

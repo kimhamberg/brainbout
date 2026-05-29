@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Brainbout — Verdant Hollow (the Walk · Phase 5)</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #292c3c;
+        color: #c6d0f5;
+        font-family: system-ui, sans-serif;
+      }
+      #walk {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        position: relative;
+      }
+      #stage {
+        image-rendering: pixelated;
+        transform: scale(2);
+        transform-origin: top center;
+        margin-bottom: 230px;
+        border-radius: 4px;
+        overflow: hidden;
+        box-shadow: 0 8px 40px #0006;
+      }
+      #stage canvas {
+        display: block;
+        image-rendering: pixelated;
+      }
+      .ctrl {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        min-height: 120px;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+      }
+      button {
+        padding: 7px 15px;
+        border-radius: 8px;
+        border: 0;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        color: #232634;
+        background: #a6d189;
+      }
+      button:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+      input {
+        font-size: 16px;
+        padding: 6px 10px;
+        border-radius: 6px;
+        border: 1px solid #51576d;
+        background: #303446;
+        color: #c6d0f5;
+        text-align: center;
+      }
+      .muted {
+        font-size: 12px;
+        opacity: 0.6;
+      }
+      .cue {
+        font-size: 15px;
+        font-style: italic;
+        text-align: center;
+        max-width: 440px;
+      }
+      .reveal {
+        min-height: 20px;
+        font-size: 14px;
+        cursor: pointer;
+      }
+      .nextbtn {
+        background: #51576d;
+        color: #c6d0f5;
+        font-size: 12px;
+        padding: 4px 12px;
+      }
+      #meadow-left {
+        background: #8caaee;
+      }
+      #meadow-hold {
+        background: #babbf1;
+      }
+      #bench-moved {
+        background: #e5c890;
+      }
+      #meadow-hp {
+        color: #e78284;
+        letter-spacing: 2px;
+      }
+      #walk-transition {
+        position: absolute;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: #292c3ccc;
+        font-size: 16px;
+        font-style: italic;
+        color: #a6d189;
+        z-index: 5;
+      }
+      #walk-summary {
+        font-size: 15px;
+        color: #a6d189;
+        min-height: 22px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="walk">
+      <div id="stage"></div>
+
+      <div class="ctrl" id="grove-controls">
+        <div class="muted" id="grove-pos"></div>
+        <div class="cue" id="grove-cue">a dormant resident waits…</div>
+        <input
+          id="grove-input"
+          autocomplete="off"
+          autocapitalize="none"
+          autocorrect="off"
+          spellcheck="false"
+          inputmode="text"
+          aria-label="Type the resident's name">
+        <button id="grove-submit" type="button">Wake</button>
+        <div class="reveal" id="grove-reveal"></div>
+        <div class="muted" id="grove-progress"></div>
+      </div>
+
+      <div class="ctrl" id="bench-controls">
+        <div class="cue" id="bench-cue"></div>
+        <div class="row">
+          <button id="bench-same" type="button" disabled>Same plant</button>
+          <button id="bench-moved" type="button" disabled>Moved</button>
+        </div>
+        <div class="reveal" id="bench-reveal"></div>
+        <button id="bench-next" class="nextbtn" type="button">Next</button>
+        <div class="muted" id="bench-progress"></div>
+      </div>
+
+      <div class="ctrl" id="meadow-controls">
+        <div id="meadow-hp">♥♥♥♥♥</div>
+        <div class="cue" id="meadow-rule"></div>
+        <div class="row">
+          <button id="meadow-left" type="button" disabled>◀</button>
+          <button id="meadow-hold" type="button" disabled>leave it</button>
+          <button id="meadow-right" type="button" disabled>▶</button>
+        </div>
+        <div class="reveal" id="meadow-reveal"></div>
+        <button id="meadow-next" class="nextbtn" type="button">Next</button>
+        <div class="muted" id="meadow-progress"></div>
+      </div>
+
+      <div id="walk-summary"></div>
+      <div id="walk-transition"></div>
+    </div>
+    <script type="module" src="/src/scene/verdant-walk.ts"></script>
+  </body>
+</html>
