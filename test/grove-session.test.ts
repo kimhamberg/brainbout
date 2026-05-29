@@ -4,6 +4,7 @@ import {
   buildGroveQueue,
   groveMode,
   groveOptions,
+  promotionCredit,
 } from "../src/games/grove-session";
 import { recordReview } from "../src/games/lex-srs";
 import { resetRng, seededRng, setRng } from "../src/shared/rng";
@@ -61,6 +62,25 @@ describe("groveMode", () => {
     expect(groveMode(-5)).toBe("mcq");
     expect(groveMode(4)).toBe("typed");
     expect(groveMode(99)).toBe("typed");
+  });
+});
+
+describe("promotionCredit", () => {
+  test("exact answer earns full credit in every mode", () => {
+    for (const m of ["mcq", "cloze", "typed"] as const) {
+      expect(promotionCredit(m, "good")).toBe(1);
+      expect(promotionCredit(m, "easy")).toBe(1);
+    }
+  });
+  test("a wrong answer earns nothing", () => {
+    for (const m of ["mcq", "cloze", "typed"] as const) {
+      expect(promotionCredit(m, "again")).toBe(0);
+    }
+  });
+  test("a correct MCQ pick is full credit; a typo (hard) in cloze/typed is half", () => {
+    expect(promotionCredit("mcq", "hard")).toBe(1); // recognition has no partial
+    expect(promotionCredit("cloze", "hard")).toBe(0.5);
+    expect(promotionCredit("typed", "hard")).toBe(0.5);
   });
 });
 

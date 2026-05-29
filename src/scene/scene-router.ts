@@ -113,7 +113,9 @@ export function runWalk(opts: WalkOptions): void {
     const onComplete = (o: BlockOutcome): void => {
       outcomes.push(o);
       recordSessionScore(o.kind, o.points); // best / score
-      recordResult(o.kind, o.accuracy); // stage curriculum history
+      // promotion uses grade-quality weighting where a block supplies it
+      // (Grove) so a scaffold mode can't graduate a stage on recognition alone.
+      recordResult(o.kind, o.promotionAccuracy ?? o.accuracy); // curriculum history
       idx++;
       const label = NEXT_LABEL[step.zone];
       if (idx >= WALK.length || label === "") {

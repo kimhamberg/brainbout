@@ -32,6 +32,13 @@ export interface BlockOutcome {
   points: number;
   /** correct / trials, or 0 when trials === 0. */
   accuracy: number;
+  /**
+   * Grade-quality-weighted accuracy for STAGE PROMOTION (curriculum readiness),
+   * when it should differ from raw `accuracy`. Grove sets this so a scaffold
+   * mode (recognition / sloppy cued recall) can't graduate a stage as if it
+   * were clean production. Omitted → consumers fall back to `accuracy`.
+   */
+  promotionAccuracy?: number;
   /** Wall-clock duration of the block in ms. */
   durationMs: number;
   /** Per-game payload (peak streak, mastered count, etc.). */

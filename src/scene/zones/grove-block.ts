@@ -24,6 +24,7 @@ import {
   type GroveMode,
   groveMode,
   groveOptions,
+  promotionCredit,
 } from "../../games/grove-session";
 import { recordReview, suggestGradeFromTyping } from "../../games/lex-srs";
 import { seededRng } from "../../shared/rng";
@@ -88,6 +89,7 @@ export function createGroveBlock(opts: GroveOptions): BlockHandle {
     phase: "answering",
   };
   let points = 0;
+  let promotionCreditSum = 0; // grade-quality-weighted, for stage readiness
   let ended = false;
   // teardown destroys the Pixi app (frees its WebGL context — browsers cap ~16);
   // the AbortController detaches every listener bound to the long-lived
@@ -113,6 +115,8 @@ export function createGroveBlock(opts: GroveOptions): BlockHandle {
       correct: state.woke,
       points,
       accuracy: state.total === 0 ? 0 : state.woke / state.total,
+      promotionAccuracy:
+        state.total === 0 ? 0 : promotionCreditSum / state.total,
       durationMs: performance.now() - startMs,
       meta: { woke: state.woke, deckId, mode },
     });
@@ -225,6 +229,7 @@ export function createGroveBlock(opts: GroveOptions): BlockHandle {
             : "again"
           : suggestGradeFromTyping(picked, entry.label);
       recordReview(deckId, entry.entryId, grade, today); // grade before cosmetics
+      promotionCreditSum += promotionCredit(mode, grade);
       state.lastGrade = grade;
       const woke = grade !== "again";
       if (woke) {

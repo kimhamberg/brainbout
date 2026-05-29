@@ -24,6 +24,25 @@ export function groveMode(stage: number): GroveMode {
   return "typed";
 }
 
+/**
+ * How much a graded trial counts toward STAGE PROMOTION (readiness), 0–1.
+ * Decouples curriculum advancement from raw correctness so the scaffold can't
+ * masquerade as clean recall:
+ *   - `good`/`easy` (exact answer) → full credit in any mode.
+ *   - `hard` in MCQ → full credit (recognition has no "partial"; a correct
+ *     pick IS the best the mode offers, and recognition mastery is exactly what
+ *     gates the next rung).
+ *   - `hard` in cloze/typed → HALF credit: a typo-within-budget answer is
+ *     correct enough to wake the plant but shouldn't graduate you to free
+ *     production on sloppy cued recall.
+ *   - `again` → 0.
+ */
+export function promotionCredit(mode: GroveMode, grade: string): number {
+  if (grade === "good" || grade === "easy") return 1;
+  if (grade === "again") return 0;
+  return mode === "mcq" ? 1 : 0.5; // "hard"
+}
+
 const normKey = (s: string): string => s.normalize("NFC").toLowerCase();
 
 /**

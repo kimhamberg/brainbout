@@ -15,6 +15,8 @@ interface GroveDone {
   points?: number;
   trials?: number;
   correct?: number;
+  accuracy?: number;
+  promotionAccuracy?: number;
   meta?: { mode?: string };
 }
 
@@ -93,6 +95,8 @@ test("Grove MCQ (stage 1): right pick wakes (hard), wrong pick stays dormant (ag
   const d = await done(page);
   expect(d?.points).toBe(8); // 4 correct × 2 (hard); the miss scores 0
   expect(d?.meta?.mode).toBe("mcq");
+  // recognition: 4 correct picks × full credit + 1 miss, /5 = 0.8
+  expect(d?.promotionAccuracy).toBeCloseTo(0.8, 5);
   expect(errors).toEqual([]);
 });
 
@@ -126,6 +130,7 @@ test("Grove cloze (stage 2): masked first-letter hint, then typed completion", a
   await expect(page.locator("#grove-summary")).toContainText("woke 5/5");
   const d = await done(page);
   expect(d?.meta?.mode).toBe("cloze");
+  expect(d?.promotionAccuracy).toBeCloseTo(1, 5); // 5 exact answers → full credit
   expect(errors).toEqual([]);
 });
 
@@ -156,5 +161,6 @@ test("Grove typed (stage 3): free production wakes; session completes cleanly", 
   const d = await done(page);
   expect(d?.points).toBe(15); // 5 × 3 (good) — production scores above recognition
   expect(d?.meta?.mode).toBe("typed");
+  expect(d?.promotionAccuracy).toBeCloseTo(1, 5); // 5 exact productions → full credit
   expect(errors).toEqual([]);
 });

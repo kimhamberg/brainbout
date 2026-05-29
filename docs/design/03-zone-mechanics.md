@@ -48,10 +48,11 @@ The shipped stage-2 cloze is a **first-letter + length mask then free typing** (
 - **Lifecycle:** per-block `AbortController` detaches listeners on the long-lived input/submit/next nodes; the Pixi app is `destroy()`-ed on abort/finish (frees the WebGL context, ~16 cap); an `ended` guard tears down a block aborted mid-`createStage`. Enter autorepeat is ignored (`ev.repeat`); input freezes on reveal; `#grove-next` is hidden until an answer is revealed.
 
 **Deferred (still open):**
-- **Stage-promotion signal counts recognition as `woke`.** `BlockOutcome.accuracy = woke/total` treats MCQ `hard` == typed `good`, so a recognition-only learner can climb `readiness()` out of stage 1 without demonstrating production. Fix = weight/gate promotion accuracy by grade quality at MCQ/cloze stages. (Touches `scene-router` → `recordResult` + `stages.ts`.)
 - **No intra-session relearning.** An `again`-graded card is recorded once and not re-queued this session (FSRS defers it ≥1 day). Internally honest; revisit if spaced-within-session retry is wanted.
 
-**Resolved:** Pixi teardown is now systemic — `grove-block.ts`, `bench-block.ts` and `meadow-block.ts` all use the per-block `cleanup`/`AbortController` pattern (`app.destroy()` + listener detach on abort/finish, `ended` guard after `await createStage`, queued-frame guards; Meadow also clears its beat/switch timers).
+**Resolved:**
+- **Grade-quality-weighted stage promotion.** `BlockOutcome` now carries `promotionAccuracy`; the router feeds *that* (not raw `accuracy`) into `recordResult`. Grove weights each trial via `promotionCredit(mode, grade)`: exact answers full credit; a correct MCQ pick full (recognition gates the next rung); a typo-within-budget (`hard`) cloze/typed answer **half** — so you can't graduate to free production on consistently sloppy cued recall. Crown/Flux omit the field → raw `accuracy` (their `hard` is correct-under-pressure, not a scaffold). The stage = input-mode scaffold that fades as each rung is proven; the *mastery* claim (words known) stays FSRS-driven, separate from stage.
+- **Systemic Pixi teardown** — `grove-block.ts`, `bench-block.ts` and `meadow-block.ts` all use the per-block `cleanup`/`AbortController` pattern (`app.destroy()` + listener detach on abort/finish, `ended` guard after `await createStage`, queued-frame guards; Meadow also clears its beat/switch timers).
 
 ## 3. Propagation Bench — mental rotation (crown adapter) — HARD CASE
 
