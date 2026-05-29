@@ -7,7 +7,7 @@ jobs:
   screenshot:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           token: ${{ secrets.SCREENSHOT_PAT }}
       - uses: ./.github/actions/setup
