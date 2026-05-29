@@ -28,25 +28,28 @@ export {
   updateStability,
 } from "../shared/fsrs";
 
-function lexKey(lang: string, word: string): string {
-  return `lex:${lang}:${word}`;
+// Keyed by (deckId, entryId) (design docs/design/04). The default deck is "no";
+// for sense-0 entries entryId === the bare label, so legacy `lex:no:<word>`
+// cards are already valid under this scheme — NO migration is needed.
+function lexKey(deckId: string, entryId: string): string {
+  return `lex:${deckId}:${entryId}`;
 }
 
-function lexPrefix(lang: string): string {
-  return `lex:${lang}:`;
+function lexPrefix(deckId: string): string {
+  return `lex:${deckId}:`;
 }
 
-export function getCard(lang: string, word: string): CardState {
-  return fsrsGetCard(lexKey(lang, word));
+export function getCard(deckId: string, entryId: string): CardState {
+  return fsrsGetCard(lexKey(deckId, entryId));
 }
 
 export function recordReview(
-  lang: string,
-  word: string,
+  deckId: string,
+  entryId: string,
   grade: Grade,
   today: string,
 ): CardState {
-  return fsrsRecordReview(lexKey(lang, word), grade, today);
+  return fsrsRecordReview(lexKey(deckId, entryId), grade, today);
 }
 
 export function isDue(card: CardState, today: string): boolean {
@@ -54,28 +57,34 @@ export function isDue(card: CardState, today: string): boolean {
 }
 
 export function getDueWords(
-  lang: string,
-  allWords: readonly string[],
+  deckId: string,
+  entryIds: readonly string[],
   today: string,
 ): string[] {
-  return allWords.filter((w) => isDue(getCard(lang, w), today));
+  return entryIds.filter((id) => isDue(getCard(deckId, id), today));
 }
 
-/** Words that have ever been reviewed (used by the session-builder to mix new + due). */
-export function getSeenWords(lang: string): Set<string> {
-  return getSeenKeys(lexPrefix(lang));
+/** Entries ever reviewed (used by the session-builder to mix new + due). */
+export function getSeenWords(deckId: string): Set<string> {
+  return getSeenKeys(lexPrefix(deckId));
 }
 
-export function getMasteredCount(lang: string): number {
-  return getMasteredCountByPrefix(lexPrefix(lang));
+export function getMasteredCount(deckId: string): number {
+  return getMasteredCountByPrefix(lexPrefix(deckId));
 }
 
 /* ─── input grading helpers (lex-specific) ───────────────────────────── */
 
+/**
+ * Typo budget by label length (Q10). Thresholds ≤13 are unchanged from the
+ * original (single-word rigor intact); only labels longer than any single
+ * Norwegian word — i.e. phrases/proverbs — get proportional slack.
+ */
 export function maxTypos(wordLength: number): number {
   if (wordLength <= 3) return 0;
   if (wordLength <= 7) return 1;
-  return 2;
+  if (wordLength <= 13) return 2;
+  return 2 + Math.floor((wordLength - 13) / 8);
 }
 
 export function levenshtein(a: string, b: string): number {
@@ -107,8 +116,12 @@ export function levenshtein(a: string, b: string): number {
  *   - otherwise         → "again"
  */
 export function suggestGradeFromTyping(typed: string, target: string): Grade {
-  const a = typed.trim().toLowerCase();
-  const b = target.toLowerCase();
+  // Collapse internal whitespace so a stray double-space in a phrase isn't a typo
+  // (Q10); no effect on single-token words.
+  const norm = (s: string): string =>
+    s.trim().toLowerCase().replace(/\s+/g, " ");
+  const a = norm(typed);
+  const b = norm(target);
   if (a === b) return "good";
   const dist = levenshtein(a, b);
   return dist <= maxTypos(b.length) ? "hard" : "again";

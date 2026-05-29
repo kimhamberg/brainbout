@@ -168,7 +168,9 @@ describe("lex-srs.maxTypos exact boundaries", () => {
   it("length 4 → 1", () => expect(maxTypos(4)).toBe(1));
   it("length 7 → 1", () => expect(maxTypos(7)).toBe(1));
   it("length 8 → 2", () => expect(maxTypos(8)).toBe(2));
-  it("length 50 → 2", () => expect(maxTypos(50)).toBe(2));
+  it("length 13 → 2", () => expect(maxTypos(13)).toBe(2));
+  it("length 21 → 3 (Q10 phrase slack)", () => expect(maxTypos(21)).toBe(3));
+  it("length 50 → 6 (Q10)", () => expect(maxTypos(50)).toBe(6));
 });
 
 describe("lex-srs.maxTypos properties", () => {

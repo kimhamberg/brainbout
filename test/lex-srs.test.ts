@@ -51,9 +51,37 @@ describe("maxTypos boundaries", () => {
     [4, 1],
     [7, 1],
     [8, 2],
-    [50, 2],
+    [13, 2], // ≤13 unchanged from the original (single-word rigor intact)
+    [14, 2],
+    [21, 3], // Q10: phrases get proportional slack past 13 chars
+    [29, 4],
+    [50, 6],
   ] as const)("length %s → %s allowed typos", (n, t) => {
     expect(maxTypos(n)).toBe(t);
+  });
+});
+
+describe("(deckId, entryId) keying + Q10 phrase grading", () => {
+  it("homograph senses are independent cards", () => {
+    recordReview("no", "være", "good", "2026-05-29");
+    expect(getCard("no", "være").reps).toBe(1);
+    expect(getCard("no", "være#1").reps).toBe(0); // the other sense untouched
+  });
+
+  it("default-deck sense-0 keys are unchanged (no migration needed)", () => {
+    recordReview("no", "fugl", "good", "2026-05-29");
+    expect(localStorage.getItem("brainbout:lex:no:fugl")).not.toBeNull();
+  });
+
+  it("collapses internal whitespace in phrase grading", () => {
+    expect(suggestGradeFromTyping("ad  hoc", "ad hoc")).toBe("good");
+  });
+
+  it("long phrases tolerate proportional typos (Q10)", () => {
+    const proverb = "rom ble ikke bygget pa en dag"; // 29 chars → 4 typos
+    expect(
+      suggestGradeFromTyping("rom ble ikke bygde pa en dag", proverb),
+    ).toBe("hard");
   });
 });
 

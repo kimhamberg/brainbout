@@ -18,6 +18,7 @@ const result = await Bun.build({
     join(ROOT, "games/flux.html"),
     join(ROOT, "games/lex.html"),
     join(ROOT, "games/verdant.html"),
+    join(ROOT, "games/verdant-grove.html"),
   ],
   outdir: DIST,
   minify: true,

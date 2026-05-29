@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Brainbout — Grove (Phase 2)</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        background: #292c3c;
+        color: #c6d0f5;
+        font-family: system-ui, sans-serif;
+      }
+      #grove {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+      #stage {
+        image-rendering: pixelated;
+        transform: scale(2);
+        transform-origin: top center;
+        margin-bottom: 240px;
+        border-radius: 4px;
+        overflow: hidden;
+        box-shadow: 0 8px 40px #0006;
+      }
+      #stage canvas {
+        display: block;
+        image-rendering: pixelated;
+      }
+      #grove-pos {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        opacity: 0.6;
+      }
+      #grove-cue {
+        font-size: 18px;
+        font-style: italic;
+      }
+      #grove-input {
+        font-size: 16px;
+        padding: 6px 10px;
+        border-radius: 6px;
+        border: 1px solid #51576d;
+        background: #303446;
+        color: #c6d0f5;
+        text-align: center;
+      }
+      #grove-submit {
+        padding: 6px 16px;
+        border-radius: 6px;
+        border: 0;
+        background: #a6d189;
+        color: #232634;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      #grove-reveal {
+        min-height: 22px;
+        font-size: 15px;
+      }
+      #grove-progress {
+        font-size: 12px;
+        opacity: 0.6;
+      }
+      #grove-summary {
+        font-size: 14px;
+        color: #a6d189;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="grove">
+      <div id="stage"></div>
+      <div id="grove-pos"></div>
+      <div id="grove-cue">a dormant resident is waiting…</div>
+      <input
+        id="grove-input"
+        autocomplete="off"
+        autocapitalize="none"
+        autocorrect="off"
+        spellcheck="false"
+        inputmode="text"
+        aria-label="Type the resident's name">
+      <button id="grove-submit" type="button">Wake</button>
+      <div id="grove-reveal"></div>
+      <div id="grove-progress"></div>
+    </div>
+    <div id="grove-summary"></div>
+    <script type="module" src="/src/scene/grove-demo.ts"></script>
+  </body>
+</html>

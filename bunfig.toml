@@ -16,6 +16,8 @@ coveragePathIgnorePatterns = [
   "src/shared/pwa.ts",
   "src/scene/pixi-stage.ts",
   "src/scene/verdant-demo.ts",
+  "src/scene/grove-demo.ts",
+  "src/scene/zones/grove-block.ts",
   "scripts/bake-atlas.ts",
   "scripts/bake/raster.ts",
   "scripts/bake/palette.ts",
