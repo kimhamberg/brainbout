@@ -81,6 +81,11 @@ RT/grade: go trials freeze→arm→capture rt on tap→`evaluateResponse`→`der
 
 **Switch-cost logging (guardrail 7):** tag each trial `isSwitch = (prevRule !== rule || prevIsNot !== isNot)` (already computed in `flux-block.ts`); push `{rt, isSwitch, correct}` → `meta.switchTrials[]` / `meta.repeatTrials[]` → mean switch cost = `E[rt|switch] − E[rt|repeat]` recoverable post-hoc. The prep interval is **excluded** from RT: the rAF onset anchors at the produce drop, *after* the weather animation, so the prep is real preparation time, not RT.
 
+### Implemented (`meadow-block.ts`) — 2026-05-29
+
+- **True-timeout no-go.** The "leave it" Hold button is gone: a no-go is withheld by NOT tapping — the beat times out (`beatTimer → respond(null)`) into a correct withhold. A dedicated withhold button would itself be a motor response and weaken the go/no-go inhibition construct (the prepotent press must be genuinely *suppressed*). Go trials still demand a timely L/R sort; a timeout on a go is a real miss (`-1`).
+- **Time-bounded session.** The standalone Meadow defaults to a 75s timed challenge (`durationMs`, no beat-count cap); the session ends at the first beat boundary past the budget (or HP 0). A `maxTrials` cap is optional — the Walk leg uses one; the demo accepts `?n=`/`?ms=` for tests.
+
 ## 6. The adapter contract
 
 ```ts

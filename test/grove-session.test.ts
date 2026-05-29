@@ -52,6 +52,13 @@ describe("buildGroveQueue", () => {
     expect(q.length).toBe(5);
   });
 
+  test("a seen, still-active, due entry leads the queue (greenhouse seenDue)", () => {
+    buildGroveQueue(deck, "no", "2026-05-29", 10); // first build seeds the greenhouse
+    recordReview("no", "ord3", "again", "2026-05-29"); // active card lapses → due soon, not mastered
+    const q = buildGroveQueue(deck, "no", "2026-06-10", 5); // future → ord3 is due
+    expect(q[0]?.entryId).toBe("ord3"); // greenhouse-due leads, ahead of fresh
+  });
+
   test("fresh entries surface by rank (shortest first), not file order", () => {
     const mixed = normalizeVocabDeck(
       [

@@ -1,7 +1,11 @@
 /**
  * Phase-4 Meadow + Weather demo: a playable flux session (sort by the active
- * rule / withhold on no-go / rule switches) via createMeadowBlock behind the
- * BlockOutcome seam.
+ * rule / withhold on a no-go by NOT tapping / rule switches) via
+ * createMeadowBlock behind the BlockOutcome seam.
+ *
+ * Defaults to the standalone TIMED challenge (75s). Query overrides for tests:
+ *   ?n=<beats>  → beat-count bound (the switch test pins 26 so a real weather
+ *                 switch is guaranteed); ?ms=<millis> → shorter time bound.
  */
 
 import { createMeadowBlock } from "./zones/meadow-block";
@@ -9,13 +13,18 @@ import { createMeadowBlock } from "./zones/meadow-block";
 const root = document.getElementById("meadow");
 if (!root) throw new Error("missing #meadow");
 
+const params = new URLSearchParams(location.search);
+const n = params.get("n");
+const ms = params.get("ms");
+const bounds: { maxTrials?: number; durationMs?: number } = {};
+if (n !== null) bounds.maxTrials = Number(n);
+if (ms !== null) bounds.durationMs = Number(ms);
+
 createMeadowBlock({
   container: root,
   stage: 2, // includes the 'fill' rule + more switches
   today: "2026-05-29",
-  // warmup (8) + two switch cycles before a 2nd rule unlocks → a real weather
-  // switch lands ~trial 16-20, so 26 guarantees the player sees one.
-  maxTrials: 26,
+  ...bounds,
   onComplete: (o) => {
     const s = document.getElementById("meadow-summary");
     if (s) {

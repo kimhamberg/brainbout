@@ -6,6 +6,7 @@
 
 import type { DeckEntry, VocabDeck } from "../content/deck";
 import type { Rng } from "../shared/rng";
+import { sampleWildDue, syncActiveSet } from "./greenhouse";
 import { pickDistractors, shuffleArray } from "./lex-logic";
 import { getCard, getDueWords } from "./lex-srs";
 
@@ -110,9 +111,11 @@ export function groveOptions(
 }
 
 /**
- * Ordered residents to tend this session: previously-seen DUE entries first
- * (most-overdue surface), then brand-new ones, capped at `cap`. Honest — "due"
- * is FSRS isDue, not a fake list.
+ * Ordered residents to tend this session, drawn from the BOUNDED greenhouse
+ * (active set) ∪ a small wild-due sample — never the whole deck. Order:
+ * greenhouse DUE first, then a capped slice of wild residents resurfacing, then
+ * brand-new greenhouse entries (lowest-rank / shortest first). Honest — "due"
+ * is FSRS isDue, not a fake list. Capped at `cap`.
  */
 export function buildGroveQueue(
   deck: VocabDeck,
@@ -121,17 +124,21 @@ export function buildGroveQueue(
   cap: number,
 ): DeckEntry[] {
   const byId = new Map(deck.entries.map((e) => [e.entryId, e]));
-  const dueIds = getDueWords(deckId, [...byId.keys()], today);
+  const active = syncActiveSet(deck, deckId); // seed / migrate-mastered / refill
+  const activeSet = new Set(active);
 
   const seenDue: DeckEntry[] = [];
-  for (const id of dueIds) {
+  for (const id of getDueWords(deckId, active, today)) {
     if (getCard(deckId, id).reps > 0) {
       const e = byId.get(id);
       if (e) seenDue.push(e);
     }
   }
+  const wildDue = sampleWildDue(deck, deckId, today, active);
   const fresh = deck.entries
-    .filter((e) => getCard(deckId, e.entryId).reps === 0)
+    .filter(
+      (e) => activeSet.has(e.entryId) && getCard(deckId, e.entryId).reps === 0,
+    )
     .sort((a, b) => a.rank - b.rank); // shortest/easiest first (Q1 seeding order)
-  return [...seenDue, ...fresh].slice(0, cap);
+  return [...seenDue, ...wildDue, ...fresh].slice(0, cap);
 }

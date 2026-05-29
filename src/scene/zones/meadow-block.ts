@@ -37,7 +37,11 @@ export interface MeadowOptions {
   container: HTMLElement;
   stage?: number;
   today?: string;
+  /** Beat-count cap. Default: none (the session is time-bounded instead). */
   maxTrials?: number;
+  /** Wall-clock budget; the session ends at a beat boundary once it elapses.
+   *  Default 75s — the standalone Meadow is a timed challenge. */
+  durationMs?: number;
   onComplete: (outcome: BlockOutcome) => void;
 }
 
@@ -102,21 +106,23 @@ function drawShape(g: Graphics, t: Trial, cx: number, cy: number): void {
 export function createMeadowBlock(opts: MeadowOptions): BlockHandle {
   const stage = opts.stage ?? 1;
   const today = opts.today ?? new Date().toISOString().slice(0, 10);
-  const total = opts.maxTrials ?? 12;
+  // The Meadow is time-bounded by default (75s); a beat-count cap is optional
+  // (the Walk leg uses one). Whichever bound is hit first ends the session.
+  const maxTrials = opts.maxTrials ?? Number.POSITIVE_INFINITY;
+  const durationMs = opts.durationMs ?? 75_000;
   const flux = createFluxState(stage);
 
   const stageHost = el(opts.container, "stage");
   const ruleEl = el(opts.container, "meadow-rule");
   const leftBtn = el(opts.container, "meadow-left") as HTMLButtonElement;
   const rightBtn = el(opts.container, "meadow-right") as HTMLButtonElement;
-  const holdBtn = el(opts.container, "meadow-hold") as HTMLButtonElement;
   const revealEl = el(opts.container, "meadow-reveal");
   const hpEl = el(opts.container, "meadow-hp");
   const progressEl = el(opts.container, "meadow-progress");
 
   const state: MeadowState = {
     trial: 0,
-    total,
+    total: maxTrials,
     correct: 0,
     hp: flux.maxHp,
     isNoGo: false,
@@ -140,7 +146,6 @@ export function createMeadowBlock(opts: MeadowOptions): BlockHandle {
   function setButtons(on: boolean): void {
     leftBtn.disabled = !on;
     rightBtn.disabled = !on;
-    holdBtn.disabled = !on;
   }
 
   function finish(reason: BlockEndReason): void {
@@ -203,7 +208,9 @@ export function createMeadowBlock(opts: MeadowOptions): BlockHandle {
           : "right";
       revealEl.textContent = "";
       revealEl.dataset.grade = "";
-      progressEl.textContent = `${String(state.trial + 1)} / ${String(state.total)}`;
+      progressEl.textContent = Number.isFinite(maxTrials)
+        ? `${String(state.trial + 1)} / ${String(maxTrials)}`
+        : `beat ${String(state.trial + 1)}`;
       setButtons(false);
 
       const render = (): void => {
@@ -274,8 +281,10 @@ export function createMeadowBlock(opts: MeadowOptions): BlockHandle {
     function step(): void {
       if (state.phase !== "revealed") return;
       state.trial++;
-      if (state.trial >= state.total) finish("completed");
-      else {
+      const elapsed = performance.now() - startMs;
+      if (state.trial >= maxTrials || elapsed >= durationMs) {
+        finish("completed");
+      } else {
         state.phase = "responding";
         showBeat();
       }
@@ -295,13 +304,10 @@ export function createMeadowBlock(opts: MeadowOptions): BlockHandle {
       },
       { signal },
     );
-    holdBtn.addEventListener(
-      "click",
-      () => {
-        respond(null);
-      },
-      { signal },
-    );
+    // No "hold" button by design: a no-go is withheld by NOT pressing — the beat
+    // times out (beatTimer → respond(null)) = a correct withhold. Pressing a
+    // dedicated button would itself be a motor response and weaken the go/no-go
+    // inhibition construct (the prepotent response must be genuinely suppressed).
     revealEl.addEventListener("click", step, { signal });
     el(opts.container, "meadow-next").addEventListener("click", step, {
       signal,

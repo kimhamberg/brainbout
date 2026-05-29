@@ -79,8 +79,17 @@ test("Walk: Grove → Bench → Meadow flows as one session and tallies a summar
       await expect(page.locator("#meadow-left")).toBeEnabled({
         timeout: 5_000,
       });
-      if (m.isNoGo) await page.locator("#meadow-hold").click();
-      else await page.locator(`#meadow-${m.correctSide ?? "hold"}`).click();
+      if (m.isNoGo) {
+        // true-timeout no-go: withhold by NOT tapping; let the beat elapse
+        await page.waitForFunction(
+          () =>
+            (window as unknown as { __meadow?: M }).__meadow?.phase !==
+            "responding",
+          { timeout: 6_000 },
+        );
+      } else {
+        await page.locator(`#meadow-${m.correctSide ?? "left"}`).click();
+      }
     } else if (m.phase === "revealed") {
       await page.locator("#meadow-next").click();
     }

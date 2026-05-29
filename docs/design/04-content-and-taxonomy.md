@@ -100,6 +100,8 @@ The **greenhouse-vs-wild** graft bounds Lex daily load:
 - When a card hits `isMastered` (s≥30) it **migrates to the wild** (removed from the active list; a fresh unseen entry promoted in to refill). Wild cards still FSRS-tick, but the session samples only a small capped slice ("the wild mostly tends itself; occasionally a wild resident needs you").
 - `buildQueue` (`lex-logic.ts`) is reused unchanged over the bounded candidate list.
 
+**Implemented** (`src/games/greenhouse.ts`, 2026-05-29): `syncActiveSet(deck, deckId, cap=ACTIVE_SET_CAP)` seeds the lowest-`rank` unseen entries, drops mastered cards (migrate to wild) and refills, persisting `brainbout:lex:<deck>:active`. `sampleWildDue(...)` returns ≤`WILD_DUE_PER_SESSION` out-of-greenhouse, seen, FSRS-due entries, most-overdue first. `buildGroveQueue` now draws from `active ∪ wildDue` (never the whole 20k deck), order = greenhouse-due → wild → fresh-by-rank. 100% unit-covered.
+
 ## Almanac — states computed from FSRS, never faked
 
 > **Scheduler corrections ([08](08-reference-audit.md) VH-4/VH-8).** `fsrs.ts` "FSRS-lite" had no retrievability term; the plan is to **adopt ts-fsrs** (MIT) behind the superset-compatible `CardState` seam (or make FSRS-lite minimum-viable-real: pass elapsed days into `recordReview`, compute `R(t,S)`, solve the interval for a desired retention) — the one place `recordReview` re-opens; `migrateLexKeys()` stays lossless. **`perennial` / `isMastered` below is redefined** from raw `s≥30d` to `R(30d,S) ≥ 0.9` **+ `minReps` + a successful recall after a real ≥N-day spacing gap**, so a single lucky fast trial cannot mint mastery (and for 2-AFC Crown, `easy` needs RT *and* a cleared spacing gap).
