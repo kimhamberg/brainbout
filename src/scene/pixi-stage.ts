@@ -16,7 +16,9 @@ import {
   Texture,
   TextureSource,
 } from "pixi.js";
+import { hueDeltaFor, type Species, templateKey } from "../content/species";
 import { BASE } from "../shared/base";
+import { hueBucket, hueRotate, moonlit } from "./recolor";
 
 export interface AtlasFrame {
   x: number;
@@ -34,6 +36,12 @@ export interface Atlas {
   texture(name: string): Texture;
   /** A ready-to-add sprite for a frame, anchored bottom-centre by default. */
   sprite(name: string, anchorX?: number, anchorY?: number): Sprite;
+  /**
+   * A sprite for a species: its bounded body-plan template, hue-rotated toward
+   * the species hue (and moonlit when dormant), cached per (template, bucket).
+   * The atlas stays a fixed size regardless of how many species exist (Q2/VH-3).
+   */
+  speciesSprite(species: Species, dormant?: boolean): Sprite;
   names(): string[];
 }
 
@@ -51,9 +59,12 @@ async function loadAtlas(baseUrl: string): Promise<Atlas> {
   const meta = (await fetch(`${baseUrl}art/atlas.frames.json`).then((r) =>
     r.json(),
   )) as AtlasMeta;
-  const sheet = (await Assets.load(`${baseUrl}art/atlas.png`)) as Texture;
+  const pngUrl = `${baseUrl}art/atlas.png`;
+  const sheet = (await Assets.load(pngUrl)) as Texture;
   const source = sheet.source;
   source.scaleMode = "nearest";
+  // Keep a bitmap of the sheet so per-species recolour can read template pixels.
+  const bitmap = await createImageBitmap(await (await fetch(pngUrl)).blob());
 
   const cache = new Map<string, Texture>();
   for (const [name, f] of Object.entries(meta.frames)) {
@@ -62,11 +73,47 @@ async function loadAtlas(baseUrl: string): Promise<Atlas> {
       new Texture({ source, frame: new Rectangle(f.x, f.y, f.w, f.h) }),
     );
   }
+
+  // Per-(template, dormant, hue-bucket) recoloured textures — built once, reused.
+  const recolorCache = new Map<string, Texture>();
+  function speciesTexture(species: Species, dormant: boolean): Texture {
+    const name = templateKey(species);
+    const f = meta.frames[name];
+    if (!f) return cache.get(name) ?? Texture.EMPTY;
+    const delta = hueBucket(hueDeltaFor(species));
+    const key = `${name}:${dormant ? "d" : "a"}:${String(delta)}`;
+    const hit = recolorCache.get(key);
+    if (hit) return hit;
+
+    const cv = document.createElement("canvas");
+    cv.width = f.w;
+    cv.height = f.h;
+    const ctx = cv.getContext("2d");
+    if (!ctx) return cache.get(name) ?? Texture.EMPTY;
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(bitmap, f.x, f.y, f.w, f.h, 0, 0, f.w, f.h);
+    const img = ctx.getImageData(0, 0, f.w, f.h);
+    const recoloured = dormant
+      ? moonlit(hueRotate(img.data, delta))
+      : hueRotate(img.data, delta);
+    img.data.set(recoloured);
+    ctx.putImageData(img, 0, 0);
+    const tex = Texture.from(cv);
+    tex.source.scaleMode = "nearest";
+    recolorCache.set(key, tex);
+    return tex;
+  }
+
   return {
     texture: (name) => cache.get(name) ?? Texture.EMPTY,
     sprite: (name, ax = 0.5, ay = 1) => {
       const s = new Sprite(cache.get(name) ?? Texture.EMPTY);
       s.anchor.set(ax, ay);
+      return s;
+    },
+    speciesSprite: (species, dormant = false) => {
+      const s = new Sprite(speciesTexture(species, dormant));
+      s.anchor.set(0.5, 1);
       return s;
     },
     names: () => [...cache.keys()],

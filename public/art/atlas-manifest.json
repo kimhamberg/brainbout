@@ -3,9 +3,9 @@
   "atlases": [
     {
       "file": "atlas.png",
-      "sha256": "0759cff89597a18fb440aa55c1d2521b5b9241b4b567bbeb8fdbe02532d23fe3",
-      "frames": 78
+      "sha256": "3e7559d201f67e6d726bdfd075503a0a606bdde29dfdb86bd90683ff27f4ce11",
+      "frames": 92
     }
   ],
-  "digest": "367382f664e131cec73140c695f5f10b5f64244d4772ca0247e7c77490c1a2db"
+  "digest": "448ce16e06e0d228309aadb1bface6d38807613625e03749304f97ee8bbda29b"
 }

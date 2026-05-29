@@ -1,43 +1,45 @@
 /**
- * Phase-0 live-render slice (design docs/design/05): mount the baked atlas in a
- * real PixiJS v8 stage and compose a small Verdant Hollow diorama — proof that
- * the 100%-procedural art renders in-engine via WebGL (not just as a sheet).
- * Deterministic layout via the seeded RNG; a gentle idle bob shows the loop is
- * alive. This is a demo surface, not a game block.
+ * Phase-0 live-render slice + Q2 demo (design docs/design/05). Mounts the BOUNDED
+ * template atlas in a real PixiJS v8 stage and composes a Verdant Hollow diorama
+ * where every resident is a real dictionary entry → `speciesFor` → a hue-rotated
+ * template sprite (atlas size is fixed regardless of deck size). A gentle idle
+ * bob shows the loop is alive. Demo surface, not a game block.
  */
 
-import type { Container, Sprite, Ticker } from "pixi.js";
+import type { Sprite, Ticker } from "pixi.js";
+import { normalizeVocabDeck, type RawEntry } from "../content/deck";
+import { speciesFor } from "../content/species";
 import { seededRng } from "../shared/rng";
 import { createStage, type Stage } from "./pixi-stage";
 
-const W = 520;
+const W = 560;
 const H = 320;
+
+// A small spread across all four kingdoms (noun→FLORA, verb→FAUNA,
+// adj/adv→MODIFIER, function-words→STRUCTURE), incl. æøå.
+const RAW: RawEntry[] = [
+  { word: "fugl", pos: "noun", definition: "a bird", example: "" },
+  { word: "skog", pos: "noun", definition: "a forest", example: "" },
+  { word: "blomst", pos: "noun", definition: "a flower", example: "" },
+  { word: "tre", pos: "noun", definition: "a tree", example: "" },
+  { word: "eng", pos: "noun", definition: "a meadow", example: "" },
+  { word: "bær", pos: "noun", definition: "a berry", example: "" },
+  { word: "busk", pos: "noun", definition: "a bush", example: "" },
+  { word: "frø", pos: "noun", definition: "a seed", example: "" },
+  { word: "sjø", pos: "noun", definition: "a lake", example: "" },
+  { word: "katt", pos: "verb", definition: "to prowl", example: "" },
+  { word: "hoppe", pos: "verb", definition: "to hop", example: "" },
+  { word: "fly", pos: "verb", definition: "to fly", example: "" },
+  { word: "krype", pos: "verb", definition: "to crawl", example: "" },
+  { word: "rød", pos: "adj", definition: "red", example: "" },
+  { word: "gul", pos: "adj", definition: "yellow", example: "" },
+  { word: "og", pos: "conj", definition: "and", example: "" },
+  { word: "på", pos: "prep", definition: "on", example: "" },
+];
 
 function setStatus(text: string): void {
   const el = document.getElementById("status");
   if (el) el.textContent = text;
-}
-
-interface Bobber {
-  sprite: Sprite;
-  baseY: number;
-  amp: number;
-  freq: number;
-  phase: number;
-}
-
-function place(
-  world: Container,
-  sprite: Sprite,
-  x: number,
-  y: number,
-  scale = 1,
-): Sprite {
-  sprite.x = x;
-  sprite.y = y;
-  sprite.scale.set(scale);
-  world.addChild(sprite);
-  return sprite;
 }
 
 async function main(): Promise<void> {
@@ -53,57 +55,65 @@ async function main(): Promise<void> {
   }
   const { app, atlas, rendererKind } = stage;
   const r = seededRng("verdant-demo");
-  const names = atlas.names();
-  const awake = names.filter(
-    (n) => n.startsWith("sp:") && !n.endsWith(":dormant"),
-  );
-  const dormant = names.filter((n) => n.endsWith(":dormant"));
-  const bench = names.filter((n) => n.startsWith("bench:")).sort();
-  const growth = names.filter((n) => n.startsWith("plant:grove-tree:")).sort();
-
   const world = app.stage;
-  const bobbers: Bobber[] = [];
-  const addBob = (s: Sprite, amp: number): void => {
-    bobbers.push({
-      sprite: s,
-      baseY: s.y,
-      amp,
-      freq: 0.001 + r() * 0.0015,
-      phase: r() * Math.PI * 2,
-    });
-  };
+  const deck = normalizeVocabDeck(RAW, "no");
 
-  // ── ground band: grass tiles (config 15 = all-grass) across two rows ──
+  interface Bob {
+    sprite: Sprite;
+    baseY: number;
+    amp: number;
+    freq: number;
+    phase: number;
+  }
+  const bobbers: Bob[] = [];
   const groundY = H - 30;
+
+  // ── ground band ──
   for (let gx = 0; gx <= W; gx += 24) {
-    place(world, atlas.sprite("tile:grass-soil:15", 0, 0), gx, groundY);
-    place(world, atlas.sprite("tile:grass-soil:15", 0, 0), gx, groundY + 24);
+    const a = atlas.sprite("tile:grass-soil:15", 0, 0);
+    a.x = gx;
+    a.y = groundY;
+    world.addChild(a);
+    const b = atlas.sprite("tile:grass-soil:15", 0, 0);
+    b.x = gx;
+    b.y = groundY + 24;
+    world.addChild(b);
   }
 
-  // ── back row: the growth-tree progression (sprout → tree) ──
-  growth.forEach((n, i) => {
-    place(world, atlas.sprite(n), 40 + i * 70, groundY + 6, 1);
+  // ── growth-tree showcase, back row ──
+  for (let s = 0; s <= 5; s++) {
+    const sp = atlas.sprite(`plant:grove-tree:${String(s)}`);
+    sp.x = 40 + s * 64;
+    sp.y = groundY + 6;
+    world.addChild(sp);
+  }
+
+  // ── residents: each dictionary entry → species → hue-rotated template ──
+  deck.entries.forEach((entry, i) => {
+    const species = speciesFor("no", entry, deck.manifest);
+    const dormant = i % 7 === 3; // a few sleeping
+    const sp = atlas.speciesSprite(species, dormant);
+    sp.x = 36 + (i % 9) * 58 + (r() - 0.5) * 12;
+    sp.y = groundY + 16 + Math.floor(i / 9) * 18;
+    world.addChild(sp);
+    if (!dormant) {
+      bobbers.push({
+        sprite: sp,
+        baseY: sp.y,
+        amp: 1.1 + r(),
+        freq: 0.001 + r() * 0.0015,
+        phase: r() * Math.PI * 2,
+      });
+    }
   });
 
-  // ── mid scatter: awake species across the grass, gently bobbing ──
-  const cols = 8;
-  awake.slice(0, 16).forEach((n, i) => {
-    const col = i % cols;
-    const row = Math.floor(i / cols);
-    const x = 40 + col * 58 + (r() - 0.5) * 14;
-    const y = groundY + 14 + row * 16 + (r() - 0.5) * 6;
-    addBob(place(world, atlas.sprite(n), x, y), 1.2 + r());
-  });
-
-  // ── dormant residents tucked at the left (moonlit + Zzz, baked) ──
-  dormant.slice(0, 3).forEach((n, i) => {
-    place(world, atlas.sprite(n), 24 + i * 30, groundY + 40, 1);
-  });
-
-  // ── bench specimens lined up at the front (chiral) ──
-  bench.forEach((n, i) => {
-    place(world, atlas.sprite(n), 60 + i * 90, H - 6, 1);
-  });
+  // ── chiral bench specimens, front ──
+  for (const [i, role] of ["q", "r", "b", "n", "p"].entries()) {
+    const sp = atlas.sprite(`bench:${role}`);
+    sp.x = 70 + i * 96;
+    sp.y = H - 4;
+    world.addChild(sp);
+  }
 
   let t = 0;
   app.ticker.add((tick: Ticker) => {
@@ -114,9 +124,8 @@ async function main(): Promise<void> {
   });
 
   setStatus(
-    `rendered ${String(names.length)} frames · renderer: ${rendererKind} · ${String(awake.length)} species`,
+    `${String(atlas.names().length)} baked templates · ${String(deck.entries.length)} residents recoloured · renderer: ${rendererKind}`,
   );
-  // Signal for the e2e harness.
   (window as unknown as { __verdantReady?: boolean }).__verdantReady = true;
 }
 

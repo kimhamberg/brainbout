@@ -58,6 +58,34 @@ const HUE_BAND: Record<Kingdom, [number, number]> = {
 };
 
 /**
+ * Canonical hue each kingdom's TEMPLATES are baked at (band midpoint). The atlas
+ * holds a bounded set of templates per kingdom; per-species variety is a runtime
+ * HUE-ROTATION of the canonical template by `hueDeltaFor` (Q2/VH-3). Because the
+ * bands are narrow, the rotation delta is small → the baked cool-shadow/warm-light
+ * shading + accents are preserved, only the base hue shifts.
+ */
+export const CANON_HUE: Record<Kingdom, number> = {
+  FLORA: 136.5,
+  FAUNA: 82.5,
+  MODIFIER: 302.5,
+  STRUCTURE: 200,
+};
+
+/** Atlas frame key for a species' baked body-plan template (bounded set). */
+export function templateKey(
+  species: Pick<Species, "kingdom" | "templateIdx">,
+): string {
+  return `tmpl:${species.kingdom.toLowerCase()}:${String(species.templateIdx)}`;
+}
+
+/** Degrees to hue-rotate the canonical template to reach this species' hue. */
+export function hueDeltaFor(
+  species: Pick<Species, "kingdom" | "baseHue">,
+): number {
+  return species.baseHue - CANON_HUE[species.kingdom];
+}
+
+/**
  * Clustering key for FLORA semantic neighborhoods. Opt-in per deck (Q5): only
  * when the deck declares clusterBy === "gloss-keyword" AND glossLang === "en".
  * Degrades gracefully to entryId hashing for any other deck or an empty keyword.

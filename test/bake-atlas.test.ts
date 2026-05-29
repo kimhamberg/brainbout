@@ -16,7 +16,7 @@ import { seededRng } from "../src/shared/rng";
  * a generator: `bun run gen:art && git add public/art`, then update this.
  */
 const EXPECTED_DIGEST =
-  "367382f664e131cec73140c695f5f10b5f64244d4772ca0247e7c77490c1a2db";
+  "448ce16e06e0d228309aadb1bface6d38807613625e03749304f97ee8bbda29b";
 
 describe("palette (OKLCH) — quantized & in range (VH-11)", () => {
   test("every channel is an integer in [0,255]", () => {
@@ -123,5 +123,35 @@ describe("committed atlas manifest (golden gate)", () => {
 
   test("digest matches the pinned golden constant (VH-11)", () => {
     expect(manifest.digest).toBe(EXPECTED_DIGEST);
+  });
+});
+
+describe("bounded template atlas (Q2)", () => {
+  const meta = JSON.parse(
+    readFileSync(
+      join(import.meta.dir, "..", "public", "art", "atlas.frames.json"),
+      "utf8",
+    ),
+  ) as { frames: Record<string, unknown> };
+  const names = Object.keys(meta.frames);
+
+  test("frames are the bounded set — NO per-entry sp:* sprites", () => {
+    // The atlas size must NOT scale with the dictionary; only templates +
+    // fixed showcase/tile/bench frames exist.
+    expect(names.some((n) => n.startsWith("sp:"))).toBe(false);
+    for (const n of names) {
+      expect(n).toMatch(
+        /^(tmpl:(flora|fauna|modifier|structure):\d+|plant:grove-tree:\d|tile:grass-soil:\d+|reclaim:panel:\d|bench:[qrbnp])$/u,
+      );
+    }
+  });
+
+  test("60 body-plan templates (24/16/12/8)", () => {
+    const count = (k: string) =>
+      names.filter((n) => n.startsWith(`tmpl:${k}:`)).length;
+    expect(count("flora")).toBe(24);
+    expect(count("fauna")).toBe(16);
+    expect(count("modifier")).toBe(12);
+    expect(count("structure")).toBe(8);
   });
 });

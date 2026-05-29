@@ -1,10 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import { normalizeVocabDeck, type RawEntry } from "../src/content/deck";
 import {
+  CANON_HUE,
   clusterKey,
   firstContentKeyword,
+  hueDeltaFor,
   kingdomForPos,
   speciesFor,
+  templateKey,
 } from "../src/content/species";
 import { resetRng, rng, setRng } from "../src/shared/rng";
 import { TEMPLATES_PER_KINGDOM } from "../src/world/limits";
@@ -72,6 +75,23 @@ describe("speciesFor — deterministic & device-identical", () => {
     // the global rng is still the injected one, untouched in sequence
     expect(rng()).toBe(0.5);
     resetRng();
+  });
+});
+
+describe("template binding (Q2)", () => {
+  test("templateKey points at the bounded per-kingdom template", () => {
+    const sp = speciesFor("no", byId("fugl"), deck.manifest); // FLORA
+    expect(templateKey(sp)).toBe(`tmpl:flora:${String(sp.templateIdx)}`);
+  });
+
+  test("hueDeltaFor is the offset from the kingdom's canonical hue (small, in-band)", () => {
+    for (const e of deck.entries) {
+      const sp = speciesFor("no", e, deck.manifest);
+      const delta = hueDeltaFor(sp);
+      expect(delta).toBeCloseTo(sp.baseHue - CANON_HUE[sp.kingdom], 6);
+      // bands are ≤35° wide, so the rotation from the midpoint stays small
+      expect(Math.abs(delta)).toBeLessThanOrEqual(20);
+    }
   });
 });
 
