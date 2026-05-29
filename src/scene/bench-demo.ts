@@ -3,11 +3,12 @@
  * (SAME/MOVED under RT) via createBenchBlock behind the BlockOutcome seam.
  */
 
-export {}; // module scope (the only imports are dynamic, inside the IIFE below)
+import { initTheme } from "../shared/theme";
 
 const root = document.getElementById("bench");
 if (!root) throw new Error("missing #bench");
 const host = root;
+initTheme(); // honour the theme chosen on the hub
 
 // pixi loads lazily: the render layer (block → pixi-stage → pixi) is pulled in
 // only via this dynamic import, so it code-splits out of the boot shell.

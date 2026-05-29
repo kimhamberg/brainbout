@@ -1,11 +1,13 @@
-import { BRAIN_PATHS, GAME_ICONS, iconSvg } from "./shared/icons";
+import { GAME_ICONS } from "./shared/icons";
 import { GAMES, type GameId } from "./shared/progress";
 import type { Readiness } from "./shared/stages";
 
-export const CYCLE_COMPLETED = "cycle";
-export const DAILY_COMPLETED = "daily";
-const CYCLE_URL = "games/cycle.html";
-const DAILY_URL = "games/daily.html";
+/** Returning to the hub with ?completed=walk counts one tended session. */
+export const WALK_COMPLETED = "walk";
+const WALK_URL = "games/verdant-walk.html";
+
+/** Display order = the order the Walk visits the zones (Grove → Bench → Meadow). */
+export const ZONE_ORDER: readonly GameId[] = ["lex", "crown", "flux"];
 
 export type EvidenceLevel = "strong" | "moderate" | "near-only";
 
@@ -18,8 +20,8 @@ export interface EvidenceBlurb {
 }
 
 export interface GameMeta {
+  /** Zone name shown in the hub (the Verdant area for this cognitive track). */
   label: string;
-  url: string;
   accent: string;
   tagline: string;
   threshold: number;
@@ -29,10 +31,9 @@ export interface GameMeta {
 
 export const GAME_META: Record<GameId, GameMeta> = {
   crown: {
-    label: "Crown",
-    url: "games/crown.html",
+    label: "Bench",
     accent: "var(--ctp-green)",
-    tagline: "Rotate the board, spot the change",
+    tagline: "Mental rotation — has a planting moved?",
     threshold: 0.6,
     stages: [
       "180° · 3-4 pieces",
@@ -48,10 +49,9 @@ export const GAME_META: Record<GameId, GameMeta> = {
     },
   },
   flux: {
-    label: "Flux",
-    url: "games/flux.html",
+    label: "Meadow",
     accent: "var(--ctp-red)",
-    tagline: "Think fast, switch faster",
+    tagline: "Sort the harvest, withhold for pollinators",
     threshold: 0.8,
     stages: ["Relaxed · 2s", "Brisk · 1.5s", "Intense · 1.2s"],
     evidence: {
@@ -63,10 +63,9 @@ export const GAME_META: Record<GameId, GameMeta> = {
     },
   },
   lex: {
-    label: "Lex",
-    url: "games/lex.html",
+    label: "Grove",
     accent: "var(--ctp-blue)",
-    tagline: "Build your vocabulary",
+    tagline: "Wake dormant residents by recalling their names",
     threshold: 0.8,
     stages: ["Multiple choice", "Hinted cloze", "Free recall"],
     evidence: {
@@ -100,7 +99,6 @@ export interface HubState {
   sessionsToday: number;
   totalSessions: number;
   cards: HubCardState[];
-  dailyScore: number | null;
   pwa: {
     canInstall: boolean;
     notifications: "unsupported" | "default" | "granted" | "denied";
@@ -140,6 +138,17 @@ function renderStatsBar(
   return html;
 }
 
+function renderWalkCta(): string {
+  return `<a href="${WALK_URL}" class="walk-cta" data-walk-cta>
+    <span class="cycle-cta-icon">🌿</span>
+    <span class="cycle-cta-body">
+      <span class="cycle-cta-title">Tend the Hollow</span>
+      <span class="cycle-cta-sub">Grove · Bench · Meadow — one walk · ~3 min</span>
+    </span>
+    <span class="cycle-cta-play">Enter</span>
+  </a>`;
+}
+
 function renderRight(card: HubCardState): string {
   let html = `<button class="stage-chip readiness-${card.ready}" data-game="${card.game}">Stage ${String(card.stage)}</button>`;
   if (card.ready === "green") {
@@ -151,10 +160,10 @@ function renderRight(card: HubCardState): string {
   return html;
 }
 
-function renderCard(card: HubCardState, index: number): string {
+/** A read-only progress row for one zone — no navigation; the Walk is the only entry. */
+function renderZoneRow(card: HubCardState, index: number): string {
   const meta = GAME_META[card.game];
   const style = `--i:${String(index)};--accent:${meta.accent}`;
-
   const line1 =
     `<span class="game-icon">${GAME_ICONS[card.game]}</span>` +
     `<span class="game-name">${meta.label}</span>` +
@@ -162,48 +171,18 @@ function renderCard(card: HubCardState, index: number): string {
   const line2 = `<span class="game-tagline">${meta.tagline}</span>`;
   const line3 =
     card.stat === null ? "" : `<span class="game-stat">${card.stat}</span>`;
-  const inner = `<div class="game-card-top">${line1}</div>${line2}${line3}`;
-
-  return `<a href="${meta.url}" class="game-card" style="${style}"><span class="game-play">Play</span>${inner}</a>`;
+  return `<div class="game-card zone-row" data-game="${card.game}" style="${style}"><div class="game-card-top">${line1}</div>${line2}${line3}</div>`;
 }
 
 function renderFooter(totalSessions: number): string {
   if (totalSessions <= 0) {
     return "";
   }
-  return `<div class="hub-footer">${String(totalSessions)} session${totalSessions === 1 ? "" : "s"} completed</div>`;
+  return `<div class="hub-footer">${String(totalSessions)} session${totalSessions === 1 ? "" : "s"} tended</div>`;
 }
 
-function renderCycleCta(): string {
-  const icon = iconSvg(BRAIN_PATHS, { size: 32, stroke: "currentColor" });
-  return `<a href="${CYCLE_URL}" class="cycle-cta" data-cycle-cta>
-    <span class="cycle-cta-icon">${icon}</span>
-    <span class="cycle-cta-body">
-      <span class="cycle-cta-title">Start Cycle</span>
-      <span class="cycle-cta-sub">Lex → Crown → Flux · ~3 min</span>
-    </span>
-    <span class="cycle-cta-play">Play</span>
-  </a>`;
-}
-
-function renderDailyCta(dailyScore: number | null): string {
-  const done = dailyScore !== null;
-  const sub = done
-    ? `Done today · ${String(dailyScore)} pts · play again for fun`
-    : "Same trials all day · self-vs-self";
-  const playLabel = done ? "Replay" : "Play";
-  return `<a href="${DAILY_URL}" class="daily-cta${done ? " is-done" : ""}" data-daily-cta>
-    <span class="daily-cta-badge">${done ? "✓" : "★"}</span>
-    <span class="daily-cta-body">
-      <span class="daily-cta-title">Daily Challenge</span>
-      <span class="daily-cta-sub">${sub}</span>
-    </span>
-    <span class="daily-cta-play">${playLabel}</span>
-  </a>`;
-}
-
-function renderDrillHeader(): string {
-  return `<div class="hub-section-head">Drill · single game</div>`;
+function renderZonesHeader(): string {
+  return `<div class="hub-section-head">Your hollow</div>`;
 }
 
 export function renderHubHtml(state: HubState): string {
@@ -214,14 +193,13 @@ export function renderHubHtml(state: HubState): string {
     state.streakCap,
     state.freezesRemaining,
   );
-  html += renderDailyCta(state.dailyScore);
-  html += renderCycleCta();
-  html += renderDrillHeader();
+  html += renderWalkCta();
+  html += renderZonesHeader();
   html += `<div class="game-list">`;
   for (let i = 0; i < state.cards.length; i++) {
     const card = state.cards[i];
     if (card) {
-      html += renderCard(card, i);
+      html += renderZoneRow(card, i);
     }
   }
   html += "</div>";
@@ -260,7 +238,5 @@ export function isKnownGame(value: string): value is GameId {
 }
 
 export function isCompletableSession(value: string): boolean {
-  return (
-    value === CYCLE_COMPLETED || value === DAILY_COMPLETED || isKnownGame(value)
-  );
+  return value === WALK_COMPLETED || isKnownGame(value);
 }

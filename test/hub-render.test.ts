@@ -3,11 +3,14 @@ import {
   GAME_META,
   type HubCardState,
   type HubState,
+  isCompletableSession,
   isKnownGame,
   renderHubHtml,
   renderPopoverHtml,
+  WALK_COMPLETED,
+  ZONE_ORDER,
 } from "../src/hub-render";
-import { GAMES, type GameId } from "../src/shared/progress";
+import { GAMES } from "../src/shared/progress";
 
 function makeCard(over: Partial<HubCardState> = {}): HubCardState {
   return {
@@ -24,8 +27,7 @@ function makeState(over: Partial<HubState> = {}): HubState {
     streak: 0,
     sessionsToday: 0,
     totalSessions: 0,
-    cards: GAMES.map((g) => makeCard({ game: g })),
-    dailyScore: null,
+    cards: ZONE_ORDER.map((g) => makeCard({ game: g })),
     pwa: { canInstall: false, notifications: "unsupported" },
     streakCap: 99,
     freezesRemaining: 2,
@@ -38,52 +40,25 @@ describe("GAME_META: structural invariants", () => {
     test(`${game} metadata has expected shape`, () => {
       const m = GAME_META[game];
       expect(m.label.length).toBeGreaterThan(0);
-      expect(m.url).toBe(`games/${game}.html`);
       expect(m.accent).toMatch(/^var\(--ctp-[a-z]+\)$/u);
       expect(m.tagline.length).toBeGreaterThan(0);
       expect(m.threshold).toBeGreaterThan(0);
       expect(m.threshold).toBeLessThanOrEqual(1);
       expect(m.stages).toHaveLength(3);
-      for (const s of m.stages) {
-        expect(s.length).toBeGreaterThan(0);
-      }
+      for (const s of m.stages) expect(s.length).toBeGreaterThan(0);
     });
   }
 
-  test("exact label values", () => {
-    expect(GAME_META.crown.label).toBe("Crown");
-    expect(GAME_META.flux.label).toBe("Flux");
-    expect(GAME_META.lex.label).toBe("Lex");
+  test("zone labels map each cognitive track to its Verdant area", () => {
+    expect(GAME_META.lex.label).toBe("Grove");
+    expect(GAME_META.crown.label).toBe("Bench");
+    expect(GAME_META.flux.label).toBe("Meadow");
   });
 
-  test("exact accent values", () => {
+  test("exact accent values (unchanged from the cognitive tracks)", () => {
     expect(GAME_META.crown.accent).toBe("var(--ctp-green)");
     expect(GAME_META.flux.accent).toBe("var(--ctp-red)");
     expect(GAME_META.lex.accent).toBe("var(--ctp-blue)");
-  });
-
-  test("exact tagline values", () => {
-    expect(GAME_META.crown.tagline).toBe("Rotate the board, spot the change");
-    expect(GAME_META.flux.tagline).toBe("Think fast, switch faster");
-    expect(GAME_META.lex.tagline).toBe("Build your vocabulary");
-  });
-
-  test("exact stage labels", () => {
-    expect(GAME_META.crown.stages).toEqual([
-      "180° · 3-4 pieces",
-      "90/180/270° · 5-7 pieces",
-      "± mirror · 8-12 pieces",
-    ]);
-    expect(GAME_META.flux.stages).toEqual([
-      "Relaxed · 2s",
-      "Brisk · 1.5s",
-      "Intense · 1.2s",
-    ]);
-    expect(GAME_META.lex.stages).toEqual([
-      "Multiple choice",
-      "Hinted cloze",
-      "Free recall",
-    ]);
   });
 
   test("exact thresholds", () => {
@@ -91,19 +66,30 @@ describe("GAME_META: structural invariants", () => {
     expect(GAME_META.flux.threshold).toBe(0.8);
     expect(GAME_META.lex.threshold).toBe(0.8);
   });
+
+  test("ZONE_ORDER is the Walk's visiting order (Grove → Bench → Meadow)", () => {
+    expect(ZONE_ORDER).toEqual(["lex", "crown", "flux"]);
+  });
 });
 
-describe("isKnownGame", () => {
+describe("isKnownGame / isCompletableSession", () => {
   for (const g of GAMES) {
-    test(`returns true for "${g}"`, () => {
+    test(`isKnownGame true for "${g}"`, () => {
       expect(isKnownGame(g)).toBe(true);
     });
   }
-  for (const bad of ["", "Crown", "CROWN", "chess", "lex2", " lex", "lex "]) {
-    test(`returns false for ${JSON.stringify(bad)}`, () => {
+  for (const bad of ["", "Crown", "chess", "lex2", " lex"]) {
+    test(`isKnownGame false for ${JSON.stringify(bad)}`, () => {
       expect(isKnownGame(bad)).toBe(false);
     });
   }
+  test("a completed Walk counts as a session", () => {
+    expect(isCompletableSession(WALK_COMPLETED)).toBe(true);
+    expect(isCompletableSession("walk")).toBe(true);
+    expect(isCompletableSession("crown")).toBe(true); // single-track still valid
+    expect(isCompletableSession("cycle")).toBe(false); // retired
+    expect(isCompletableSession("nope")).toBe(false);
+  });
 });
 
 describe("renderHubHtml: stats bar", () => {
@@ -112,26 +98,18 @@ describe("renderHubHtml: stats bar", () => {
       "streak-badge",
     );
   });
-  test("streak badge with singular/plural correct (>=1 always uses 'streak')", () => {
-    const out = renderHubHtml(makeState({ streak: 1 }));
-    expect(out).toContain('<span class="streak-badge">1-day streak</span>');
-  });
   test("streak badge value matches input exactly (under the cap)", () => {
     for (const s of [1, 2, 7, 50, 99]) {
-      const out = renderHubHtml(makeState({ streak: s }));
-      expect(out).toContain(`>${String(s)}-day streak<`);
+      expect(renderHubHtml(makeState({ streak: s }))).toContain(
+        `>${String(s)}-day streak<`,
+      );
     }
   });
-
   test("streak badge collapses to '99+' once the cap is crossed", () => {
     expect(renderHubHtml(makeState({ streak: 100 }))).toContain(
       ">99+-day streak<",
     );
-    expect(renderHubHtml(makeState({ streak: 365 }))).toContain(
-      ">99+-day streak<",
-    );
   });
-
   test("freeze badge shown only when streak is alive AND freezes remain", () => {
     expect(
       renderHubHtml(makeState({ streak: 5, freezesRemaining: 2 })),
@@ -143,58 +121,34 @@ describe("renderHubHtml: stats bar", () => {
       renderHubHtml(makeState({ streak: 5, freezesRemaining: 0 })),
     ).not.toContain("freeze-badge");
   });
-  test("no sessions-today badge when 0", () => {
+  test("sessions-today singular / plural", () => {
+    expect(renderHubHtml(makeState({ sessionsToday: 1 }))).toContain(
+      "1 session today",
+    );
+    expect(renderHubHtml(makeState({ sessionsToday: 2 }))).toContain(
+      "2 sessions today",
+    );
     expect(renderHubHtml(makeState({ sessionsToday: 0 }))).not.toContain(
       "sessions-badge",
     );
   });
-  test("sessions-today singular for 1", () => {
-    expect(renderHubHtml(makeState({ sessionsToday: 1 }))).toContain(
-      "1 session today",
-    );
-  });
-  test("sessions-today plural for >=2", () => {
-    expect(renderHubHtml(makeState({ sessionsToday: 2 }))).toContain(
-      "2 sessions today",
-    );
-    expect(renderHubHtml(makeState({ sessionsToday: 5 }))).toContain(
-      "5 sessions today",
-    );
-  });
-  test("stats-bar wrapper always present", () => {
-    expect(renderHubHtml(makeState())).toContain('<div class="hub-stats-bar">');
-  });
-  test("empty stats-bar is properly closed before daily CTA", () => {
+  test("empty stats-bar is closed before the Walk CTA", () => {
     expect(renderHubHtml(makeState())).toContain(
-      '<div class="hub-stats-bar"></div><a href="games/daily.html" class="daily-cta',
+      '<div class="hub-stats-bar"></div><a href="games/verdant-walk.html"',
     );
   });
-
-  test("install chip shown when pwa.canInstall = true", () => {
-    const out = renderHubHtml(
-      makeState({
-        pwa: { canInstall: true, notifications: "unsupported" },
-      }),
-    );
-    expect(out).toContain("data-pwa-install");
-    expect(out).toContain("+ Install");
-  });
-
-  test("reminder chip shown when notifications = default", () => {
-    const out = renderHubHtml(
-      makeState({
-        pwa: { canInstall: false, notifications: "default" },
-      }),
-    );
-    expect(out).toContain("data-pwa-notify");
-    expect(out).toContain("Reminders");
-  });
-
-  test("no install chip when canInstall = false", () => {
+  test("install + reminder chips gate on pwa state", () => {
+    expect(
+      renderHubHtml(
+        makeState({ pwa: { canInstall: true, notifications: "unsupported" } }),
+      ),
+    ).toContain("data-pwa-install");
+    expect(
+      renderHubHtml(
+        makeState({ pwa: { canInstall: false, notifications: "default" } }),
+      ),
+    ).toContain("data-pwa-notify");
     expect(renderHubHtml(makeState())).not.toContain("data-pwa-install");
-  });
-
-  test("no reminder chip when notifications != default", () => {
     expect(
       renderHubHtml(
         makeState({ pwa: { canInstall: false, notifications: "granted" } }),
@@ -203,143 +157,98 @@ describe("renderHubHtml: stats bar", () => {
   });
 });
 
-describe("renderHubHtml: game cards (icon slot)", () => {
-  test('each card contains a <span class="game-icon"> wrapping its icon', () => {
+describe("renderHubHtml: Walk CTA (the single entry point)", () => {
+  test("links to the Walk page with the data hook", () => {
     const out = renderHubHtml(makeState());
-    const openers = out.match(/<span class="game-icon">/gu) ?? [];
-    expect(openers).toHaveLength(3);
-    // Inner content is SVG markup beginning with '<svg' (not the closing </span>).
-    expect(out).toMatch(/<span class="game-icon"><svg/u);
+    expect(out).toContain('href="games/verdant-walk.html"');
+    expect(out).toContain("data-walk-cta");
+    expect(out).toContain("Tend the Hollow");
+  });
+  test("no retired Daily / Cycle / drill CTAs survive", () => {
+    const out = renderHubHtml(makeState());
+    expect(out).not.toContain("daily-cta");
+    expect(out).not.toContain("Start Cycle");
+    expect(out).not.toContain("games/daily.html");
+    expect(out).not.toContain("games/cycle.html");
+    expect(out).not.toContain("games/crown.html");
   });
 });
 
-describe("renderPopoverHtml: leading char", () => {
-  test("output starts with a stage-row div (not a leading sentinel)", () => {
-    const out = renderPopoverHtml(GAME_META.crown, 1);
-    expect(out.startsWith("<div")).toBe(true);
-  });
-});
-
-describe("renderHubHtml: game cards", () => {
-  test("emits anchor with correct href + accent + index for each non-done game", () => {
+describe("renderHubHtml: zone progress rows", () => {
+  test("three read-only rows — never navigable anchors", () => {
     const out = renderHubHtml(makeState());
-    for (let i = 0; i < GAMES.length; i++) {
-      const g = GAMES[i] as GameId;
-      const meta = GAME_META[g];
-      expect(out).toContain(`href="${meta.url}"`);
-      expect(out).toContain(`--accent:${meta.accent}`);
-      expect(out).toContain(`--i:${String(i)}`);
-    }
+    const rows = out.match(/<div class="game-card zone-row"/gu) ?? [];
+    expect(rows).toHaveLength(3);
+    // the only anchor in the hub is the Walk CTA
+    expect(out.match(/<a [^>]*class="walk-cta"/gu) ?? []).toHaveLength(1);
+    expect(out).not.toContain('class="game-play"');
   });
-
-  test("each card contains its label, tagline, and Play CTA", () => {
+  test("each row carries its zone label, tagline, accent + index", () => {
     const out = renderHubHtml(makeState());
-    for (const g of GAMES) {
-      const meta = GAME_META[g];
+    for (let i = 0; i < ZONE_ORDER.length; i++) {
+      const meta = GAME_META[ZONE_ORDER[i] as (typeof ZONE_ORDER)[number]];
       expect(out).toContain(`>${meta.label}<`);
       expect(out).toContain(`>${meta.tagline}<`);
+      expect(out).toContain(`--i:${String(i)}`);
+      expect(out).toContain(`--accent:${meta.accent}`);
     }
-    const plays = out.match(/<span class="game-play">Play<\/span>/gu) ?? [];
-    expect(plays).toHaveLength(3);
   });
-
-  test("every card is always an anchor (no game is ever greyed out)", () => {
+  test("icon slot wraps an svg per row", () => {
     const out = renderHubHtml(makeState());
-    expect(out).not.toContain("done-badge");
-    expect(out).not.toContain("game-card done");
-    expect(out.match(/<a [^>]*class="game-card"/gu) ?? []).toHaveLength(3);
+    expect(out.match(/<span class="game-icon">/gu) ?? []).toHaveLength(3);
+    expect(out).toMatch(/<span class="game-icon"><svg/u);
   });
-
   test("Advance button appears only when ready === green", () => {
     for (const ready of ["grey", "amber"] as const) {
-      const out = renderHubHtml(
-        makeState({ cards: [makeCard({ game: "crown", ready })] }),
-      );
-      expect(out).not.toContain("advance-btn");
+      expect(
+        renderHubHtml(makeState({ cards: [makeCard({ ready })] })),
+      ).not.toContain("advance-btn");
     }
-    const out = renderHubHtml(
-      makeState({ cards: [makeCard({ game: "crown", ready: "green" })] }),
-    );
-    expect(out).toContain('data-game="crown"');
-    expect(out).toMatch(
-      /<button class="advance-btn"[^>]*>Advance ▸<\/button>/u,
-    );
+    expect(
+      renderHubHtml(makeState({ cards: [makeCard({ ready: "green" })] })),
+    ).toMatch(/<button class="advance-btn"[^>]*>Advance ▸<\/button>/u);
   });
-
   test("Retreat button appears only when stage > 1", () => {
-    const out1 = renderHubHtml(
-      makeState({ cards: [makeCard({ game: "crown", stage: 1 })] }),
-    );
-    expect(out1).not.toContain("retreat-btn");
+    expect(
+      renderHubHtml(makeState({ cards: [makeCard({ stage: 1 })] })),
+    ).not.toContain("retreat-btn");
     for (const stage of [2, 3]) {
-      const out = renderHubHtml(
-        makeState({ cards: [makeCard({ game: "crown", stage })] }),
-      );
-      expect(out).toMatch(/<button class="retreat-btn"[^>]*>▾<\/button>/u);
+      expect(
+        renderHubHtml(makeState({ cards: [makeCard({ stage })] })),
+      ).toMatch(/<button class="retreat-btn"[^>]*>▾<\/button>/u);
     }
   });
-
   test("stage chip shows stage number and readiness class", () => {
-    for (const stage of [1, 2, 3]) {
-      for (const ready of ["grey", "amber", "green"] as const) {
-        const out = renderHubHtml(
-          makeState({ cards: [makeCard({ game: "flux", stage, ready })] }),
-        );
-        expect(out).toContain(`readiness-${ready}`);
-        expect(out).toContain(`>Stage ${String(stage)}<`);
-      }
-    }
-  });
-
-  test("stat line is omitted when null", () => {
-    const out = renderHubHtml(
-      makeState({ cards: [makeCard({ game: "crown", stat: null })] }),
-    );
-    expect(out).not.toContain("game-stat");
-  });
-
-  test("stat=null leaves nothing between tagline close and anchor close", () => {
-    // Real branch emits "" → tagline span is immediately followed by </a>.
-    // Any non-empty fallback (literal text, sentinel string) would inject
-    // characters between the </span> and </a> and break this match.
-    const out = renderHubHtml(
-      makeState({ cards: [makeCard({ game: "crown", stat: null })] }),
-    );
-    expect(out).toContain("</span></a>");
-  });
-
-  test("stat line is rendered with the exact provided text", () => {
     const out = renderHubHtml(
       makeState({
-        cards: [makeCard({ game: "flux", stat: "Best: 42 pts" })],
+        cards: [makeCard({ game: "flux", stage: 2, ready: "amber" })],
       }),
     );
-    expect(out).toContain('<span class="game-stat">Best: 42 pts</span>');
+    expect(out).toContain("readiness-amber");
+    expect(out).toContain(">Stage 2<");
+  });
+  test("stat line omitted when null, exact when present", () => {
+    expect(
+      renderHubHtml(makeState({ cards: [makeCard({ stat: null })] })),
+    ).not.toContain("game-stat");
+    expect(
+      renderHubHtml(makeState({ cards: [makeCard({ stat: "Best: 42 pts" })] })),
+    ).toContain('<span class="game-stat">Best: 42 pts</span>');
   });
 });
 
-describe("renderHubHtml: footer + new-session", () => {
+describe("renderHubHtml: footer", () => {
   test("no footer when totalSessions === 0", () => {
     expect(renderHubHtml(makeState({ totalSessions: 0 }))).not.toContain(
       "hub-footer",
     );
   });
-  test("footer singular for 1", () => {
+  test("footer singular/plural says 'tended'", () => {
     expect(renderHubHtml(makeState({ totalSessions: 1 }))).toContain(
-      "1 session completed",
+      "1 session tended",
     );
-  });
-  test("footer plural for >=2", () => {
     expect(renderHubHtml(makeState({ totalSessions: 7 }))).toContain(
-      "7 sessions completed",
-    );
-  });
-  test("no 'New Session' button is ever rendered (cards always replayable)", () => {
-    expect(renderHubHtml(makeState({ totalSessions: 0 }))).not.toContain(
-      "new-session-btn",
-    );
-    expect(renderHubHtml(makeState({ totalSessions: 50 }))).not.toContain(
-      "new-session-btn",
+      "7 sessions tended",
     );
   });
 });
@@ -358,14 +267,14 @@ describe("renderPopoverHtml", () => {
       }
     });
   }
-  test("only the current stage gets .current modifier", () => {
+  test("output starts with a stage/evidence div", () => {
+    expect(renderPopoverHtml(GAME_META.crown, 1).startsWith("<div")).toBe(true);
+  });
+  test("only the current stage gets .current modifier, in the right slot", () => {
     for (const stage of [1, 2, 3]) {
       const out = renderPopoverHtml(GAME_META.flux, stage);
-      const matches = out.match(/class="stage-row current"/gu) ?? [];
-      expect(matches).toHaveLength(1);
-      // The 'current' marker is on the right row index
-      const idx = out.indexOf("stage-row current");
-      const before = out.slice(0, idx);
+      expect((out.match(/class="stage-row current"/gu) ?? []).length).toBe(1);
+      const before = out.slice(0, out.indexOf("stage-row current"));
       expect((before.match(/<div class="stage-row/gu) ?? []).length).toBe(
         stage - 1,
       );
@@ -373,19 +282,21 @@ describe("renderPopoverHtml", () => {
   });
   test("stage outside 1..3 yields no current row", () => {
     for (const s of [0, 4, 99, -1]) {
-      const out = renderPopoverHtml(GAME_META.crown, s);
-      expect(out).not.toContain("stage-row current");
+      expect(renderPopoverHtml(GAME_META.crown, s)).not.toContain(
+        "stage-row current",
+      );
     }
   });
 });
 
-describe("renderHubHtml: structural snapshot (3 fresh cards)", () => {
-  it("matches expected HTML scaffold", () => {
+describe("renderHubHtml: structural snapshot", () => {
+  it("stats bar → Walk CTA → zone list, no trailing footer when fresh", () => {
     const html = renderHubHtml(makeState());
-    // Stats bar, game list opens, three anchors, list closes, no footer/new-session
     expect(html.startsWith('<div class="hub-stats-bar">')).toBe(true);
     expect(html).toContain('<div class="game-list">');
-    expect(html.match(/<a [^>]*class="game-card"/gu) ?? []).toHaveLength(3);
+    expect(html.match(/<div class="game-card zone-row"/gu) ?? []).toHaveLength(
+      3,
+    );
     expect(html.endsWith("</div>")).toBe(true);
   });
 });

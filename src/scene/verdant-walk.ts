@@ -11,6 +11,8 @@ import {
   type VocabDeck,
 } from "../content/deck";
 import { loadVocabDeck } from "../content/load-deck";
+import { BASE } from "../shared/base";
+import { initTheme } from "../shared/theme";
 
 const FALLBACK: RawEntry[] = [
   { word: "fugl", pos: "noun", definition: "a bird", example: "" },
@@ -23,6 +25,7 @@ if (!host) throw new Error("missing #walk");
 const walkHost = host;
 
 async function boot(): Promise<void> {
+  initTheme(); // honour the theme chosen on the hub
   // pixi loads lazily: scene-router (→ zone blocks → pixi-stage → pixi) is
   // pulled in only here, so the render layer code-splits out of the boot shell.
   const { runWalk } = await import("./scene-router");
@@ -39,6 +42,14 @@ async function boot(): Promise<void> {
     groveTrials: 2,
     benchTrials: 2,
     meadowTrials: 6,
+    onDone: () => {
+      // returning to the hub with ?completed=walk counts one tended session
+      const home = document.getElementById("walk-home");
+      if (home instanceof HTMLAnchorElement) {
+        home.href = `${BASE}?completed=walk`;
+        home.hidden = false;
+      }
+    },
   });
 }
 

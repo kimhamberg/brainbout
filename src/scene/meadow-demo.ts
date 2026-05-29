@@ -8,11 +8,12 @@
  *                 switch is guaranteed); ?ms=<millis> → shorter time bound.
  */
 
-export {}; // module scope (the only imports are dynamic, inside the IIFE below)
+import { initTheme } from "../shared/theme";
 
 const root = document.getElementById("meadow");
 if (!root) throw new Error("missing #meadow");
 const host = root;
+initTheme(); // honour the theme chosen on the hub
 
 const params = new URLSearchParams(location.search);
 const n = params.get("n");

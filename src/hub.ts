@@ -7,13 +7,13 @@ import {
   isKnownGame,
   renderHubHtml,
   renderPopoverHtml,
+  ZONE_ORDER,
 } from "./hub-render";
 import { getMasteredCountByPrefix } from "./shared/fsrs";
 import { mountHubIcon } from "./shared/icons";
 import {
   completeSession,
   freezesRemainingThisWeek,
-  GAMES,
   type GameId,
   getBest,
   getDaily,
@@ -82,7 +82,7 @@ function getGameStat(game: GameId): string | null {
 
 function buildCards(): HubCardState[] {
   const cards: HubCardState[] = [];
-  for (const game of GAMES) {
+  for (const game of ZONE_ORDER) {
     cards.push({
       game,
       stage: getStage(game),
@@ -119,7 +119,6 @@ export function init(): void {
       sessionsToday: getSessionsToday(),
       totalSessions: getTotalSessions(),
       cards: buildCards(),
-      dailyScore: getDaily(today),
       pwa: {
         canInstall: canInstall(),
         notifications: notificationStatus(),
@@ -222,10 +221,7 @@ export function init(): void {
       return;
     }
 
-    const dailyCta = target.closest<HTMLAnchorElement>("a.daily-cta");
-    const cycleCta = target.closest<HTMLAnchorElement>("a.cycle-cta");
-    const card = target.closest<HTMLAnchorElement>("a.game-card");
-    const link = dailyCta ?? cycleCta ?? card;
+    const link = target.closest<HTMLAnchorElement>("a.walk-cta");
     if (!link) {
       return;
     }

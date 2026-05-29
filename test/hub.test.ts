@@ -89,32 +89,33 @@ describe("hub: basic render", () => {
     init();
   });
 
-  test("renders 3 game cards", () => {
-    expect(document.querySelectorAll("#hub a.game-card")).toHaveLength(3);
+  test("renders 3 read-only zone rows (no navigable game cards)", () => {
+    expect(document.querySelectorAll("#hub .game-card.zone-row")).toHaveLength(
+      3,
+    );
+    expect(document.querySelectorAll("#hub a.game-card")).toHaveLength(0);
   });
 
-  test("cards have correct relative hrefs (no BASE drift)", () => {
-    const cards =
-      document.querySelectorAll<HTMLAnchorElement>("#hub a.game-card");
-    expect(cards[0]?.getAttribute("href")).toBe("games/crown.html");
-    expect(cards[1]?.getAttribute("href")).toBe("games/flux.html");
-    expect(cards[2]?.getAttribute("href")).toBe("games/lex.html");
+  test("the single Walk CTA points at the Walk page", () => {
+    const cta = document.querySelector<HTMLAnchorElement>("#hub a.walk-cta");
+    expect(cta?.getAttribute("href")).toBe("games/verdant-walk.html");
+    expect(cta?.textContent).toMatch(/Tend the Hollow/u);
   });
 
-  test("renders game labels in fixed order", () => {
+  test("renders zone labels in Walk order (Grove → Bench → Meadow)", () => {
     const labels = Array.from(
       document.querySelectorAll<HTMLElement>(".game-name"),
     ).map((n) => n.textContent);
-    expect(labels).toEqual(["Crown", "Flux", "Lex"]);
+    expect(labels).toEqual(["Grove", "Bench", "Meadow"]);
   });
 
-  test("stage chip rendered per non-done game", () => {
+  test("stage chip rendered per zone in Walk order", () => {
     const chips = document.querySelectorAll<HTMLButtonElement>(".stage-chip");
     expect(chips).toHaveLength(3);
     expect(Array.from(chips).map((c) => c.dataset.game)).toEqual([
+      "lex",
       "crown",
       "flux",
-      "lex",
     ]);
   });
 
@@ -270,28 +271,27 @@ const navCalls: string[] = [];
   });
 }
 
-describe("hub: card click triggers nav overlay + fallback", () => {
+describe("hub: Walk CTA click triggers nav overlay + fallback", () => {
+  const WALK = "games/verdant-walk.html";
+  const cta = (): HTMLAnchorElement | null =>
+    document.querySelector<HTMLAnchorElement>("a.walk-cta");
+
   beforeEach(() => {
     resetEnv();
     init();
     navCalls.length = 0;
   });
 
-  test("anchor click is prevent-defaulted and marks card pressed", () => {
-    const card = document.querySelector<HTMLAnchorElement>(
-      'a.game-card[href$="crown.html"]',
-    );
+  test("anchor click is prevent-defaulted and marks the CTA pressed", () => {
+    const link = cta();
     const ev = new MouseEvent("click", { bubbles: true, cancelable: true });
-    card?.dispatchEvent(ev);
+    link?.dispatchEvent(ev);
     expect(ev.defaultPrevented).toBe(true);
-    expect(card?.classList.contains("pressed")).toBe(true);
+    expect(link?.classList.contains("pressed")).toBe(true);
   });
 
   test("overlay element is added to body after press delay", async () => {
-    const card = document.querySelector<HTMLAnchorElement>(
-      'a.game-card[href$="flux.html"]',
-    );
-    card?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    cta()?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await new Promise((r) => setTimeout(r, 120));
     expect(document.querySelector(".page-transition")).not.toBeNull();
     expect(document.querySelector(".app")?.classList.contains("exiting")).toBe(
@@ -299,63 +299,48 @@ describe("hub: card click triggers nav overlay + fallback", () => {
     );
   });
 
-  test("animationend → navigates to the card's exact href, once", async () => {
-    const card = document.querySelector<HTMLAnchorElement>(
-      'a.game-card[href$="lex.html"]',
-    );
-    card?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  test("animationend → navigates to the Walk, once", async () => {
+    cta()?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await new Promise((r) => setTimeout(r, 120));
-    const overlay = document.querySelector<HTMLElement>(".page-transition");
-    overlay?.dispatchEvent(new Event("animationend", { bubbles: true }));
-    expect(navCalls).toEqual(["games/lex.html"]);
+    document
+      .querySelector<HTMLElement>(".page-transition")
+      ?.dispatchEvent(new Event("animationend", { bubbles: true }));
+    expect(navCalls).toEqual([WALK]);
   });
 
   test("fallback timer navigates when animationend never fires, once", async () => {
-    const card = document.querySelector<HTMLAnchorElement>(
-      'a.game-card[href$="crown.html"]',
-    );
-    card?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    cta()?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await new Promise((r) => setTimeout(r, 750));
-    expect(navCalls).toEqual(["games/crown.html"]);
+    expect(navCalls).toEqual([WALK]);
   });
 
   test("nav fires only once even if animationend + fallback both arrive", async () => {
-    const card = document.querySelector<HTMLAnchorElement>(
-      'a.game-card[href$="flux.html"]',
-    );
-    card?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    cta()?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await new Promise((r) => setTimeout(r, 120));
-    const overlay = document.querySelector<HTMLElement>(".page-transition");
-    overlay?.dispatchEvent(new Event("animationend", { bubbles: true }));
-    // First nav already fired. Now let the fallback timer also fire.
+    document
+      .querySelector<HTMLElement>(".page-transition")
+      ?.dispatchEvent(new Event("animationend", { bubbles: true }));
     await new Promise((r) => setTimeout(r, 700));
-    expect(navCalls).toEqual(["games/flux.html"]);
+    expect(navCalls).toEqual([WALK]);
   });
 
   test("nav fires only once even if animationend dispatched multiple times", async () => {
-    const card = document.querySelector<HTMLAnchorElement>(
-      'a.game-card[href$="crown.html"]',
-    );
-    card?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    cta()?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await new Promise((r) => setTimeout(r, 120));
     const overlay = document.querySelector<HTMLElement>(".page-transition");
     overlay?.dispatchEvent(new Event("animationend", { bubbles: true }));
     overlay?.dispatchEvent(new Event("animationend", { bubbles: true }));
     overlay?.dispatchEvent(new Event("animationend", { bubbles: true }));
     expect(navCalls).toHaveLength(1);
-    expect(navCalls[0]).toBe("games/crown.html");
+    expect(navCalls[0]).toBe(WALK);
   });
 
   test("nav does NOT fire if a non-animationend event is dispatched on overlay", async () => {
-    const card = document.querySelector<HTMLAnchorElement>(
-      'a.game-card[href$="lex.html"]',
-    );
-    card?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    cta()?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await new Promise((r) => setTimeout(r, 120));
     const overlay = document.querySelector<HTMLElement>(".page-transition");
     overlay?.dispatchEvent(new Event("transitionend", { bubbles: true }));
     overlay?.dispatchEvent(new Event("animationstart", { bubbles: true }));
-    // Neither should have triggered nav — only animationend or the fallback timer should.
     expect(navCalls).toEqual([]);
   });
 });
@@ -375,20 +360,31 @@ describe("hub: ?completed= bumps the session counter", () => {
     expect(localStorage.getItem("brainbout:total-sessions")).toBe("1");
   });
 
-  test("all 3 cards remain replayable anchors (no done state)", () => {
-    expect(document.querySelectorAll("#hub a.game-card")).toHaveLength(3);
+  test("3 zone rows remain, none in a done state", () => {
+    expect(document.querySelectorAll("#hub .game-card.zone-row")).toHaveLength(
+      3,
+    );
     expect(document.querySelectorAll("#hub .game-card.done")).toHaveLength(0);
     expect(document.querySelector(".done-badge")).toBeNull();
   });
 
-  test("footer shows total sessions completed", () => {
+  test("footer shows total sessions tended", () => {
     expect(document.querySelector(".hub-footer")?.textContent).toMatch(
-      /1 session completed/u,
+      /1 session tended/u,
     );
   });
+});
 
-  test("no 'New Session' button is rendered", () => {
-    expect(document.querySelector(".new-session-btn")).toBeNull();
+describe("hub: a completed Walk bumps the session counter", () => {
+  beforeEach(() => {
+    resetEnv();
+    window.location.search = "?completed=walk";
+    init();
+  });
+
+  test("Walk completion increments total-sessions and cleans the URL", () => {
+    expect(localStorage.getItem("brainbout:total-sessions")).toBe("1");
+    expect(window.location.search).toBe("");
   });
 });
 
@@ -403,8 +399,10 @@ describe("hub: bogus ?completed= value is ignored", () => {
     expect(localStorage.getItem("brainbout:total-sessions")).toBeNull();
   });
 
-  test("all 3 cards remain anchors", () => {
-    expect(document.querySelectorAll("#hub a.game-card")).toHaveLength(3);
+  test("3 zone rows still render", () => {
+    expect(document.querySelectorAll("#hub .game-card.zone-row")).toHaveLength(
+      3,
+    );
   });
 });
 
@@ -525,27 +523,27 @@ describe("hub: badges + per-game stats", () => {
 
   test("footer shows total sessions", () => {
     expect(document.querySelector(".hub-footer")?.textContent).toMatch(
-      /7 sessions completed/u,
+      /7 sessions tended/u,
     );
   });
 
   test("crown stat: best score", () => {
     expect(
-      document.querySelector('a.game-card[href$="crown.html"] .game-stat')
+      document.querySelector('.zone-row[data-game="crown"] .game-stat')
         ?.textContent,
     ).toMatch(/Best: 120 pts/u);
   });
 
   test("flux stat: best score", () => {
     expect(
-      document.querySelector('a.game-card[href$="flux.html"] .game-stat')
+      document.querySelector('.zone-row[data-game="flux"] .game-stat')
         ?.textContent,
     ).toMatch(/Best: 42 pts/u);
   });
 
   test("lex stat: mastered word count", () => {
     expect(
-      document.querySelector('a.game-card[href$="lex.html"] .game-stat')
+      document.querySelector('.zone-row[data-game="lex"] .game-stat')
         ?.textContent,
     ).toMatch(/2 words mastered/u);
   });
@@ -560,7 +558,7 @@ describe("hub: singular vs plural game-stat wording", () => {
     localStorage.setItem("brainbout:best:crown", "1");
     init();
     const stat = document.querySelector(
-      'a.game-card[href$="crown.html"] .game-stat',
+      '.zone-row[data-game="crown"] .game-stat',
     )?.textContent;
     expect(stat).toBe("Best: 1 pts");
   });
@@ -579,7 +577,7 @@ describe("hub: singular vs plural game-stat wording", () => {
     );
     init();
     const stat = document.querySelector(
-      'a.game-card[href$="lex.html"] .game-stat',
+      '.zone-row[data-game="lex"] .game-stat',
     )?.textContent;
     expect(stat).toBe("1 word mastered");
   });
@@ -596,7 +594,7 @@ describe("hub: singular vs plural game-stat wording", () => {
     );
     init();
     const stat = document.querySelector(
-      'a.game-card[href$="crown.html"] .game-stat',
+      '.zone-row[data-game="crown"] .game-stat',
     )?.textContent;
     expect(stat).toBe("Best: 120 pts · 2 classes mastered");
   });
@@ -608,7 +606,7 @@ describe("hub: singular vs plural game-stat wording", () => {
     );
     init();
     const stat = document.querySelector(
-      'a.game-card[href$="crown.html"] .game-stat',
+      '.zone-row[data-game="crown"] .game-stat',
     )?.textContent;
     expect(stat).toBe("1 class mastered");
   });
@@ -618,7 +616,7 @@ describe("hub: singular vs plural game-stat wording", () => {
     localStorage.setItem("brainbout:flux:color", JSON.stringify({ s: 45 }));
     init();
     const stat = document.querySelector(
-      'a.game-card[href$="flux.html"] .game-stat',
+      '.zone-row[data-game="flux"] .game-stat',
     )?.textContent;
     expect(stat).toBe("Best: 88 pts · 1 rule mastered");
   });
@@ -793,7 +791,7 @@ describe("hub: ?completed= history cleanup passes empty title", () => {
   });
 });
 
-describe("hub: card click sets overlay accent + .app exiting", () => {
+describe("hub: Walk CTA click sets overlay accent + .app exiting", () => {
   beforeEach(() => {
     resetEnv();
     init();
@@ -802,7 +800,7 @@ describe("hub: card click sets overlay accent + .app exiting", () => {
 
   test("after press delay, .app gains 'exiting' class", async () => {
     document
-      .querySelector<HTMLAnchorElement>('a.game-card[href$="crown.html"]')
+      .querySelector<HTMLAnchorElement>("a.walk-cta")
       ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await new Promise((r) => setTimeout(r, 120));
     expect(document.querySelector(".app")?.classList.contains("exiting")).toBe(
@@ -810,14 +808,14 @@ describe("hub: card click sets overlay accent + .app exiting", () => {
     );
   });
 
-  test("overlay carries --transition-color from the card's --accent", async () => {
+  test("overlay --transition-color falls back to mauve (the CTA carries no accent)", async () => {
     document
-      .querySelector<HTMLAnchorElement>('a.game-card[href$="flux.html"]')
+      .querySelector<HTMLAnchorElement>("a.walk-cta")
       ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await new Promise((r) => setTimeout(r, 120));
     const overlay = document.querySelector<HTMLElement>(".page-transition");
     expect(overlay?.style.getPropertyValue("--transition-color")).toBe(
-      "var(--ctp-red)",
+      "var(--ctp-mauve)",
     );
   });
 });
@@ -938,26 +936,30 @@ describe("hub: defensive click paths", () => {
     expect(ev.defaultPrevented).toBe(false);
   });
 
-  test("click on a card with empty href bails out (no overlay, no pressed)", async () => {
-    const card = document.querySelector<HTMLAnchorElement>(
-      'a.game-card[href$="flux.html"]',
-    );
-    card?.setAttribute("href", "");
-    card?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  test("clicking a read-only zone row never navigates", async () => {
+    document
+      .querySelector<HTMLElement>('.zone-row[data-game="flux"]')
+      ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await new Promise((r) => setTimeout(r, 120));
     expect(document.querySelector(".page-transition")).toBeNull();
-    expect(card?.classList.contains("pressed")).toBe(false);
   });
 
-  test("click on a card with no href attribute (getAttribute=null) bails out", async () => {
-    const card = document.querySelector<HTMLAnchorElement>(
-      'a.game-card[href$="flux.html"]',
-    );
-    card?.removeAttribute("href");
-    card?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  test("Walk CTA with empty href bails out (no overlay, no pressed)", async () => {
+    const cta = document.querySelector<HTMLAnchorElement>("a.walk-cta");
+    cta?.setAttribute("href", "");
+    cta?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await new Promise((r) => setTimeout(r, 120));
     expect(document.querySelector(".page-transition")).toBeNull();
-    expect(card?.classList.contains("pressed")).toBe(false);
+    expect(cta?.classList.contains("pressed")).toBe(false);
+  });
+
+  test("Walk CTA with no href attribute bails out", async () => {
+    const cta = document.querySelector<HTMLAnchorElement>("a.walk-cta");
+    cta?.removeAttribute("href");
+    cta?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 120));
+    expect(document.querySelector(".page-transition")).toBeNull();
+    expect(cta?.classList.contains("pressed")).toBe(false);
   });
 });
 

@@ -185,7 +185,8 @@
   margin-bottom: 1rem;
 }
 
-.cycle-cta {
+.cycle-cta,
+.walk-cta {
   display: flex;
   gap: 1rem;
   align-items: center;

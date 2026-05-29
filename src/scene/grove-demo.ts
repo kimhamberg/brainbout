@@ -13,6 +13,7 @@ import {
 } from "../content/deck";
 import { loadVocabDeck } from "../content/load-deck";
 import type { BlockHandle } from "../engine/block";
+import { initTheme } from "../shared/theme";
 
 // pixi loads lazily: createGroveBlock (→ pixi-stage → pixi) is pulled in via a
 // dynamic import in boot(), so the render layer code-splits out of the shell.
@@ -60,6 +61,7 @@ function start(deck: VocabDeck, stage: number): void {
 }
 
 async function boot(): Promise<void> {
+  initTheme();
   createGroveBlock = (await import("./zones/grove-block")).createGroveBlock;
   let deck: VocabDeck;
   try {

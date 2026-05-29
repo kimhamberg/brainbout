@@ -11,6 +11,9 @@ import {
   type RawEntry,
   type VocabDeck,
 } from "../content/deck";
+import { initTheme } from "../shared/theme";
+
+initTheme(); // honour the theme chosen on the hub
 
 // A small spread across all four kingdoms (noun→FLORA, verb→FAUNA,
 // adj/adv→MODIFIER, function-words→STRUCTURE), incl. æøå.

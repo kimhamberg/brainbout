@@ -2,12 +2,10 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 const PAGES: Array<{ name: string; url: string; ready: string }> = [
-  { name: "hub", url: "/", ready: "a.game-card" },
-  { name: "crown", url: "/games/crown.html", ready: ".cg-wrap" },
-  { name: "flux", url: "/games/flux.html", ready: ".flux-btn" },
-  { name: "lex", url: "/games/lex.html", ready: ".xw-grid" },
-  { name: "cycle", url: "/games/cycle.html", ready: ".cycle-stepper" },
-  { name: "daily", url: "/games/daily.html", ready: ".cycle-stepper" },
+  { name: "hub", url: "/", ready: "a.walk-cta" },
+  { name: "walk", url: "/games/verdant-walk.html", ready: "#grove-controls" },
+  { name: "grove", url: "/games/verdant-grove.html", ready: "#grove-options" },
+  { name: "meadow", url: "/games/verdant-meadow.html", ready: ".meadow-btns" },
 ];
 
 for (const { name, url, ready } of PAGES) {

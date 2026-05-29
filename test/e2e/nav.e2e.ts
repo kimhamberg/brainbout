@@ -1,8 +1,7 @@
 import { expect, type Page, test } from "@playwright/test";
 
 /**
- * Hook console + page errors and failing requests; flush via `expectClean(page)`
- * inside each test. Anything goes wrong → the test fails with context.
+ * Hook console + page errors and failing requests; flush via `expectClean`.
  */
 function attachErrorTrap(page: Page): {
   consoleErrors: string[];
@@ -19,7 +18,6 @@ function attachErrorTrap(page: Page): {
     pageErrors.push(err.message);
   });
   page.on("requestfailed", (req) => {
-    // Ignore well-known noisy aborts (e.g., font preconnect)
     if (req.failure()?.errorText === "net::ERR_ABORTED") return;
     failedRequests.push(`${req.method()} ${req.url()}`);
   });
@@ -36,19 +34,36 @@ function expectClean(t: {
   expect(t.failedRequests, "failed network requests").toEqual([]);
 }
 
-test.describe("hub", () => {
-  test("renders three game cards with correct hrefs", async ({ page }) => {
+test.describe("hub (Verdant home)", () => {
+  test("shows the Walk CTA + three read-only zone rows; no retired surfaces", async ({
+    page,
+  }) => {
     const trap = attachErrorTrap(page);
     await page.goto("/");
-    const cards = page.locator("a.game-card");
-    await expect(cards).toHaveCount(3);
-    await expect(cards.nth(0)).toHaveAttribute("href", /games\/crown\.html$/u);
-    await expect(cards.nth(1)).toHaveAttribute("href", /games\/flux\.html$/u);
-    await expect(cards.nth(2)).toHaveAttribute("href", /games\/lex\.html$/u);
+
+    const cta = page.locator("a.walk-cta");
+    await expect(cta).toBeVisible();
+    await expect(cta).toHaveAttribute("href", /games\/verdant-walk\.html$/u);
+    await expect(cta).toContainText(/Tend the Hollow/u);
+
+    await expect(page.locator(".game-card.zone-row")).toHaveCount(3);
+    await expect(page.locator("a.game-card")).toHaveCount(0); // rows are read-only
+    await expect(page.locator("a.daily-cta, a.cycle-cta")).toHaveCount(0);
     expectClean(trap);
   });
 
-  test("theme toggle persists across navigation", async ({ page }) => {
+  test("a stage chip opens its evidence popover", async ({ page }) => {
+    const trap = attachErrorTrap(page);
+    await page.goto("/");
+    await page.locator('.stage-chip[data-game="lex"]').click();
+    await expect(page.locator(".stage-popover")).toBeVisible();
+    await expect(page.locator(".stage-popover .stage-row")).toHaveCount(3);
+    expectClean(trap);
+  });
+
+  test("theme toggle persists across navigation to the Walk", async ({
+    page,
+  }) => {
     const trap = attachErrorTrap(page);
     await page.goto("/");
     const initial = await page.evaluate(
@@ -59,137 +74,37 @@ test.describe("hub", () => {
       () => document.documentElement.dataset.theme,
     );
     expect(toggled).not.toBe(initial);
-    await page.goto("/games/crown.html");
-    const onGame = await page.evaluate(
+    await page.goto("/games/verdant-walk.html");
+    const onWalk = await page.evaluate(
       () => document.documentElement.dataset.theme,
     );
-    expect(onGame).toBe(toggled);
+    expect(onWalk).toBe(toggled);
     expectClean(trap);
   });
 });
 
-for (const game of ["crown", "flux", "lex"] as const) {
-  test(`hub → ${game} navigates and loads`, async ({ page }) => {
-    const trap = attachErrorTrap(page);
-    await page.goto("/");
-    await page.locator(`a.game-card[href$="${game}.html"]`).click();
-    await page.waitForURL(new RegExp(`games/${game}\\.html$`, "u"), {
-      timeout: 5000,
-    });
-    await expect(page).toHaveTitle(new RegExp(game, "iu"));
-    await expect(page.locator("#game")).toBeVisible();
-    expectClean(trap);
-  });
-}
-
-test("back navigation returns to hub", async ({ page }) => {
+test("hub → Walk navigates, mounts the first zone, then returns home", async ({
+  page,
+}) => {
   const trap = attachErrorTrap(page);
   await page.goto("/");
-  await page.locator('a.game-card[href$="flux.html"]').click();
-  await page.waitForURL(/games\/flux\.html$/u, { timeout: 5000 });
+  await page.locator("a.walk-cta").click();
+  await page.waitForURL(/games\/verdant-walk\.html$/u, { timeout: 5000 });
+  // the Grove leg mounts (its probe is published once the first resident shows)
+  await page.waitForFunction(
+    () =>
+      !!(window as unknown as { __grove?: { answer?: string } }).__grove
+        ?.answer,
+    { timeout: 15_000 },
+  );
   await page.goBack();
-  await expect(page.locator("a.game-card")).toHaveCount(3);
+  await expect(page.locator("a.walk-cta")).toBeVisible();
   expectClean(trap);
 });
 
-test("game pages load directly (deep link)", async ({ page }) => {
+test("the Walk deep-links and mounts directly", async ({ page }) => {
   const trap = attachErrorTrap(page);
-  for (const game of ["crown", "flux", "lex"] as const) {
-    await page.goto(`/games/${game}.html`);
-    await expect(page).toHaveTitle(new RegExp(game, "iu"));
-    await expect(page.locator("#game")).toBeVisible();
-  }
+  await page.goto("/games/verdant-walk.html");
+  await expect(page.locator("#stage")).toBeVisible({ timeout: 15_000 });
   expectClean(trap);
-});
-
-test.describe("daily", () => {
-  test("hub exposes Daily CTA pointing at daily.html", async ({ page }) => {
-    const trap = attachErrorTrap(page);
-    await page.goto("/");
-    const cta = page.locator("a.daily-cta");
-    await expect(cta).toBeVisible();
-    await expect(cta).toHaveAttribute("href", /games\/daily\.html$/u);
-    await expect(cta).toContainText(/daily challenge/iu);
-    expectClean(trap);
-  });
-
-  test("daily page loads with stepper + today tagline", async ({ page }) => {
-    const trap = attachErrorTrap(page);
-    await page.goto("/games/daily.html");
-    await expect(page.locator(".daily-tagline")).toBeVisible({
-      timeout: 15_000,
-    });
-    await expect(page.locator(".cycle-stepper")).toBeVisible();
-    await expect(page.locator(".cycle-step")).toHaveCount(3);
-    expectClean(trap);
-  });
-
-  test("quit ends the daily run and shows summary with history strip", async ({
-    page,
-  }) => {
-    const trap = attachErrorTrap(page);
-    await page.goto("/games/daily.html");
-    await expect(page.locator(".cycle-stepper")).toBeVisible({
-      timeout: 15_000,
-    });
-    await page.locator("#quit-btn").click();
-    await expect(page.locator(".cycle-summary")).toBeVisible({ timeout: 2000 });
-    await expect(page.locator(".daily-history")).toBeVisible();
-    expectClean(trap);
-  });
-});
-
-test.describe("cycle", () => {
-  test("hub exposes Start Cycle CTA pointing at cycle.html", async ({
-    page,
-  }) => {
-    const trap = attachErrorTrap(page);
-    await page.goto("/");
-    const cta = page.locator("a.cycle-cta");
-    await expect(cta).toBeVisible();
-    await expect(cta).toHaveAttribute("href", /games\/cycle\.html$/u);
-    await expect(cta).toContainText(/start cycle/iu);
-    expectClean(trap);
-  });
-
-  test("hub → cycle navigates and renders the stepper", async ({ page }) => {
-    const trap = attachErrorTrap(page);
-    await page.goto("/");
-    await page.locator("a.cycle-cta").click();
-    await page.waitForURL(/games\/cycle\.html$/u, { timeout: 5000 });
-    await expect(page).toHaveTitle(/cycle/iu);
-    await expect(page.locator(".cycle-stepper")).toBeVisible();
-    await expect(page.locator(".cycle-step")).toHaveCount(3);
-    expectClean(trap);
-  });
-
-  test("cycle page loads directly and the first block (Lex) is active", async ({
-    page,
-  }) => {
-    const trap = attachErrorTrap(page);
-    await page.goto("/games/cycle.html");
-    await expect(page.locator(".cycle-stepper")).toBeVisible({
-      timeout: 15_000,
-    });
-    // First step active = Lex; Lex block renders the crossword grid.
-    await expect(page.locator(".cycle-step.is-active")).toContainText(/lex/iu);
-    await expect(page.locator(".xw-grid")).toBeVisible({ timeout: 15_000 });
-    expectClean(trap);
-  });
-
-  test("quit ends the cycle and shows the combined summary", async ({
-    page,
-  }) => {
-    const trap = attachErrorTrap(page);
-    await page.goto("/games/cycle.html");
-    await expect(page.locator(".cycle-stepper")).toBeVisible({
-      timeout: 15_000,
-    });
-    await page.locator("#quit-btn").click();
-    await expect(page.locator(".cycle-summary")).toBeVisible({ timeout: 2000 });
-    await expect(page.locator(".cycle-block-tile")).toHaveCount(3);
-    await expect(page.locator("#again-btn")).toBeVisible();
-    await expect(page.locator("#back-btn")).toBeVisible();
-    expectClean(trap);
-  });
 });
