@@ -106,3 +106,18 @@ jobs:
           name: stryke-report
           path: reports/stryke.json
           retention-days: 7
+
+  bake:
+    name: Art bake (reproducible)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: Re-bake the atlas
+        run: bun run gen:art
+      - name: Committed art must be byte-reproducible
+        run: |
+          if ! git diff --exit-code -- public/art; then
+            echo "::error::public/art is not reproducible from gen:art on the pinned Bun. Run 'bun run gen:art && git add public/art' and update EXPECTED_DIGEST in test/bake-atlas.test.ts."
+            exit 1
+          fi

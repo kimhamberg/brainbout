@@ -1,10 +1,22 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { critter } from "../scripts/bake/creature";
 import { drawPlant, type PlantKnobs } from "../scripts/bake/lsystem";
 import { sha256 } from "../scripts/bake/manifest";
 import { oklch, rampFromAnchor } from "../scripts/bake/palette";
+import { dualGridTiles } from "../scripts/bake/tiles";
 import { seededRng } from "../src/shared/rng";
+
+/**
+ * Golden digest of the committed atlas, baked on the PINNED Bun (see
+ * .github/actions/setup). The CI `bake` job re-runs `gen:art` and asserts the
+ * committed PNGs are byte-reproducible; this constant additionally catches an
+ * atlas/manifest changed without acknowledging it. If you intentionally change
+ * a generator: `bun run gen:art && git add public/art`, then update this.
+ */
+const EXPECTED_DIGEST =
+  "367382f664e131cec73140c695f5f10b5f64244d4772ca0247e7c77490c1a2db";
 
 describe("palette (OKLCH) — quantized & in range (VH-11)", () => {
   test("every channel is an integer in [0,255]", () => {
@@ -67,16 +79,49 @@ describe("L-system plant — deterministic from seed", () => {
   });
 });
 
-describe("committed atlas manifest (golden gate)", () => {
-  test("manifest digest is a 64-hex SHA-256", () => {
-    const p = join(
-      import.meta.dir,
-      "..",
-      "public",
-      "art",
-      "atlas-manifest.json",
+describe("creature + tile generators — deterministic", () => {
+  const ramp = rampFromAnchor(80, 0.13, 5);
+  const accent = oklch(0.74, 0.15, 40);
+
+  test("critter: same seed → byte-identical; different seed → different", () => {
+    const a = critter(48, ramp, accent, seededRng("crit:a"));
+    const b = critter(48, ramp, accent, seededRng("crit:a"));
+    const c = critter(48, ramp, accent, seededRng("crit:z"));
+    expect(sha256(a.data)).toBe(sha256(b.data));
+    expect(sha256(a.data)).not.toBe(sha256(c.data));
+  });
+
+  test("dual-grid tiles: 16 configs, fully deterministic", () => {
+    const t1 = dualGridTiles(
+      24,
+      rampFromAnchor(150, 0.11, 5),
+      rampFromAnchor(60, 0.07, 5),
     );
-    const m = JSON.parse(readFileSync(p, "utf8")) as { digest: string };
-    expect(m.digest).toMatch(/^[0-9a-f]{64}$/u);
+    const t2 = dualGridTiles(
+      24,
+      rampFromAnchor(150, 0.11, 5),
+      rampFromAnchor(60, 0.07, 5),
+    );
+    expect(t1.length).toBe(16);
+    expect(t1.map((t) => sha256(t.ras.data))).toEqual(
+      t2.map((t) => sha256(t.ras.data)),
+    );
+  });
+});
+
+describe("committed atlas manifest (golden gate)", () => {
+  const manifest = JSON.parse(
+    readFileSync(
+      join(import.meta.dir, "..", "public", "art", "atlas-manifest.json"),
+      "utf8",
+    ),
+  ) as { digest: string; atlases: { sha256: string }[] };
+
+  test("digest is a 64-hex SHA-256", () => {
+    expect(manifest.digest).toMatch(/^[0-9a-f]{64}$/u);
+  });
+
+  test("digest matches the pinned golden constant (VH-11)", () => {
+    expect(manifest.digest).toBe(EXPECTED_DIGEST);
   });
 });

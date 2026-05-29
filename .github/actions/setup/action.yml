@@ -4,6 +4,11 @@ runs:
   using: composite
   steps:
     - uses: oven-sh/setup-bun@v2
+      with:
+        # Pinned: the art-bake golden-hash digest is toolchain-coupled (the
+        # OKLCH / L-system transcendentals are implementation-defined across
+        # engine versions). Pin so `gen:art` reproduces the committed atlas in CI.
+        bun-version: 1.3.14
     - uses: actions/cache@v4
       with:
         path: ~/.bun/install/cache

@@ -25,7 +25,8 @@
     "clean": "rm -rf dist brainbout brainbout-linux-amd64 brainbout-windows-amd64.exe brainbout.apk",
     "screenshot": "bun scripts/screenshot.ts",
     "download:dict": "bun scripts/download-dictionaries.ts",
-    "gen:icons": "bun scripts/gen-icons.ts"
+    "gen:icons": "bun scripts/gen-icons.ts",
+    "gen:art": "bun scripts/bake-atlas.ts"
   },
   "dependencies": {
     "@lichess-org/chessground": "^10.0.2",
