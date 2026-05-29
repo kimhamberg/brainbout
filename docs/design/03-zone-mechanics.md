@@ -86,6 +86,16 @@ RT/grade: go trials freeze→arm→capture rt on tap→`evaluateResponse`→`der
 - **True-timeout no-go.** The "leave it" Hold button is gone: a no-go is withheld by NOT tapping — the beat times out (`beatTimer → respond(null)`) into a correct withhold. A dedicated withhold button would itself be a motor response and weaken the go/no-go inhibition construct (the prepotent press must be genuinely *suppressed*). Go trials still demand a timely L/R sort; a timeout on a go is a real miss (`-1`).
 - **Time-bounded session.** The standalone Meadow defaults to a 75s timed challenge (`durationMs`, no beat-count cap); the session ends at the first beat boundary past the budget (or HP 0). A `maxTrials` cap is optional — the Walk leg uses one; the demo accepts `?n=`/`?ms=` for tests.
 
+## 5b. Juice (`src/scene/juice.ts`) — 2026-05-29
+
+Post-grade game-feel, **cosmetic only** — every flourish fires after the grade is recorded and is skipped during the measured RT window (frozen-ticker guardrail), so it can't contaminate response times. Pure math (`easeOutBack`, `easeOutCubic`, `makeBurst`, `integrate`, `particleAlpha`, `isDead`) is unit-tested to 100%; the Graphics drawing lives in the coverage-ignored blocks.
+
+- **Grove** — a successful wake pops the sprite in with an overshoot (`easeOutBack`) and emits a gold (good) / green (hard) particle burst; a miss gives a gentle "still drowsing" wobble.
+- **Bench** — a correct read sparks sun-gold over the specimen board; a miss shakes the bench.
+- **Meadow** — a harvest sparkles gold, a correct *withhold* blooms green (the design §4 restraint reward), a miss red-shakes the screen.
+
+All particles retire on the next re-render and on block teardown, and the whole layer is gated by `prefers-reduced-motion` (the recolour/reveal feedback stays; the motion drops).
+
 ## 6. The adapter contract
 
 ```ts

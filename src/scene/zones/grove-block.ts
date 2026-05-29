@@ -11,7 +11,7 @@
  * BlockOutcome (kind "lex"). Self-paced; the wake fires only AFTER the grade.
  */
 
-import type { Sprite } from "pixi.js";
+import { Graphics, type Sprite } from "pixi.js";
 import type { VocabDeck } from "../../content/deck";
 import { speciesFor } from "../../content/species";
 import type {
@@ -30,6 +30,14 @@ import {
 import { recordReview, suggestGradeFromTyping } from "../../games/lex-srs";
 import { seededRng } from "../../shared/rng";
 import { getStage } from "../../shared/stages";
+import {
+  easeOutBack,
+  integrate,
+  isDead,
+  makeBurst,
+  type Particle,
+  particleAlpha,
+} from "../juice";
 import { createStage } from "../pixi-stage";
 
 export interface GroveOptions {
@@ -68,6 +76,11 @@ export function createGroveBlock(opts: GroveOptions): BlockHandle {
   const cap = opts.maxTrials ?? 6;
   const mode = groveMode(opts.stage ?? getStage("lex"));
   const queue = buildGroveQueue(opts.deck, deckId, today, cap);
+  // honour prefers-reduced-motion: keep recolour/reveal feedback, drop the
+  // particle bursts + shake + overshoot pop.
+  const reduce =
+    typeof matchMedia === "function" &&
+    matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const stageHost = el(opts.container, "stage");
   const cueEl = el(opts.container, "grove-cue");
@@ -141,15 +154,40 @@ export function createGroveBlock(opts: GroveOptions): BlockHandle {
       app.destroy({ removeView: true }, { children: true });
     };
     let current: Sprite | null = null;
-    let pop = 0;
+    let pop = 0; // wake-pop progress (1 → 0)
+    let shake = 0; // miss-shake progress (1 → 0)
+    const fx: { p: Particle; g: Graphics }[] = []; // post-grade burst particles
     // working queue: a lapsed resident is re-appended for a spaced retry this
     // session (capped per card), so distinct entries can outnumber `total`.
     const pending = [...queue];
     const lapses = new Map<string, number>();
 
+    function clearFx(): void {
+      for (const f of fx) f.g.destroy();
+      fx.length = 0;
+    }
+
+    function spawnWakeBurst(color: number, n: number): void {
+      if (!current) return;
+      const burst = makeBurst(
+        current.x,
+        current.y - 16,
+        n,
+        seededRng(`grove-fx:${deckId}:${String(state.trial)}`),
+        { speed: 0.07, life: 680, size: 3 },
+      );
+      for (const p of burst) {
+        const g = new Graphics().circle(0, 0, p.size).fill({ color });
+        g.position.set(p.x, p.y);
+        app.stage.addChild(g);
+        fx.push({ p, g });
+      }
+    }
+
     function place(entryIdx: number, dormant: boolean): void {
       const entry = pending[entryIdx];
       if (!entry) return;
+      clearFx();
       app.stage.removeChildren();
       const sp = atlas.speciesSprite(
         speciesFor(deckId, entry, opts.deck.manifest),
@@ -243,9 +281,16 @@ export function createGroveBlock(opts: GroveOptions): BlockHandle {
       if (woke) {
         state.woke++;
         points += grade === "good" ? 3 : grade === "hard" ? 2 : 1;
-        place(state.trial, false);
-        pop = 1;
+        place(state.trial, false); // dormant → awake
+        if (!reduce) {
+          pop = 1; // overshoot wake-pop
+          spawnWakeBurst(
+            grade === "good" ? 0xe5c890 : 0xa6d189,
+            grade === "good" ? 16 : 10,
+          );
+        }
       } else {
+        if (!reduce) shake = 1; // a gentle "still drowsing" wobble
         // intra-session relearning: re-queue the lapsed resident for a spaced
         // retry later this session (capped), so a miss isn't lost until tomorrow.
         const prior = lapses.get(entry.entryId) ?? 0;
@@ -293,9 +338,33 @@ export function createGroveBlock(opts: GroveOptions): BlockHandle {
     nextEl.addEventListener("click", next, { signal });
 
     app.ticker.add((t) => {
-      if (current && pop > 0) {
-        pop = Math.max(0, pop - t.deltaMS / 220);
-        current.scale.set(1 + 0.18 * pop);
+      const dt = t.deltaMS;
+      if (current) {
+        if (pop > 0) {
+          pop = Math.max(0, pop - dt / 320);
+          // grow-in with overshoot: scale 1.4 → 1 (easeOutBack dips <1, settles)
+          current.scale.set(1 + 0.4 * (1 - easeOutBack(1 - pop)));
+        } else {
+          current.scale.set(1);
+        }
+        if (shake > 0) {
+          shake = Math.max(0, shake - dt / 260);
+          current.x = W / 2 + Math.sin(shake * 42) * 6 * shake;
+        } else {
+          current.x = W / 2;
+        }
+      }
+      // post-grade burst particles drift + fade, then retire
+      for (let i = fx.length - 1; i >= 0; i--) {
+        const f = fx[i];
+        if (!f) continue;
+        integrate(f.p, dt, 0.00006);
+        f.g.position.set(f.p.x, f.p.y);
+        f.g.alpha = particleAlpha(f.p);
+        if (isDead(f.p)) {
+          f.g.destroy();
+          fx.splice(i, 1);
+        }
       }
     });
 

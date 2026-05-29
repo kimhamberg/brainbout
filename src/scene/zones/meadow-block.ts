@@ -29,7 +29,15 @@ import {
   updateAdaptation,
 } from "../../games/flux-engine";
 import { recordReview } from "../../shared/fsrs";
+import { seededRng } from "../../shared/rng";
 import { CSI_MS } from "../../world/limits";
+import {
+  integrate,
+  isDead,
+  makeBurst,
+  type Particle,
+  particleAlpha,
+} from "../juice";
 import { createStage } from "../pixi-stage";
 import { browserScheduler, TrialClock } from "../trial-clock";
 
@@ -110,6 +118,9 @@ export function createMeadowBlock(opts: MeadowOptions): BlockHandle {
   // (the Walk leg uses one). Whichever bound is hit first ends the session.
   const maxTrials = opts.maxTrials ?? Number.POSITIVE_INFINITY;
   const durationMs = opts.durationMs ?? 75_000;
+  const reduce =
+    typeof matchMedia === "function" &&
+    matchMedia("(prefers-reduced-motion: reduce)").matches;
   const flux = createFluxState(stage);
 
   const stageHost = el(opts.container, "stage");
@@ -186,6 +197,45 @@ export function createMeadowBlock(opts: MeadowOptions): BlockHandle {
       app.destroy({ removeView: true }, { children: true });
     };
 
+    // ── post-grade juice (cosmetic; never during the RT window) ──
+    const fx: { p: Particle; g: Graphics }[] = [];
+    let shake = 0; // miss screen-shake progress (1 → 0)
+    function spawnBurst(color: number, n: number): void {
+      const burst = makeBurst(
+        W / 2,
+        H / 2,
+        n,
+        seededRng(`meadow-fx:${String(state.trial)}`),
+        {
+          speed: 0.09,
+          life: 560,
+          size: 3,
+        },
+      );
+      for (const p of burst) {
+        const g = new Graphics().circle(0, 0, p.size).fill({ color });
+        g.position.set(p.x, p.y);
+        app.stage.addChild(g);
+        fx.push({ p, g });
+      }
+    }
+    app.ticker.add((t) => {
+      const dt = t.deltaMS;
+      app.stage.x = shake > 0 ? Math.sin(shake * 50) * 5 * shake : 0;
+      if (shake > 0) shake = Math.max(0, shake - dt / 240);
+      for (let i = fx.length - 1; i >= 0; i--) {
+        const f = fx[i];
+        if (!f) continue;
+        integrate(f.p, dt, 0.00008);
+        f.g.position.set(f.p.x, f.p.y);
+        f.g.alpha = particleAlpha(f.p);
+        if (isDead(f.p)) {
+          f.g.destroy();
+          fx.splice(i, 1);
+        }
+      }
+    });
+
     function showBeat(): void {
       const prevRule = flux.rule;
       const prevNot = flux.isNot;
@@ -215,6 +265,8 @@ export function createMeadowBlock(opts: MeadowOptions): BlockHandle {
 
       const render = (): void => {
         if (ended) return; // a queued post-paint frame must not touch a dead app
+        for (const f of fx) f.g.destroy(); // retire last beat's burst
+        fx.length = 0;
         app.stage.removeChildren();
         const g = new Graphics();
         drawShape(g, t, W / 2, H / 2);
@@ -273,6 +325,17 @@ export function createMeadowBlock(opts: MeadowOptions): BlockHandle {
         ? `✓ +${String(res.totalPoints)}`
         : `✗ ${res.feedback || "missed"}`;
       revealEl.dataset.grade = grade;
+      // juice: harvest sparkle (gold) / correct-withhold bloom (green) / miss shake
+      if (!reduce) {
+        if (res.correct) {
+          spawnBurst(
+            current.isNoGo ? 0xa6d189 : 0xe5c890,
+            current.isNoGo ? 8 : 14,
+          );
+        } else {
+          shake = 1;
+        }
+      }
       clock.settle();
       state.phase = "revealed";
       if (state.hp <= 0) finish("failed");

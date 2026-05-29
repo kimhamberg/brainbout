@@ -27,6 +27,13 @@ import {
 } from "../../games/crown-rotation";
 import { recordReview } from "../../shared/fsrs";
 import { seededRng } from "../../shared/rng";
+import {
+  integrate,
+  isDead,
+  makeBurst,
+  type Particle,
+  particleAlpha,
+} from "../juice";
 import { createStage } from "../pixi-stage";
 import { browserScheduler, TrialClock } from "../trial-clock";
 
@@ -64,6 +71,9 @@ export function createBenchBlock(opts: BenchOptions): BlockHandle {
   const today = opts.today ?? new Date().toISOString().slice(0, 10);
   const total = opts.maxTrials ?? 6;
   const seedBase = opts.seed ?? "bench";
+  const reduce =
+    typeof matchMedia === "function" &&
+    matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const stageHost = el(opts.container, "stage");
   const cueEl = el(opts.container, "bench-cue");
@@ -137,8 +147,31 @@ export function createBenchBlock(opts: BenchOptions): BlockHandle {
       }
     }
 
+    // ── post-grade juice (cosmetic; never during the RT window) ──
+    const fx: { p: Particle; g: Graphics }[] = [];
+    let shake = 0; // miss screen-shake progress (1 → 0)
+    const specimenCx = 8 + BOARD + GAP + BOARD / 2; // centre of board B
+    const specimenCy = 8 + BOARD / 2;
+    function spawnBurst(color: number, n: number): void {
+      const burst = makeBurst(
+        specimenCx,
+        specimenCy,
+        n,
+        seededRng(`bench-fx:${seedBase}:${String(state.trial)}`),
+        { speed: 0.1, life: 600, size: 3 },
+      );
+      for (const p of burst) {
+        const g = new Graphics().circle(0, 0, p.size).fill({ color });
+        g.position.set(p.x, p.y);
+        app.stage.addChild(g);
+        fx.push({ p, g });
+      }
+    }
+
     function renderTrial(t: Trial): void {
       if (ended) return; // a queued post-paint frame must not touch a dead app
+      for (const f of fx) f.g.destroy(); // retire last trial's burst
+      fx.length = 0;
       app.stage.removeChildren();
       renderBoard(t.a, 8); // parent footprint
       renderBoard(t.b, 8 + BOARD + GAP); // grown specimen (already transformed)
@@ -190,6 +223,11 @@ export function createBenchBlock(opts: BenchOptions): BlockHandle {
         ? `✓ ${currentTrial.kind === "same" ? "Same — true to its parent" : "Moved — well spotted"} (${String(Math.round(rt))} ms)`
         : `✗ it was ${currentTrial.kind === "same" ? "the SAME" : "MOVED"}`;
       revealEl.dataset.grade = grade;
+      // juice: a sun-gold spark over the specimen on a correct read; a shake on a miss
+      if (!reduce) {
+        if (correct) spawnBurst(grade === "easy" ? 0xe5c890 : 0xa6d189, 12);
+        else shake = 1;
+      }
       clock.settle();
       state.phase = "revealed";
     }
@@ -221,6 +259,23 @@ export function createBenchBlock(opts: BenchOptions): BlockHandle {
     revealEl.addEventListener("click", step, { signal });
     el(opts.container, "bench-next").addEventListener("click", step, {
       signal,
+    });
+
+    app.ticker.add((t) => {
+      const dt = t.deltaMS;
+      app.stage.x = shake > 0 ? Math.sin(shake * 50) * 6 * shake : 0;
+      if (shake > 0) shake = Math.max(0, shake - dt / 260);
+      for (let i = fx.length - 1; i >= 0; i--) {
+        const f = fx[i];
+        if (!f) continue;
+        integrate(f.p, dt, 0.00006);
+        f.g.position.set(f.p.x, f.p.y);
+        f.g.alpha = particleAlpha(f.p);
+        if (isDead(f.p)) {
+          f.g.destroy();
+          fx.splice(i, 1);
+        }
+      }
     });
 
     showTrial();
