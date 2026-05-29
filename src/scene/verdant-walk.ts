@@ -11,7 +11,6 @@ import {
   type VocabDeck,
 } from "../content/deck";
 import { loadVocabDeck } from "../content/load-deck";
-import { runWalk } from "./scene-router";
 
 const FALLBACK: RawEntry[] = [
   { word: "fugl", pos: "noun", definition: "a bird", example: "" },
@@ -24,6 +23,9 @@ if (!host) throw new Error("missing #walk");
 const walkHost = host;
 
 async function boot(): Promise<void> {
+  // pixi loads lazily: scene-router (→ zone blocks → pixi-stage → pixi) is
+  // pulled in only here, so the render layer code-splits out of the boot shell.
+  const { runWalk } = await import("./scene-router");
   let deck: VocabDeck;
   try {
     deck = await loadVocabDeck("no");

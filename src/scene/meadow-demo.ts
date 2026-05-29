@@ -8,10 +8,11 @@
  *                 switch is guaranteed); ?ms=<millis> → shorter time bound.
  */
 
-import { createMeadowBlock } from "./zones/meadow-block";
+export {}; // module scope (the only imports are dynamic, inside the IIFE below)
 
 const root = document.getElementById("meadow");
 if (!root) throw new Error("missing #meadow");
+const host = root;
 
 const params = new URLSearchParams(location.search);
 const n = params.get("n");
@@ -20,16 +21,20 @@ const bounds: { maxTrials?: number; durationMs?: number } = {};
 if (n !== null) bounds.maxTrials = Number(n);
 if (ms !== null) bounds.durationMs = Number(ms);
 
-createMeadowBlock({
-  container: root,
-  stage: 2, // includes the 'fill' rule + more switches
-  today: "2026-05-29",
-  ...bounds,
-  onComplete: (o) => {
-    const s = document.getElementById("meadow-summary");
-    if (s) {
-      s.textContent = `${o.endReason === "failed" ? "The meadow rests" : "Tidy harvest"} — ${String(o.correct)}/${String(o.trials)} · ${String(o.points)} pts`;
-    }
-    (window as unknown as { __meadowDone?: unknown }).__meadowDone = o;
-  },
-});
+// pixi loads lazily via this dynamic import (kept out of the boot shell).
+void (async () => {
+  const { createMeadowBlock } = await import("./zones/meadow-block");
+  createMeadowBlock({
+    container: host,
+    stage: 2, // includes the 'fill' rule + more switches
+    today: "2026-05-29",
+    ...bounds,
+    onComplete: (o) => {
+      const s = document.getElementById("meadow-summary");
+      if (s) {
+        s.textContent = `${o.endReason === "failed" ? "The meadow rests" : "Tidy harvest"} — ${String(o.correct)}/${String(o.trials)} · ${String(o.points)} pts`;
+      }
+      (window as unknown as { __meadowDone?: unknown }).__meadowDone = o;
+    },
+  });
+})();

@@ -13,7 +13,11 @@ import {
 } from "../content/deck";
 import { loadVocabDeck } from "../content/load-deck";
 import type { BlockHandle } from "../engine/block";
-import { createGroveBlock } from "./zones/grove-block";
+
+// pixi loads lazily: createGroveBlock (→ pixi-stage → pixi) is pulled in via a
+// dynamic import in boot(), so the render layer code-splits out of the shell.
+type CreateGroveBlock = typeof import("./zones/grove-block").createGroveBlock;
+let createGroveBlock: CreateGroveBlock | null = null;
 
 // Offline fallback so the demo still plays if dict-no.json can't be fetched.
 const FALLBACK: RawEntry[] = [
@@ -33,6 +37,7 @@ const host = root;
 let handle: BlockHandle | null = null;
 
 function start(deck: VocabDeck, stage: number): void {
+  if (!createGroveBlock) return;
   handle?.abort();
   host.querySelector("#stage")?.replaceChildren();
   const summary = document.getElementById("grove-summary");
@@ -55,6 +60,7 @@ function start(deck: VocabDeck, stage: number): void {
 }
 
 async function boot(): Promise<void> {
+  createGroveBlock = (await import("./zones/grove-block")).createGroveBlock;
   let deck: VocabDeck;
   try {
     deck = await loadVocabDeck("no");

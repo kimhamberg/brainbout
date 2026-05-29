@@ -20,6 +20,15 @@ import { hueDeltaFor, type Species, templateKey } from "../content/species";
 import { BASE } from "../shared/base";
 import { hueBucket, hueRotate, moonlit } from "./recolor";
 
+/**
+ * pixi.js is loaded LAZILY: the whole render layer (this module + the zone
+ * blocks + pixi, with named imports so pixi stays tree-shaken) is reached only
+ * through a dynamic `import()` from each verdant entry, so it code-splits into
+ * an on-demand chunk and never sits in the boot shell (audit VH-6). The
+ * verdant build enables `splitting`; the bundle-size gate's BOOT column asserts
+ * pixi stays out of the eager graph.
+ */
+
 export interface AtlasFrame {
   x: number;
   y: number;
