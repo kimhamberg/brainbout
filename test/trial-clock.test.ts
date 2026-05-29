@@ -1,5 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { type FrameScheduler, TrialClock } from "../src/scene/trial-clock";
+import {
+  browserScheduler,
+  type FrameScheduler,
+  TrialClock,
+} from "../src/scene/trial-clock";
 
 function makeFake(start = 1000): {
   sched: FrameScheduler;
@@ -29,6 +33,16 @@ function makeFake(start = 1000): {
     now: () => t,
   };
 }
+
+describe("browserScheduler", () => {
+  test("bridges performance.now + requestAnimationFrame without throwing", () => {
+    const s = browserScheduler();
+    expect(typeof s.now()).toBe("number");
+    expect(() => {
+      s.requestFrame(() => {});
+    }).not.toThrow();
+  });
+});
 
 describe("TrialClock — post-paint onset (VH-1)", () => {
   test("onset is anchored on the SECOND frame, not the first", () => {
