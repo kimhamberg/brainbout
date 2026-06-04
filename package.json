@@ -46,7 +46,7 @@
     "sharp": "^0.34.5",
     "stryker-mutator-bun-runner": "^0.4.0",
     "stylelint": "^17.4.0",
-    "stylelint-config-clean-order": "^8.0.1",
+    "stylelint-config-clean-order": "^10.0.0",
     "stylelint-config-standard": "^40.0.0",
     "stylelint-declaration-block-no-ignored-properties": "^3.0.0",
     "stylelint-media-use-custom-media": "^4.1.0",
