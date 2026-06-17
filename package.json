@@ -43,7 +43,7 @@
     "fast-check": "^4.8.0",
     "lefthook": "^2.1.6",
     "playwright": "^1.60.0",
-    "sharp": "^0.34.5",
+    "sharp": "^0.35.1",
     "stryker-mutator-bun-runner": "^0.4.0",
     "stylelint": "^17.4.0",
     "stylelint-config-clean-order": "^8.0.1",
